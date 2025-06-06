@@ -1,0 +1,344 @@
+/* ========================================
+   MOBILE DRAWER MENU - RIGHT SLIDE OUT
+   ======================================== */
+
+/* Ẩn Bootstrap default collapse trên mobile */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    display: none !important;
+  }
+}
+
+/* Overlay backdrop khi drawer mở */
+.sg3-mobile-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sg3-mobile-drawer-overlay.sg3-active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Mobile Drawer Container */
+.sg3-mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 300px;
+  height: 100vh;
+  background: #ffffff;
+  z-index: 9999;
+  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.15);
+  transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sg3-mobile-drawer.sg3-active {
+  right: 0;
+}
+
+/* Drawer Header */
+.sg3-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sg3-drawer-logo {
+  height: 40px;
+  width: auto;
+}
+
+.sg3-drawer-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #1e4f7a;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.sg3-drawer-close:hover {
+  background-color: rgba(30, 79, 122, 0.1);
+  color: #0e441c;
+}
+
+/* Drawer Navigation */
+.sg3-drawer-nav {
+  flex: 1;
+  padding: 0;
+  margin: 0;
+}
+
+.sg3-drawer-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sg3-drawer-nav-item {
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.sg3-drawer-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 18px 25px;
+  text-decoration: none;
+  color: #333333;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.sg3-drawer-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #1e4f7a, #0e441c);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+  transform-origin: bottom;
+}
+
+.sg3-drawer-nav-link:hover,
+.sg3-drawer-nav-link.sg3-active {
+  background-color: #f8f9fa;
+  color: #1e4f7a;
+  padding-left: 35px;
+}
+
+.sg3-drawer-nav-link:hover::before,
+.sg3-drawer-nav-link.sg3-active::before {
+  transform: scaleY(1);
+}
+
+/* Icon cho nav items */
+.sg3-drawer-nav-icon {
+  margin-right: 15px;
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+  color: #1e4f7a;
+  transition: color 0.3s ease;
+}
+
+.sg3-drawer-nav-link:hover .sg3-drawer-nav-icon,
+.sg3-drawer-nav-link.sg3-active .sg3-drawer-nav-icon {
+  color: #0e441c;
+}
+
+/* Drawer Footer */
+.sg3-drawer-footer {
+  padding: 20px 25px;
+  border-top: 1px solid #e9ecef;
+  background: white;
+  text-align: center;
+}
+
+.sg3-drawer-social {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.sg3-drawer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #f8f9fa;
+  color: #1e4f7a;
+  border-radius: 50%;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.sg3-drawer-social-link:hover {
+  background: #1e4f7a;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.sg3-drawer-copyright {
+  font-size: 12px;
+  color: #6c757d;
+  margin: 0;
+}
+
+/* Custom Toggle Button Animation */
+.sg3-custom-toggler {
+  border: none;
+  background: none;
+  padding: 8px;
+  cursor: pointer;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sg3-custom-toggler i {
+  font-size: 24px;
+  color: #1e4f7a;
+  transition: all 0.3s ease;
+}
+
+.sg3-custom-toggler:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sg3-custom-toggler:hover i {
+  color: #0e441c;
+}
+
+.sg3-custom-toggler:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(30, 79, 122, 0.25);
+}
+
+/* Vị trí nút toggle khi fixed */
+.sg3-custom-toggler.fixed-position {
+  position: fixed;
+  /* top: 15px; */
+  right: 15px;
+  z-index: 1000;
+  /* background-color: rgba(255, 255, 255, 0.9); */
+  /* border-radius: 50%; */
+  /* box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); */
+}
+
+.sg3-custom-toggler.sg3-active i {
+  color: #0e441c;
+}
+
+/* Prevent body scroll */
+body.sg3-drawer-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+  .sg3-mobile-drawer {
+    width: 270px;
+  }
+
+  .sg3-drawer-nav-link {
+    padding: 15px 20px;
+  }
+
+  .sg3-drawer-header {
+    padding: 15px;
+  }
+
+  .sg3-drawer-footer {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 360px) {
+  .sg3-mobile-drawer {
+    width: 250px;
+  }
+}
+
+/* Animation for nav items */
+.sg3-drawer-nav-item {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition-delay: 0s;
+}
+
+.sg3-mobile-drawer.sg3-active .sg3-drawer-nav-item {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.sg3-mobile-drawer.sg3-active .sg3-drawer-nav-item:nth-child(1) {
+  transition-delay: 0.1s;
+}
+
+.sg3-mobile-drawer.sg3-active .sg3-drawer-nav-item:nth-child(2) {
+  transition-delay: 0.2s;
+}
+
+.sg3-mobile-drawer.sg3-active .sg3-drawer-nav-item:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.sg3-mobile-drawer.sg3-active .sg3-drawer-nav-item:nth-child(4) {
+  transition-delay: 0.4s;
+}
+
+/* Motion/Animation Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .sg3-mobile-drawer,
+  .sg3-mobile-drawer-overlay,
+  .sg3-drawer-nav-link,
+  .sg3-drawer-nav-link::before,
+  .sg3-drawer-close,
+  .sg3-drawer-social-link,
+  .sg3-drawer-nav-item {
+    transition: none !important;
+  }
+
+  .sg3-custom-toggler,
+  .sg3-custom-toggler i {
+    transition: none !important;
+  }
+}
+
+/* Hiển thị nút toggler chỉ trên mobile */
+@media (min-width: 992px) {
+  .sg3-custom-toggler {
+    display: none !important;
+  }
+}
+
+/* Đảm bảo z-index và vị trí trên mọi thiết bị */
+.sg3-mobile-drawer,
+.sg3-mobile-drawer-overlay,
+.sg3-custom-toggler {
+  z-index: 9999;
+}
