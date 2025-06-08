@@ -4,13 +4,23 @@ import React, { useRef, useState, useEffect } from "react";
 import Slider from "react-slick";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
+import { AutomationService } from "@/services/automation.service";
 
 export default function AutomationPage() {
+  const [AutomationData, setAutomation] = useState<Automation[]>([]);
+
     const [nav1, setNav1] = useState<Slider | null>(null);
     const [nav2, setNav2] = useState<Slider | null>(null);
 
     const slider1 = useRef<Slider>(null);
     const slider2 = useRef<Slider>(null);
+
+    interface Automation {
+        title: string,
+        description: string,
+        image: string,
+        imageAlt: string,
+    }
 
     const imageSettings = {
         centerMode: true,
@@ -18,7 +28,6 @@ export default function AutomationPage() {
         arrows: false,
         asNavFor: nav2!,
         focusOnSelect: true,
-        centerPadding: "50px",
         infinite: true,
         responsive: [
             {
@@ -56,10 +65,22 @@ export default function AutomationPage() {
         ],
     };
     useEffect(() => {
-        if (slider1.current && slider2.current) {
-            setNav1(slider1.current);
-            setNav2(slider2.current);
-        }
+        const fetchData = async () => {
+            try {
+                const res = await AutomationService.Load();
+                setAutomation(res.data);
+                console.log("AutomationData:", res.data);
+            } catch (error) {
+                console.error("Failed to load automation data:", error);
+            }
+
+            if (slider1.current && slider2.current) {
+                setNav1(slider1.current);
+                setNav2(slider2.current);
+            }
+        };
+        fetchData();
+
     }, []);
     return (
         <>
@@ -73,19 +94,11 @@ export default function AutomationPage() {
                         ref={slider1}
                         className="slider-image"
                     >
-                        
-                        <div className="image-box">
-                            <img src="../images/automation/automation_3.png" />
-                        </div>
-                        <div className="image-box">
-                            <img src="../images/automation/automation_2.jpg" />
-                        </div>
-                        <div className="image-box">
-                            <img src="../images/automation/automation_1.png" />
-                        </div>
-                        <div className="image-box">
-                            <img src="../images/automation/automation_2.jpg" />
-                        </div>
+                        {AutomationData?.map((item, index) => (
+                            <div className="image-box" key={index}>
+                                <img src={item.image} alt={item.imageAlt} />
+                            </div>
+                        ))}
                     </Slider>
 
                     <div className="content-container">
@@ -95,31 +108,13 @@ export default function AutomationPage() {
                             ref={slider2}
                             className="slider-content"
                         >
-                            
-                            <div className="content-item">
-                                <h3>AUTOMATIC CHEMICAL QUANTIFICATION</h3>
-                                <div className="dash"></div>
-                                <p>The system automatically calculates and precisely distributes the required amount of chemicals for each
-                                    production process, enabling real-time monitoring of energy consumption.</p>
-                            </div>
-                            <div className="content-item">
-                                <h3>CONTINUOUS MONITORING AND ADJUSTMENT</h3>
-                                <div className="dash"></div>
-                                <p>Sensors continuously record data on chemical levels, temperature, pressure, and flow rate. The system integrates
-                                    remote management and control through a digital interface, processing data to optimize chemical ratios and make
-                                    automatic adjustments</p>
-                            </div>
-                            <div className="content-item">
-                                <h3>DATA STORAGE AND ANALYSIS</h3>
-                                <div className="dash"></div>
-                                <p>The system provides reports on chemical usage performance, compares it with desired standards, and suggests
-                                    improvements when necessary.</p>
-                            </div>
-                            <div className="content-item">
-                                <h3>DATA STORAGE AND ANALYSIS</h3>
-                                <div className="dash"></div>
-                                <p>The system provides reports on chemical usage performance, compares it with desired standards, and suggests improvements when necessary.</p>
-                            </div>
+                            {AutomationData?.map((item, index) => (
+                                <div className="content-item" key={index}>
+                                    <h3>{item.title}</h3>
+                                    <div className="dash"></div>
+                                    <p>{item.description}</p>
+                                </div>
+                            ))}
                         </Slider>
                     </div>
                 </div>

@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
 export const AutomationService = {
     async Load() {
         try {
-            const response = await axiosInstance.get('api/automation/info');
+            const response = await axiosInstance.get('api/automation/items');
             return response.data;
         } catch (error) {
             console.error('Error fetching automation:', error);
