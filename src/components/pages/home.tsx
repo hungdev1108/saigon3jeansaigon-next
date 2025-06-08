@@ -625,7 +625,7 @@ export default function Home() {
                   We seek like-minded provide high-quality manufacturing
                   services innovation, and work together sustainable growth
                 </p>
-                <a href="/pages/contact.html" className="btn btn-dark">
+                <a href="/contact" className="btn btn-dark">
                   CONTACT US
                 </a>
               </div>
@@ -637,7 +637,7 @@ export default function Home() {
                   We are looking for intelligent, passionate individuals who are
                   ready to join us in building and growing the company
                 </p>
-                <a href="/pages/recruitment.html" className="btn btn-dark">
+                <a href="/recruitment" className="btn btn-dark">
                   LEARN MORE
                 </a>
               </div>

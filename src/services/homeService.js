@@ -1,4 +1,5 @@
 import { getHomeData } from "../api/homeApi";
+import {BACKEND_DOMAIN} from '../api/config';
 
 /**
  * Service để xử lý dữ liệu home
@@ -19,11 +20,11 @@ class HomeService {
 
     // Nếu đã có /uploads/ thì thêm base URL
     if (imagePath.startsWith("/uploads/")) {
-      return `http://localhost:5001${imagePath}`;
+      return `${BACKEND_DOMAIN}${imagePath}`;
     }
 
     // Fallback cho đường dẫn cũ
-    return `http://localhost:5001${imagePath}`;
+    return `${BACKEND_DOMAIN}${imagePath}`;
   }
 
   /**

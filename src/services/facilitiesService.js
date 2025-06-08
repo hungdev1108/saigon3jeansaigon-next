@@ -1,4 +1,6 @@
 import facilitiesApi from "../api/facilitiesApi";
+import {BACKEND_DOMAIN} from '../api/config';
+
 
 /**
  * Service để xử lý dữ liệu facilities
@@ -19,11 +21,11 @@ class FacilitiesService {
 
     // Nếu đã có /uploads/ thì thêm base URL
     if (imagePath.startsWith("/uploads/")) {
-      return `http://localhost:5001${imagePath}`;
+      return `${BACKEND_DOMAIN}${imagePath}`;
     }
 
     // Fallback cho đường dẫn cũ - tất cả đều chuyển về backend
-    return `http://localhost:5001${imagePath}`;
+    return `${BACKEND_DOMAIN}${imagePath}`;
   }
 
   /**
