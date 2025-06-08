@@ -1,12 +1,27 @@
 import axios from "axios";
 
+const config = {
+  development: {
+    baseURL: 'http://localhost:5001',
+    timeout: 30000
+  },
+  production: {
+    baseURL: 'https://saigon3jeansaigon.com',
+    timeout: 30000
+  }
+};
+
+const environment = process.env.NODE_ENV || 'development';
+
+export const API_CONFIG = config[environment];
+
 // Base URL cho API
-export const BASE_URL = "http://localhost:5001";
+export const BACKEND_DOMAIN = config[environment].baseURL;
 
 // Tạo axios instance với cấu hình mặc định
 const apiClient = axios.create({
-  baseURL: BASE_URL,
-  timeout: 30000,
+  baseURL: BACKEND_DOMAIN,
+  timeout: API_CONFIG.timeout,
   headers: {
     "Content-Type": "application/json",
   },

@@ -58,7 +58,7 @@ export default function Footer() {
             <h5>SUSTAINABILITY</h5>
             <ul className="list-unstyled">
               <li>
-                <Link href="/sustainability">Eco-friendly infrastructure</Link>
+                <Link href="/eco-friendly">Eco-friendly infrastructure</Link>
               </li>
               <li>
                 <Link href="/automation">Automation</Link>

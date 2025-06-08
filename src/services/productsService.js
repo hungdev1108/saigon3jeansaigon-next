@@ -1,4 +1,5 @@
 import productsApi from "../api/productsApi";
+import {BACKEND_DOMAIN} from '../api/config';
 
 /**
  * Service để xử lý dữ liệu products
@@ -19,11 +20,11 @@ class ProductsService {
 
     // Nếu đã có /uploads/ thì thêm base URL
     if (imagePath.startsWith("/uploads/")) {
-      return `http://localhost:5001${imagePath}`;
+      return `${BACKEND_DOMAIN}${imagePath}`;
     }
 
     // Fallback cho đường dẫn cũ - tất cả đều chuyển về backend
-    return `http://localhost:5001${imagePath}`;
+    return `${BACKEND_DOMAIN}${imagePath}`;
   }
 
   /**
