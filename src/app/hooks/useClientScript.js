@@ -1,3 +1,5 @@
+"use client";
+
 // hooks/useClientScript.js
 import { useEffect } from "react";
 

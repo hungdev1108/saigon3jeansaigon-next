@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -32,23 +34,23 @@ export default function Header() {
           >
             <ul className="navbar-nav">
               <li className="nav-item">
-                <Link className="nav-link" href="/about">
-                  WHO WE ARE
+                <Link className="nav-link" href="/">
+                  HOME
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" href="/technology">
-                  TECHNOLOGY
+                <Link className="nav-link" href="/facilities">
+                  FACILITIES
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" href="/sustainability">
-                  SUSTAINABILITY
+                <Link className="nav-link" href="/machinery">
+                  MACHINERY
                 </Link>
               </li>
               <li className="nav-item">
-                <Link className="nav-link" href="/contact">
-                  CONTACT
+                <Link className="nav-link" href="/products">
+                  PRODUCTS
                 </Link>
               </li>
             </ul>
