@@ -3,21 +3,23 @@ import Header from "@/components/header";
 import ProductDetails from "@/components/pages/product_details";
 
 interface ProductDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function ProductDetailsPage({
+export default async function ProductDetailsPage({
   params,
 }: ProductDetailsPageProps) {
+  const resolvedParams = await params;
+
   return (
     <>
       {/* Header */}
       <Header />
 
       {/* Product Details */}
-      <ProductDetails params={params} />
+      <ProductDetails params={resolvedParams} />
 
       {/* Footer */}
       <Footer />

@@ -375,6 +375,7 @@ export default function Home() {
                           className="cert-image"
                           width={1920}
                           height={1080}
+                          objectFit="cover"
                         />
                         <div className="iso-text-container">
                           <div className="iso-text-item">{cert.name}</div>
