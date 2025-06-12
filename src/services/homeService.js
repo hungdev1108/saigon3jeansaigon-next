@@ -1,4 +1,4 @@
-import { getHomeData } from "../api/homeApi";
+import { getHomeData } from '../api/homeApi';
 import {BACKEND_DOMAIN} from '../api/config';
 
 /**
