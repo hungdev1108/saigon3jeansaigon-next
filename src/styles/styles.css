@@ -7160,3 +7160,160 @@ footer a:hover {
     font-size: 14px;
   }
 }
+
+/* Customer Slider Styles */
+.customer-slider-container {
+  position: relative;
+  padding: 20px 0;
+  overflow: visible;
+}
+
+.customer-slider {
+  margin: 0 -10px;
+  overflow: visible;
+}
+
+.customer-slider .slick-slide {
+  padding: 0 10px;
+  overflow: visible;
+}
+
+.customer-slider .slick-list {
+  overflow: visible;
+}
+
+.customer-slider .slick-track {
+  overflow: visible;
+}
+
+.customer-slider .slick-dots {
+  bottom: -50px;
+  text-align: center;
+}
+
+.customer-slider .slick-dots li {
+  margin: 0 5px;
+}
+
+.customer-slider .slick-dots li button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+}
+
+.customer-slider .slick-dots li button:before {
+  display: none;
+}
+
+.customer-slider .slick-dots li.slick-active button {
+  background: #ffffff;
+}
+
+.customer-slider .slick-prev,
+.customer-slider .slick-next {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+
+.customer-slider .slick-prev:hover,
+.customer-slider .slick-next:hover {
+  background: #ffffff;
+  transform: scale(1.1);
+}
+
+.customer-slider .slick-prev {
+  left: -20px;
+}
+
+.customer-slider .slick-next {
+  right: -20px;
+}
+
+.customer-slider .slick-prev:before,
+.customer-slider .slick-next:before {
+  color: #333;
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Customer Logo Items in Slider */
+.customer-slider .customer-logo-item {
+  height: 120px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  margin: 0 5px;
+  position: relative;
+  overflow: visible;
+}
+
+.customer-slider .customer-logo-item:hover {
+  background: #ffffff;
+  transform: translateY(-10px) scale(1.08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  margin: -10px 5px 10px 5px;
+}
+
+.customer-slider .customer-logo {
+  max-height: 80px;
+  max-width: 100%;
+  object-fit: contain;
+  filter: grayscale(20%);
+  transition: all 0.3s ease;
+}
+
+.customer-slider .customer-logo-item:hover .customer-logo {
+  filter: grayscale(0%);
+}
+
+/* Responsive adjustments for customer slider */
+@media (max-width: 768px) {
+  .customer-slider .slick-prev,
+  .customer-slider .slick-next {
+    width: 35px;
+    height: 35px;
+  }
+
+  .customer-slider .slick-prev {
+    left: -15px;
+  }
+
+  .customer-slider .slick-next {
+    right: -15px;
+  }
+
+  .customer-slider .slick-dots {
+    bottom: -40px;
+  }
+}
+
+@media (max-width: 576px) {
+  .customer-slider {
+    margin: 0 -5px;
+  }
+
+  .customer-slider .slick-slide {
+    padding: 0 5px;
+  }
+
+  .customer-slider .customer-logo-item {
+    margin: 0 2px;
+    height: 100px;
+  }
+
+  .customer-slider .customer-logo {
+    max-height: 60px;
+  }
+}

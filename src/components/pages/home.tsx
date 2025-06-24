@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
 import homeService from "../../services/homeService";
 
@@ -71,6 +72,65 @@ export default function Home() {
   const [homeData, setHomeData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Function to get customer slider settings based on item count
+  const getCustomerSliderSettings = (itemCount: number) => ({
+    dots: false,
+    arrows: false,
+    infinite: true,
+    speed: 500,
+    slidesToShow: Math.min(4, itemCount), // Don't show more slides than items
+    slidesToScroll: itemCount > 4 ? 2 : 1,
+    autoplay: itemCount > 1,
+    autoplaySpeed: 3000,
+    pauseOnHover: true,
+    centerMode: itemCount < 4, // Center mode when fewer items
+    centerPadding: itemCount < 4 ? "60px" : "0px",
+    responsive: [
+      {
+        breakpoint: 1200,
+        settings: {
+          slidesToShow: Math.min(3, itemCount),
+          slidesToScroll: 1,
+          infinite: true,
+          centerMode: itemCount < 3,
+          arrows: false,
+        },
+      },
+      {
+        breakpoint: 992,
+        settings: {
+          slidesToShow: Math.min(2, itemCount),
+          slidesToScroll: 1,
+          infinite: true,
+          centerMode: itemCount < 2,
+          arrows: false,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: Math.min(2, itemCount),
+          slidesToScroll: 1,
+          dots: false,
+          arrows: false,
+          infinite: true,
+          centerMode: itemCount < 2,
+        },
+      },
+      {
+        breakpoint: 576,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          dots: false,
+          arrows: false,
+          infinite: true,
+          centerMode: true,
+        },
+      },
+    ],
+  });
 
   // Fetch dữ liệu khi component mount
   useEffect(() => {
@@ -176,7 +236,16 @@ export default function Home() {
                     </div>
                     <div
                       className="card-body text-white"
-                      style={{ backgroundColor: section.backgroundColor }}
+                      style={{
+                        backgroundColor:
+                          index === 0
+                            ? "#1e4f7a"
+                            : index === 1
+                            ? "#0e441c"
+                            : index === 2
+                            ? "#935b19"
+                            : "",
+                      }}
                     >
                       <h5 className="card-title">{section.title}</h5>
                       <p className="card-text">{section.content}</p>
@@ -236,7 +305,10 @@ export default function Home() {
                   <br />
                   AUTOMATED PRODUCTION
                 </h2>
-                <a href="#" className="btn btn-outline-light px-4 mt-3">
+                <a
+                  href="/automation"
+                  className="btn btn-outline-light px-4 mt-3"
+                >
                   LEARN MORE
                 </a>
               </div>
@@ -289,46 +361,60 @@ export default function Home() {
                 <h2 className="section-title text-center mb-5">OUR CUSTOMER</h2>
 
                 {/* DENIM & WOVEN Section */}
-                <div className="customer-category mb-2">
+                <div className="customer-category mb-5">
                   <h4 className="text-center mb-4">DENIM & WOVEN</h4>
-                  <div className="row customer-logos-row justify-content-center align-items-center">
-                    {customers?.denimWoven?.map(
-                      (customer: CustomerData, index: number) => (
-                        <div key={index} className="col-6 col-md-3 mb-3">
-                          <div className="customer-logo-item">
-                            <Image
-                              src={customer.logo}
-                              alt={customer.name}
-                              className="img-fluid customer-logo"
-                              width={1920}
-                              height={1080}
-                            />
+                  <div className="customer-slider-container">
+                    <Slider
+                      {...getCustomerSliderSettings(
+                        customers?.denimWoven?.length || 0
+                      )}
+                      className="customer-slider"
+                    >
+                      {customers?.denimWoven?.map(
+                        (customer: CustomerData, index: number) => (
+                          <div key={index} className="px-2">
+                            <div className="customer-logo-item">
+                              <Image
+                                src={customer.logo}
+                                alt={customer.name}
+                                className="img-fluid customer-logo"
+                                width={200}
+                                height={120}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )
-                    )}
+                        )
+                      )}
+                    </Slider>
                   </div>
                 </div>
 
                 {/* KNIT Section */}
                 <div className="customer-category">
                   <h4 className="text-center mb-4">KNIT</h4>
-                  <div className="row customer-logos-row justify-content-center align-items-center">
-                    {customers?.knit?.map(
-                      (customer: CustomerData, index: number) => (
-                        <div key={index} className="col-6 col-md-3 mb-3">
-                          <div className="customer-logo-item">
-                            <Image
-                              src={customer.logo}
-                              alt={customer.name}
-                              className="img-fluid customer-logo"
-                              width={1920}
-                              height={1080}
-                            />
+                  <div className="customer-slider-container">
+                    <Slider
+                      {...getCustomerSliderSettings(
+                        customers?.knit?.length || 0
+                      )}
+                      className="customer-slider"
+                    >
+                      {customers?.knit?.map(
+                        (customer: CustomerData, index: number) => (
+                          <div key={index} className="px-2">
+                            <div className="customer-logo-item">
+                              <Image
+                                src={customer.logo}
+                                alt={customer.name}
+                                className="img-fluid customer-logo"
+                                width={200}
+                                height={120}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )
-                    )}
+                        )
+                      )}
+                    </Slider>
                   </div>
                 </div>
               </div>
