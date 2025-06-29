@@ -2,13 +2,20 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import Slider from "react-slick";
 import { machineryService } from "../../services";
+import { BACKEND_DOMAIN } from "../../api/config";
 
 interface Machine {
   id: string;
   name: string;
   description: string;
   image: string;
+  images: Array<{
+    url: string;
+    alt: string;
+    order: number;
+  }>;
   imageAlt: string;
   order: number;
   isActive: boolean;
@@ -33,6 +40,72 @@ interface MachineryData {
     metaDescription: string;
     keywords: string[];
   };
+}
+
+// Image Slider Component for machines
+interface MachineImageSliderProps {
+  images: Array<{
+    url: string;
+    alt: string;
+    order: number;
+  }>;
+  alt: string;
+}
+
+function MachineImageSlider({ images, alt }: MachineImageSliderProps) {
+  // Slider settings for machine images
+  const sliderSettings = {
+    dots: true,
+    arrows: true,
+    infinite: images.length > 1,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: images.length > 1,
+    autoplaySpeed: 4000,
+    pauseOnHover: true,
+    responsive: [
+      {
+        breakpoint: 768,
+        settings: {
+          arrows: false,
+          dots: true,
+        },
+      },
+    ],
+  };
+
+  // If only one image, display without slider
+  if (images.length === 1) {
+    return (
+      <Image
+        src={`${BACKEND_DOMAIN}${images[0].url}`}
+        alt={images[0].alt || alt}
+        className="img-fluid"
+        width={500}
+        height={500}
+      />
+    );
+  }
+
+  // Multiple images - use slider
+  return (
+    <div className="machine-image-slider">
+      <Slider {...sliderSettings}>
+        {images.map((image, index) => (
+          <div key={index} className="slider-item">
+            <Image
+              src={`${BACKEND_DOMAIN}${image.url}`}
+              alt={image.alt || `${alt} - ${index + 1}`}
+              className="img-fluid"
+              width={500}
+              height={500}
+            />
+          </div>
+        ))}
+      </Slider>
+    </div>
+  );
 }
 
 export default function Machinery() {
@@ -90,6 +163,22 @@ export default function Machinery() {
 
     fetchMachineryData();
   }, []);
+
+  // Helper function to process images
+  const processMachineImages = (machine: Machine) => {
+    // Use images array from API, fallback to single image if needed
+    if (machine.images && machine.images.length > 0) {
+      return machine.images;
+    }
+    // Fallback to single image as object structure
+    return [{ url: machine.image, alt: machine.imageAlt, order: 0 }];
+  };
+
+  // const testImages = [
+  //   "http://222.255.214.144:3007/uploads/images/facilities-page/section_1-outdoor.jpg",
+  //   "http://222.255.214.144:3007/uploads/images/facilities-page/section_2-office.jpg",
+  //   "http://222.255.214.144:3007/uploads/images/facilities-page/section_3-facilities.jpg",
+  // ];
 
   // Handle stage selection
   const handleStageClick = (stageNumber: number) => {
@@ -167,7 +256,7 @@ export default function Machinery() {
     <>
       <section className="machinery-section py-5">
         <div className="container">
-          <h2 className="section-title mt-5">{machineryData.pageTitle}</h2>
+          {/* <h2 className="section-title mt-5">{machineryData.pageTitle}</h2> */}
 
           <div className="row">
             {/* Stages Column */}
@@ -234,14 +323,11 @@ export default function Machinery() {
                               onClick={handleMachineOverlayClick}
                             >
                               <div className="machine-image-container">
-                                <Image
-                                  src={currentMachine.image}
+                                <MachineImageSlider
+                                  images={processMachineImages(currentMachine)}
                                   alt={currentMachine.imageAlt}
-                                  className="img-fluid"
-                                  width={500}
-                                  height={500}
                                 />
-                                <div
+                                {/* <div
                                   className="machine-overlay"
                                   style={{ opacity: 0 }}
                                 >
@@ -249,7 +335,7 @@ export default function Machinery() {
                                     <h5>DESCRIPTION</h5>
                                     <p>{currentMachine.description}</p>
                                   </div>
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                           </div>

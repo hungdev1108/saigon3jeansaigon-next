@@ -3,63 +3,109 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Slider from "react-slick";
+import { overviewService } from "../../services";
+import { BACKEND_DOMAIN } from "../../api/config";
+
+// Interfaces for TypeScript
+interface Banner {
+  id: string;
+  title: string;
+  description: string;
+  backgroundImage: string;
+  isActive: boolean;
+}
+
+interface Milestone {
+  id: string;
+  year: string;
+  title: string;
+  description: string;
+  image: string;
+  order: number;
+}
+
+interface MessageContent {
+  id: string;
+  paragraph: string;
+  order: number;
+}
+
+interface Message {
+  id: string;
+  ceoName: string;
+  ceoImage: string;
+  content: MessageContent[];
+  isActive: boolean;
+}
+
+interface VisionMission {
+  id: string;
+  vision: {
+    icon: string;
+    title: string;
+    content: string;
+  };
+  mission: {
+    icon: string;
+    title: string;
+    content: string;
+  };
+  isActive: boolean;
+}
+
+interface CoreValue {
+  id: string;
+  title: string;
+  content: string;
+  icon: string;
+  order: number;
+}
+
+interface OverviewData {
+  banner: Banner;
+  milestones: Milestone[];
+  message: Message;
+  visionMission: VisionMission;
+  coreValues: CoreValue[];
+}
 
 export default function Overview() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [overviewData, setOverviewData] = useState<OverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const animateElementsRef = useRef<(HTMLElement | null)[]>([]);
   const sliderRef = useRef<Slider>(null);
 
-  // Milestones data
-  const milestones = [
-    {
-      year: "2019",
-      title: "Beginning",
-      description:
-        "Established the company with a vision to produce high-quality denim for both domestic and international markets",
-      image: "/images/overview-page/overview_1.jpg",
-    },
-    {
-      year: "2020",
-      title: "Expansion",
-      description:
-        "Expanded production capacity and modernized technology to meet increasing demand",
-      image: "/images/overview-page/overview_2.jpg",
-    },
-    {
-      year: "2021",
-      title: "Innovation",
-      description:
-        "Applied new technology and sustainable production processes, ensuring environmental friendliness",
-      image: "/images/overview-page/overview_3.jpg",
-    },
-    {
-      year: "2022",
-      title: "Globalization",
-      description:
-        "Expanded export markets and established strategic partnerships globally",
-      image: "/images/overview-page/overview_4.jpg",
-    },
-    {
-      year: "2023",
-      title: "60 Hectares",
-      description:
-        "Expanded factory area to 60 hectares with modern production capacity",
-      image: "/images/overview-page/overview_5.jpg",
-    },
-    {
-      year: "2024",
-      title: "Expansion",
-      description:
-        "Expanded production capacity and modernized technology to meet increasing demand",
-      image: "/images/overview-page/overview_6.jpg",
-    },
-  ];
+  // Fetch data from API
+  useEffect(() => {
+    const fetchOverviewData = async () => {
+      try {
+        setLoading(true);
+        const data = await overviewService.getCompleteOverviewData();
+        const typedData = data as OverviewData;
+        setOverviewData(typedData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching overview data:", err);
+        setError("Failed to load overview data");
+        // Sử dụng dữ liệu mặc định khi có lỗi
+        const defaultData = overviewService.getDefaultOverviewData();
+        const typedDefaultData = defaultData as OverviewData;
+        setOverviewData(typedDefaultData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOverviewData();
+  }, []);
 
   // Slick settings
   const slickSettings = {
     centerMode: true,
-    centerPadding: "40px",
-    slidesToShow: 5,
+    centerPadding: "60px",
+    slidesToShow: 4,
     slidesToScroll: 1,
     // autoplay: true,
     autoplaySpeed: 4000,
@@ -71,24 +117,31 @@ export default function Overview() {
     beforeChange: (current: number, next: number) => setCurrentSlide(next),
     responsive: [
       {
+        breakpoint: 1400,
+        settings: {
+          slidesToShow: 3,
+          centerPadding: "80px",
+        },
+      },
+      {
         breakpoint: 1024,
         settings: {
           slidesToShow: 2,
-          centerPadding: "40px",
+          centerPadding: "60px",
         },
       },
       {
         breakpoint: 768,
         settings: {
           slidesToShow: 1,
-          centerPadding: "60px",
+          centerPadding: "80px",
         },
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 1,
-          centerPadding: "40px",
+          centerPadding: "60px",
         },
       },
     ],
@@ -168,6 +221,34 @@ export default function Overview() {
     console.log("Current slide:", currentSlide);
   }, [currentSlide]);
 
+  if (loading) {
+    return (
+      <section className="page-content py-5">
+        <div className="container">
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Loading overview data...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!overviewData) {
+    return (
+      <section className="page-content py-5">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-danger">Error loading overview data</h2>
+            <p>{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       <section className="page-content py-5">
@@ -180,18 +261,8 @@ export default function Overview() {
         >
           <div className="container">
             <div className="hero-content">
-              <h2>SAIGON 3 JEAN GROUP</h2>
-              <p>
-                Saigon 3 Jean Group is a leading manufacturer in Vietnam&apos;s
-                textile and garment industry. We specialize in producing
-                high-quality denim products, including jeans, jackets, and other
-                garment items for both domestic and international markets. With
-                modern facilities and skilled workforce, we are committed to
-                delivering excellence in every product we create. Our company
-                values sustainability, innovation, and customer satisfaction as
-                we continue to grow and expand our presence in the global
-                textile industry.
-              </p>
+              <h2>{overviewData.banner.title}</h2>
+              <p>{overviewData.banner.description}</p>
             </div>
           </div>
         </div>
@@ -212,8 +283,8 @@ export default function Overview() {
 
             <div className="milestones-carousel">
               <Slider {...slickSettings} ref={sliderRef}>
-                {milestones.map((milestone, index) => (
-                  <div key={milestone.year} className="timeline-slide-wrapper">
+                {overviewData.milestones.map((milestone, index) => (
+                  <div key={milestone.id} className="timeline-slide-wrapper">
                     <div
                       className={`timeline-slide ${
                         index === currentSlide ? "slick-center" : ""
@@ -225,7 +296,7 @@ export default function Overview() {
                         <div className="timeline-date">{milestone.year}</div>
                         <div className="timeline-content">
                           <Image
-                            src={milestone.image}
+                            src={`${BACKEND_DOMAIN}${milestone.image}`}
                             alt={`Milestone ${milestone.year}`}
                             width={300}
                             height={200}
@@ -252,50 +323,33 @@ export default function Overview() {
             if (el) animateElementsRef.current[2] = el;
           }}
         >
-          <div className="container">
-            <h2 className="section-title mt-5">MESSAGE</h2>
-            <div className="message-content">
-              <div className="row align-items-center">
-                <div className="col-md-8">
-                  <p>
-                    &quot;Saigon 3 will always be associated with the core value
-                    of &quot;Quality creates the difference&quot;. We aim to
-                    optimize our production system to deliver high-quality
-                    products that meet global standards in the denim garment
-                    supplier industry.&quot;
-                  </p>
-                  <p>
-                    &quot;Saigon 3 also positions itself as a pioneer in
-                    applying modern, sustainable, and eco-friendly technologies.
-                    This approach reflects our social and environmental
-                    responsibility, as well as our intention to follow fashion
-                    trends in the sustainable garment production sector.&quot;
-                  </p>
-                  <p>
-                    &quot;Our culture is demonstrated through the talent,
-                    ethics, and passion of our leaders. We are constantly
-                    seeking benefits for our workers. This culture is also
-                    reflected in our commitment to sharing, caring, and a
-                    sincere work attitude.&quot;
-                  </p>
-                </div>
-                <div className="col-md-4">
-                  <div className="ceo-image">
-                    <Image
-                      src="/images/overview-page/CEO.jpg"
-                      alt="CEO"
-                      className="ceo-photo"
-                      width={300}
-                      height={300}
-                      objectFit="cover"
-                    />
-                    <div
-                      className="ceo-placeholder"
-                      style={{ display: "none" }}
-                    >
-                      CEO IMAGE
+          <div className="message-banner-wrapper">
+            {/* Background Image */}
+            <div className="message-background">
+              <Image
+                src="/images/overview-page/CEO-Banner.jpg"
+                alt="CEO Message Banner"
+                fill
+                style={{ objectFit: 'cover', objectPosition: 'center center' }}
+                priority
+              />
+            </div>
+            
+            {/* Content Overlay */}
+            <div className="message-overlay">
+              <div className="container">
+                <div className="message-content">
+                  <div className="message-text-wrapper">
+                    <h2 className="message-title">MESSAGE</h2>
+                    <div className="message-text">
+                      {overviewData.message.content.map((content) => (
+                        <p key={content.id}>{content.paragraph}</p>
+                      ))}
                     </div>
-                    <div className="ceo-title">CEO</div>
+                    <div className="ceo-signature">
+                      <div className="ceo-name">{overviewData.message.ceoName}</div>
+                      <div className="ceo-position">Chief Executive Officer</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -314,27 +368,16 @@ export default function Overview() {
             <div className="row">
               <div className="col-md-6">
                 <div className="vision-box">
-                  <i className="fas fa-eye"></i>
-                  <h3>VISION</h3>
-                  <p>
-                    To assert our position as a pioneer in sustainable garment
-                    production, driving innovation and environmental
-                    responsibility within the industry. Saigon 3 will continue
-                    to lead in denim garment supplier services and champion
-                    eco-friendly.
-                  </p>
+                  <i className={overviewData.visionMission.vision.icon}></i>
+                  <h2 className="section-title">{overviewData.visionMission.vision.title}</h2>
+                  <p>{overviewData.visionMission.vision.content}</p>
                 </div>
               </div>
               <div className="col-md-6">
                 <div className="mission-box">
-                  <i className="fas fa-bullseye"></i>
-                  <h3>MISSION</h3>
-                  <p>
-                    To provide the highest quality denim garments and denim
-                    washing services, ensuring excellence in every product.
-                    Saigon 3 aims to be a second home for all of our employees,
-                    fostering a supportive and thriving work environment.
-                  </p>
+                  <i className={overviewData.visionMission.mission.icon}></i>
+                  <h2 className="section-title">{overviewData.visionMission.mission.title}</h2>
+                  <p>{overviewData.visionMission.mission.content}</p>
                 </div>
               </div>
             </div>
@@ -351,37 +394,18 @@ export default function Overview() {
           <div className="container">
             <h2 className="section-title mt-5">CORE VALUES</h2>
             <div className="row">
-              {[1, 2, 3, 4, 5].map((value, index) => (
+              {overviewData.coreValues.map((value, index) => (
                 <div
-                  key={value}
-                  className={`${value <= 3 ? "col-md-4" : "col-md-6"} mb-4`}
+                  key={value.id}
+                  className={`${index < 3 ? "col-md-4" : "col-md-6"} mb-4`}
                   ref={(el) => {
                     if (el) animateElementsRef.current[5 + index] = el;
                   }}
                 >
                   <div className="value-box">
-                    <i
-                      className={`fas fa-${
-                        value === 1
-                          ? "handshake"
-                          : value === 2
-                          ? "lightbulb"
-                          : value === 3
-                          ? "leaf"
-                          : value === 4
-                          ? "users"
-                          : "chart-line"
-                      }`}
-                    ></i>
-                    <h4>CORE VALUE {value}</h4>
-                    <p>
-                      A talented and ethical workforce committed to excellence.
-                      Sustainable development and environmental{" "}
-                      {value <= 3 ? "f riendliness are" : "friendliness are"}
-                      at the heart of our operations, ensuring we contribute
-                      positively to the garment finishing process and
-                      sustainable garment production.
-                    </p>
+                    <i className={value.icon}></i>
+                    <h4>{value.title}</h4>
+                    <p>{value.content}</p>
                   </div>
                 </div>
               ))}

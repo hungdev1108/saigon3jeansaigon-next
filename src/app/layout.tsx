@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/styles.css";
-import 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer } from 'react-toastify';
+import "../styles/facility-slider.css";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 
 import ClientScriptProvider from "../components/ClientScriptProvider";
 
@@ -16,7 +17,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Saigon 3 Jean",
   description: "Fashion-driven manufacturing in Vietnam",
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
+
+
 
 export default function RootLayout({
   children,
@@ -41,7 +47,7 @@ export default function RootLayout({
           name="google-site-verification"
           content="google-site-verification=google-site-verification"
         />
-        <link rel="icon" href="/favicon.ico" />
+        {/* <link rel="icon" href="/favicon.ico" /> */}
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"

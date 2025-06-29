@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
 import homeService from "../../services/homeService";
+import { BACKEND_DOMAIN } from "../../api/config";
+import ClientOnly from "../ClientOnly";
 
 // Type definitions
 interface HeroData {
@@ -77,24 +79,27 @@ export default function Home() {
   const getCustomerSliderSettings = (itemCount: number) => ({
     dots: false,
     arrows: false,
-    infinite: true,
+    infinite: itemCount > 4,
     speed: 500,
-    slidesToShow: Math.min(4, itemCount), // Don't show more slides than items
-    slidesToScroll: itemCount > 4 ? 2 : 1,
-    autoplay: itemCount > 1,
+    slidesToShow: Math.min(4, itemCount),
+    slidesToScroll: 1,
+    autoplay: itemCount > 4,
     autoplaySpeed: 3000,
     pauseOnHover: true,
-    centerMode: itemCount < 4, // Center mode when fewer items
-    centerPadding: itemCount < 4 ? "60px" : "0px",
+    centerMode: false,
+    centerPadding: "0px",
+    variableWidth: false,
+    swipeToSlide: true,
     responsive: [
       {
         breakpoint: 1200,
         settings: {
           slidesToShow: Math.min(3, itemCount),
           slidesToScroll: 1,
-          infinite: true,
-          centerMode: itemCount < 3,
+          infinite: itemCount > 3,
           arrows: false,
+          centerMode: false,
+          centerPadding: "0px",
         },
       },
       {
@@ -102,9 +107,10 @@ export default function Home() {
         settings: {
           slidesToShow: Math.min(2, itemCount),
           slidesToScroll: 1,
-          infinite: true,
-          centerMode: itemCount < 2,
+          infinite: itemCount > 2,
           arrows: false,
+          centerMode: false,
+          centerPadding: "0px",
         },
       },
       {
@@ -114,19 +120,21 @@ export default function Home() {
           slidesToScroll: 1,
           dots: false,
           arrows: false,
-          infinite: true,
-          centerMode: itemCount < 2,
+          infinite: itemCount > 2,
+          centerMode: false,
+          centerPadding: "0px",
         },
       },
       {
         breakpoint: 576,
         settings: {
-          slidesToShow: 1,
+          slidesToShow: 2,
           slidesToScroll: 1,
           dots: false,
           arrows: false,
-          infinite: true,
-          centerMode: true,
+          infinite: itemCount > 1,
+          centerMode: itemCount === 1,
+          centerPadding: itemCount === 1 ? "30px" : "0px",
         },
       },
     ],
@@ -157,14 +165,16 @@ export default function Home() {
   // Hiển thị loading state
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh" }}
-      >
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Đang tải...</span>
+      <ClientOnly>
+        <div
+          className="d-flex justify-content-center align-items-center"
+          style={{ minHeight: "100vh" }}
+        >
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Đang tải...</span>
+          </div>
         </div>
-      </div>
+      </ClientOnly>
     );
   }
 
@@ -180,15 +190,17 @@ export default function Home() {
   const { hero, sections, customers, certifications, featuredNews } =
     homeData || {};
 
-  console.log("hero", hero?.backgroundImage);
-
   return (
-    <>
+    <ClientOnly>
       {/* Hero Section */}
       <section className="hero-section">
         <div className="video-container">
           <Image
-            src={hero?.backgroundImage || "/images/home_banner-section2.jpg"}
+            src={
+              hero?.backgroundImage
+                ? `${BACKEND_DOMAIN}${hero.backgroundImage}`
+                : "/images/home_banner-section2.jpg"
+            }
             alt="Factory Aerial View"
             className="img-fluid w-100"
             width={1920}
@@ -221,12 +233,23 @@ export default function Home() {
                     <div className="card-img-top video-container">
                       {section.mediaType === "video" ? (
                         <video className="w-100" muted loop controls autoPlay>
-                          <source src={section.mediaUrl} type="video/mp4" />
+                          <source
+                            src={
+                              section.mediaUrl
+                                ? `${BACKEND_DOMAIN}${section.mediaUrl}`
+                                : "/videos/SAIGON_3_JEAN.mp4"
+                            }
+                            type="video/mp4"
+                          />
                           Your browser does not support the video tag.
                         </video>
                       ) : (
                         <Image
-                          src={section.mediaUrl}
+                          src={
+                            section.mediaUrl
+                              ? `${BACKEND_DOMAIN}${section.mediaUrl}`
+                              : "/images/home_banner-section2.jpg"
+                          }
                           alt={section.title}
                           className="img-fluid w-100"
                           width={1920}
@@ -364,28 +387,39 @@ export default function Home() {
                 <div className="customer-category mb-5">
                   <h4 className="text-center mb-4">DENIM & WOVEN</h4>
                   <div className="customer-slider-container">
-                    <Slider
-                      {...getCustomerSliderSettings(
-                        customers?.denimWoven?.length || 0
-                      )}
-                      className="customer-slider"
-                    >
-                      {customers?.denimWoven?.map(
-                        (customer: CustomerData, index: number) => (
-                          <div key={index} className="px-2">
-                            <div className="customer-logo-item">
-                              <Image
-                                src={customer.logo}
-                                alt={customer.name}
-                                className="img-fluid customer-logo"
-                                width={200}
-                                height={120}
-                              />
+                    {customers?.denimWoven &&
+                    customers.denimWoven.length > 0 ? (
+                      <Slider
+                        {...getCustomerSliderSettings(
+                          customers.denimWoven.length
+                        )}
+                        className="customer-slider"
+                      >
+                        {customers.denimWoven.map(
+                          (customer: CustomerData, index: number) => (
+                            <div key={`denim-${index}`} className="px-2">
+                              <div className="customer-logo-item">
+                                <Image
+                                  src={
+                                    customer.logo
+                                      ? `${BACKEND_DOMAIN}${customer.logo}`
+                                      : "/images/placeholder-logo.png"
+                                  }
+                                  alt={customer.name}
+                                  className="img-fluid customer-logo"
+                                  width={200}
+                                  height={120}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )
-                      )}
-                    </Slider>
+                          )
+                        )}
+                      </Slider>
+                    ) : (
+                      <div className="text-center">
+                        <p>No DENIM & WOVEN customers data available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -393,28 +427,36 @@ export default function Home() {
                 <div className="customer-category">
                   <h4 className="text-center mb-4">KNIT</h4>
                   <div className="customer-slider-container">
-                    <Slider
-                      {...getCustomerSliderSettings(
-                        customers?.knit?.length || 0
-                      )}
-                      className="customer-slider"
-                    >
-                      {customers?.knit?.map(
-                        (customer: CustomerData, index: number) => (
-                          <div key={index} className="px-2">
-                            <div className="customer-logo-item">
-                              <Image
-                                src={customer.logo}
-                                alt={customer.name}
-                                className="img-fluid customer-logo"
-                                width={200}
-                                height={120}
-                              />
+                    {customers?.knit && customers.knit.length > 0 ? (
+                      <Slider
+                        {...getCustomerSliderSettings(customers.knit.length)}
+                        className="customer-slider"
+                      >
+                        {customers.knit.map(
+                          (customer: CustomerData, index: number) => (
+                            <div key={`knit-${index}`} className="px-2">
+                              <div className="customer-logo-item">
+                                <Image
+                                  src={
+                                    customer.logo
+                                      ? `${BACKEND_DOMAIN}${customer.logo}`
+                                      : "/images/placeholder-logo.png"
+                                  }
+                                  alt={customer.name}
+                                  className="img-fluid customer-logo"
+                                  width={200}
+                                  height={120}
+                                />
+                              </div>
                             </div>
-                          </div>
-                        )
-                      )}
-                    </Slider>
+                          )
+                        )}
+                      </Slider>
+                    ) : (
+                      <div className="text-center">
+                        <p>No KNIT customers data available</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -427,7 +469,7 @@ export default function Home() {
         <div className="container">
           <h2 className="section-title text-center mb-5">CERTIFICATION</h2>
           <div className="row">
-            {/* Hiển thị certifications từ API */}
+            {/* Hiển thị LEED GOLD và ISO certifications từ API */}
             {certifications &&
               certifications.map((cert: CertificationData, index: number) => {
                 // Xử lý hiển thị theo category
@@ -436,7 +478,11 @@ export default function Home() {
                     <div key={index} className="col-lg-4 mb-4">
                       <div className="cert-item leed-cert">
                         <Image
-                          src={cert.image}
+                          src={
+                            cert.image
+                              ? `${BACKEND_DOMAIN}${cert.image}`
+                              : "/images/certification/leed_gold.png"
+                          }
                           alt={cert.name}
                           className="cert-image"
                           width={1920}
@@ -456,7 +502,11 @@ export default function Home() {
                     <div key={index} className="col-lg-4 mb-4">
                       <div className="cert-item iso-cert">
                         <Image
-                          src={cert.image}
+                          src={
+                            cert.image
+                              ? `${BACKEND_DOMAIN}${cert.image}`
+                              : "/images/certification/certificate.png"
+                          }
                           alt={cert.name}
                           className="cert-image"
                           width={1920}
@@ -464,8 +514,9 @@ export default function Home() {
                           objectFit="cover"
                         />
                         <div className="iso-text-container">
-                          <div className="iso-text-item">{cert.name}</div>
                           <div className="iso-text-item">
+                            {cert.name}
+                            <br />
                             {cert.description}
                           </div>
                         </div>
@@ -475,100 +526,42 @@ export default function Home() {
                 }
               })}
 
-            {/* Fallback cho các certifications cố định khác */}
+            {/* Hiển thị các certifications khác từ API */}
             <div className="col-lg-4 mb-4">
               <div className="certifications-list">
-                {/* Higg Index */}
-                <div className="cert-row mb-3">
-                  <div className="cert-row-content higg-cert">
-                    <div className="cert-icon">
-                      <Image
-                        src="/images/certification/higg_index.png"
-                        alt="Higg Index"
-                        className="cert-small-image"
-                        width={1920}
-                        height={1080}
-                      />
-                    </div>
-                    <div className="cert-text">
-                      <div className="cert-title">
-                        SUSTAINABLE MANUFACTURING
+                {certifications &&
+                  certifications
+                    .filter(
+                      (cert) =>
+                        !cert.name.includes("LEED") &&
+                        !cert.name.includes("ISO")
+                    )
+                    .map((cert, index) => (
+                      <div key={index} className="cert-row mb-3">
+                        <div
+                          className={`cert-row-content ${cert.name
+                            .toLowerCase()
+                            .replace(/\s+/g, "-")}-cert`}
+                        >
+                          <div className="cert-icon">
+                            <Image
+                              src={
+                                cert.image
+                                  ? `${BACKEND_DOMAIN}${cert.image}`
+                                  : "/images/placeholder-cert.png"
+                              }
+                              alt={cert.name}
+                              className="cert-small-image"
+                              width={1920}
+                              height={1080}
+                            />
+                          </div>
+                          <div className="cert-text">
+                            <div className="cert-title">{cert.description}</div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* OEKO-TEX */}
-                <div className="cert-row mb-3">
-                  <div className="cert-row-content oeko-cert">
-                    <div className="cert-icon">
-                      <Image
-                        src="/images/certification/oeko_tex.png"
-                        alt="OEKO-TEX Standard 100"
-                        className="cert-small-image"
-                        width={1920}
-                        height={1080}
-                      />
-                    </div>
-                    <div className="cert-text">
-                      <div className="cert-title">SAFE & CARING PRODUCTS</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* EIM Score */}
-                <div className="cert-row mb-3">
-                  <div className="cert-row-content eim-cert">
-                    <div className="cert-icon">
-                      <Image
-                        src="/images/certification/eim_score.png"
-                        alt="EIM Score"
-                        className="cert-small-image"
-                        width={1920}
-                        height={1080}
-                      />
-                    </div>
-                    <div className="cert-text">
-                      <div className="cert-title">SUSTAINABLE TECHNOLOGY</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sedex */}
-                <div className="cert-row mb-3">
-                  <div className="cert-row-content sedex-cert">
-                    <div className="cert-icon">
-                      <Image
-                        src="/images/certification/sedex.png"
-                        alt="Sedex SMETA"
-                        className="cert-small-image"
-                        width={1920}
-                        height={1080}
-                      />
-                    </div>
-                    <div className="cert-text">
-                      <div className="cert-title">SOCIAL RESPONSIBILITY</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Fast Retailing */}
-                <div className="cert-row">
-                  <div className="cert-row-content fast-cert">
-                    <div className="cert-icon">
-                      <Image
-                        src="/images/certification/fast_retailing.png"
-                        alt="Fast Retailing"
-                        className="cert-small-image"
-                        width={1920}
-                        height={1080}
-                      />
-                    </div>
-                    <div className="cert-text">
-                      <div className="cert-title">CERTIFIED SUB-CONTRACTOR</div>
-                    </div>
-                  </div>
-                </div>
+                    ))}
               </div>
             </div>
           </div>
@@ -581,10 +574,14 @@ export default function Home() {
           <div className="row mt-4">
             {/* Featured News - Hiển thị tin đầu tiên */}
             {featuredNews && featuredNews.length > 0 && (
-              <div className="col-md-5 mb-4">
+              <div className="col-md-5 mb-4 news-item-container">
                 <div className="news-item position-relative">
                   <Image
-                    src={featuredNews[0].image}
+                    src={
+                      featuredNews[0].image
+                        ? `${BACKEND_DOMAIN}${featuredNews[0].image}`
+                        : "/images/news/post_1.jpg"
+                    }
                     alt={featuredNews[0].title}
                     className="img-fluid w-100"
                     width={1920}
@@ -612,7 +609,11 @@ export default function Home() {
                       <div className="news-item-content">
                         <div className="news-thumbnail">
                           <Image
-                            src={news.image}
+                            src={
+                              news.image
+                                ? `${BACKEND_DOMAIN}${news.image}`
+                                : "/images/news/post_1.jpg"
+                            }
                             alt={news.title}
                             className="img-fluid"
                             width={1920}
@@ -639,7 +640,7 @@ export default function Home() {
                       <div className="news-item-content">
                         <div className="news-thumbnail">
                           <Image
-                            src="/images/news/post_2.png"
+                            src="/images/news/post_1.jpg"
                             alt="News Thumbnail"
                             className="img-fluid"
                             width={1920}
@@ -665,7 +666,7 @@ export default function Home() {
                       <div className="news-item-content">
                         <div className="news-thumbnail">
                           <Image
-                            src="/images/news/post_3.jpg"
+                            src="/images/news/post_5.png"
                             alt="News Thumbnail"
                             className="img-fluid"
                             width={1920}
@@ -681,6 +682,33 @@ export default function Home() {
                             cotton and non-toxic dyeing technology, delivering
                             sustainable fashion choices for modern consumers
                             worldwide....
+                          </p>
+                          <span className="news-date">03/15/2025</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="news-list-item mb-3">
+                      <div className="news-item-content">
+                        <div className="news-thumbnail">
+                          <Image
+                            src="/images/news/post_6.png"
+                            alt="News Thumbnail"
+                            className="img-fluid"
+                            width={1920}
+                            height={1080}
+                          />
+                        </div>
+                        <div className="news-info">
+                          <h6 className="news-title">
+                            SG3 JEAN WINS &quot;BEST SUSTAINABLE FACTORY&quot;
+                            AWARD 2025
+                          </h6>
+                          <p className="news-excerpt">
+                            SG3 Jean has been honored with the &quot;Best
+                            Sustainable Factory&quot; award for 2025,
+                            recognizing our leadership in eco-friendly
+                            manufacturing and innovation in the denim
+                            industry....
                           </p>
                           <span className="news-date">03/15/2025</span>
                         </div>
@@ -732,6 +760,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </>
+    </ClientOnly>
   );
 }

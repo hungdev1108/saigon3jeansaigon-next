@@ -1,0 +1,430 @@
+/* Facility Image Slider Styles */
+.facility-image-slider {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.facility-image-slider .slick-slider {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.facility-image-slider .slick-list {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.facility-image-slider .slick-track {
+  display: flex;
+  align-items: stretch;
+}
+
+.facility-image-slider .slider-item {
+  outline: none;
+  position: relative;
+  height: 400px; /* Fixed height */
+  display: flex !important; /* Override slick's display */
+  align-items: center;
+  justify-content: center;
+}
+
+.facility-image-slider .slider-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+  display: block;
+}
+
+.facility-image-slider .slider-item:hover img {
+  transform: scale(1.02);
+}
+
+/* Ensure single image (no slider) has same dimensions */
+.facility-image-slider.single-image img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Dots styling */
+.facility-image-slider .slick-dots {
+  bottom: 15px;
+  z-index: 10;
+  list-style: none;
+  display: flex !important;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.facility-image-slider .slick-dots li {
+  margin: 0 3px;
+  list-style: none;
+}
+
+.facility-image-slider .slick-dots li button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+}
+
+.facility-image-slider .slick-dots li button:before {
+  display: none;
+}
+
+.facility-image-slider .slick-dots li.slick-active button {
+  background-color: var(--primary-color, #007bff);
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.facility-image-slider .slick-dots li:hover button {
+  opacity: 1;
+  background-color: var(--primary-color, #007bff);
+}
+
+/* Arrow styling - Hidden by default */
+.facility-image-slider .slick-prev,
+.facility-image-slider .slick-next {
+  display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .facility-image-slider .slider-item {
+    height: 300px;
+  }
+
+  .facility-image-slider .slider-item img,
+  .facility-image-slider.single-image img {
+    height: 300px;
+  }
+
+  .facility-image-slider .slick-dots {
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .facility-image-slider {
+    max-width: 100%;
+  }
+
+  .facility-image-slider .slider-item {
+    height: 250px;
+  }
+
+  .facility-image-slider .slider-item img,
+  .facility-image-slider.single-image img {
+    height: 250px;
+    border-radius: 4px;
+  }
+
+  .facility-image-slider .slick-dots li button {
+    width: 8px;
+    height: 8px;
+  }
+}
+
+/* Additional fixes for slick carousel conflicts */
+.facility-image-slider .slick-slide {
+  outline: none;
+}
+
+.facility-image-slider .slick-slide > div {
+  height: 100%;
+}
+
+/* Next.js Image component fixes */
+.facility-image-slider .slider-item img,
+.facility-image-slider.single-image img {
+  position: relative !important;
+  object-position: center;
+}
+
+/* Ensure proper aspect ratio maintenance */
+.facility-image-slider .slider-item,
+.facility-image-slider.single-image {
+  aspect-ratio: 3/2; /* 600x400 ratio */
+}
+
+.facility-image-slider .slider-item > span,
+.facility-image-slider.single-image > span {
+  display: block !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+.facility-image-slider .slider-item > span > img,
+.facility-image-slider.single-image > span > img {
+  height: 100% !important;
+  width: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Loading state */
+.facility-image-slider .loading {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+/* Responsive aspect ratio adjustments */
+@media (max-width: 768px) {
+  .facility-image-slider .slider-item,
+  .facility-image-slider.single-image {
+    aspect-ratio: 4/3; /* Slightly taller on mobile */
+  }
+}
+
+@media (max-width: 576px) {
+  .facility-image-slider .slider-item,
+  .facility-image-slider.single-image {
+    aspect-ratio: 16/10; /* Even more compact on small screens */
+  }
+}
+
+/* Animated Counter Styles */
+.metric-item {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease forwards;
+  animation-delay: var(--delay, 0s);
+}
+
+.metric-item:nth-child(1) {
+  --delay: 0.1s;
+}
+.metric-item:nth-child(2) {
+  --delay: 0.2s;
+}
+.metric-item:nth-child(3) {
+  --delay: 0.3s;
+}
+.metric-item:nth-child(4) {
+  --delay: 0.4s;
+}
+
+.metric-value {
+  transition: all 0.3s ease;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.metric-item:hover .metric-value {
+  transform: scale(1.05);
+  color: var(--secondary-color);
+}
+
+.metric-icon {
+  transition: transform 0.3s ease;
+}
+
+.metric-item:hover .metric-icon {
+  transform: scale(1.1) rotateY(10deg);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Counter number pulse effect */
+@keyframes counterPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.metric-value.animating {
+  animation: counterPulse 0.3s ease-in-out;
+}
+
+/* Machine Image Slider Styles */
+.machine-image-slider {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.machine-image-slider .slick-slider {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.machine-image-slider .slider-item {
+  outline: none;
+  position: relative;
+}
+
+.machine-image-slider .slider-item img {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.machine-image-slider .slider-item:hover img {
+  transform: scale(1.02);
+}
+
+/* Machine slider dots styling */
+.machine-image-slider .slick-dots {
+  bottom: 15px;
+  z-index: 10;
+}
+
+.machine-image-slider .slick-dots li {
+  margin: 0 3px;
+}
+
+.machine-image-slider .slick-dots li button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.7);
+  border: none;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+}
+
+.machine-image-slider .slick-dots li button:before {
+  display: none;
+}
+
+.machine-image-slider .slick-dots li.slick-active button {
+  background-color: var(--primary-color);
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.machine-image-slider .slick-dots li:hover button {
+  opacity: 1;
+  background-color: var(--primary-color);
+}
+
+/* Machine slider arrow styling */
+.machine-image-slider .slick-prev,
+.machine-image-slider .slick-next {
+  display: none !important;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.machine-image-slider .slick-prev:hover,
+.machine-image-slider .slick-next:hover {
+  display: none !important;
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.machine-image-slider .slick-prev {
+  display: none !important;
+  left: 15px;
+}
+
+.machine-image-slider .slick-next {
+  display: none !important;
+  right: 15px;
+}
+
+.machine-image-slider .slick-prev:before,
+.machine-image-slider .slick-next:before {
+  display: none !important;
+  font-size: 16px;
+  color: #333;
+  line-height: 1;
+}
+
+.machine-image-slider .slick-prev:hover:before,
+.machine-image-slider .slick-next:hover:before {
+  display: none !important;
+  color: white;
+}
+
+/* Machine slider responsive design */
+@media (max-width: 768px) {
+  .machine-image-slider {
+    max-width: 100%;
+  }
+
+  .machine-image-slider .slider-item img {
+    height: 300px;
+  }
+
+  .machine-image-slider .slick-prev,
+  .machine-image-slider .slick-next {
+    width: 35px;
+    height: 35px;
+  }
+
+  .machine-image-slider .slick-prev {
+    left: 10px;
+  }
+
+  .machine-image-slider .slick-next {
+    right: 10px;
+  }
+
+  .machine-image-slider .slick-dots {
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .machine-image-slider .slider-item img {
+    height: 250px;
+    border-radius: 4px;
+  }
+
+  .machine-image-slider .slick-prev,
+  .machine-image-slider .slick-next {
+    width: 30px;
+    height: 30px;
+  }
+
+  .machine-image-slider .slick-prev:before,
+  .machine-image-slider .slick-next:before {
+    font-size: 14px;
+  }
+
+  .machine-image-slider .slick-dots li button {
+    width: 8px;
+    height: 8px;
+  }
+}

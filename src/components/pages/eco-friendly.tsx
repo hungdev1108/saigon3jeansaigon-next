@@ -1,10 +1,78 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { ecoFriendlyService } from "../../services";
+import { BACKEND_DOMAIN } from "../../api/config";
+
+// Interfaces for TypeScript
+interface Hero {
+  image: string;
+  imageAlt: string;
+}
+
+interface Feature {
+  id: string;
+  title: string;
+  points: string[];
+  order: number;
+  isActive: boolean;
+}
+
+interface Stat {
+  id: string;
+  value: string;
+  label: string;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  imageAlt: string;
+  order: number;
+  stats: Stat[];
+  isActive: boolean;
+}
+
+interface EcoFriendlyData {
+  pageTitle: string;
+  pageDescription: string;
+  hero: Hero;
+  mainImage: string;
+  mainImageAlt: string;
+  features: Feature[];
+  sections: Section[];
+}
 
 export default function EcoFriendly() {
-  //   const [AutomationData, setAutomation] = useState<Automation[]>([]);
+  const [ecoFriendlyData, setEcoFriendlyData] = useState<EcoFriendlyData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchEcoFriendlyData = async () => {
+      try {
+        setLoading(true);
+        const data = await ecoFriendlyService.getCompleteEcoFriendlyData();
+        setEcoFriendlyData(data as EcoFriendlyData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching eco-friendly data:", err);
+        setError("Failed to load eco-friendly data");
+        // Sử dụng dữ liệu mặc định khi có lỗi
+        const defaultData = ecoFriendlyService.getDefaultEcoFriendlyData();
+        setEcoFriendlyData(defaultData as EcoFriendlyData);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEcoFriendlyData();
+  }, []);
+
   useEffect(() => {
     const dots = document.querySelectorAll(
       "#eco-friendly .left-select-item .dot"
@@ -57,15 +125,44 @@ export default function EcoFriendly() {
         item.removeEventListener("click", () => handleItemClick(index));
       });
     };
-  }, []);
+  }, [ecoFriendlyData]);
+
+  if (loading) {
+    return (
+      <main id="eco-friendly">
+        <section className="hero d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
+          <div className="text-center">
+            <div className="spinner-border" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Loading eco-friendly data...</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  if (!ecoFriendlyData) {
+    return (
+      <main id="eco-friendly">
+        <section className="hero d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
+          <div className="text-center">
+            <h2 className="text-danger">Error loading eco-friendly data</h2>
+            <p>{error}</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <>
       <main id="eco-friendly">
         {/* Eco-friendly Overview */}
         <section className="hero">
           <Image
-            src="/images/eco-friendly/home_banner-section3.png"
-            alt="Factory overview"
+            src={`${BACKEND_DOMAIN}${ecoFriendlyData.hero.image}`}
+            alt={ecoFriendlyData.hero.imageAlt}
             width={1920}
             height={1080}
             objectFit="cover"
@@ -77,16 +174,14 @@ export default function EcoFriendly() {
           <div className="circle-layout">
             <div className="features-left">
               <div className="left-select-item">
-                <div className="dot dot-1"></div>
-                <div className="dot dot-2"></div>
-                <div className="dot dot-3"></div>
-                <div className="dot dot-4"></div>
-                <div className="dot dot-5"></div>
+                {ecoFriendlyData.features.slice(0, 5).map((_, index) => (
+                  <div key={index} className={`dot dot-${index + 1}`}></div>
+                ))}
               </div>
               <div className="left-item">
                 <Image
-                  src="/images/eco-friendly/800af685d5f926cfad56985faf8a5f783d53086c.png"
-                  alt="Factory overview"
+                  src={`${BACKEND_DOMAIN}${ecoFriendlyData.mainImage}`}
+                  alt={ecoFriendlyData.mainImageAlt}
                   width={800}
                   height={600}
                   objectFit="cover"
@@ -94,146 +189,82 @@ export default function EcoFriendly() {
               </div>
             </div>
             <div className="features-right">
-              <div className="right-item">
-                <p>SOLAR ENERGY</p>
-                <div className="line"></div>
-                <ul>
-                  <li>
-                    Use solar panel systems to provide clean energy for
-                    production activities.
-                  </li>
-                  <li>
-                    Reduce dependence on fossil fuel energy sources,
-                    contributing to the reduction of CO2 emissions.
-                  </li>
-                </ul>
-              </div>
-              <div className="right-item">
-                <p>SOLAR ENERGY</p>
-                <div className="line"></div>
-                <ul>
-                  <li>
-                    Use solar panel systems to provide clean energy for
-                    production activities.
-                  </li>
-                  <li>
-                    Reduce dependence on fossil fuel energy sources,
-                    contributing to the reduction of CO2 emissions.
-                  </li>
-                </ul>
-              </div>
-              <div className="right-item">
-                <p>AUTOMATED DATA FEEDING AND MONITORING SYSTEM</p>
-                <div className="line"></div>
-                <ul>
-                  <li>
-                    Use Eliar Automation technology to automate the feeding
-                    process, chemical adjustment, and dyeing process management.
-                  </li>
-                  <li>
-                    Monitor production and environmental parameters in real-time
-                    to ensure maximum efficiency.
-                  </li>
-                </ul>
-              </div>
-              <div className="right-item">
-                <p>GREEN AREA</p>
-                <div className="line"></div>
-                <ul>
-                  <li>
-                    Develop green spaces around the factory to create a green
-                    environment and improve air quality.
-                  </li>
-                  <li>
-                    Enhance sustainability and the company&apos;s eco-friendly
-                    image.
-                  </li>
-                </ul>
-              </div>
-              <div className="right-item">
-                <p>ENVIRONMENTALLY FRIENDLY</p>
-                <div className="line"></div>
-                <ul>
-                  <li>
-                    Áp dụng các công nghệ tiên tiến trong quản lý chất thải,
-                    nước thải và khí thải.
-                  </li>
-                  <li>
-                    Đảm bảo các quy trình sản xuất tuân thủ nghiêm ngặt các tiêu
-                    chuẩn quốc tế về bảo vệ môi trường.
-                  </li>
-                </ul>
-              </div>
+              {ecoFriendlyData.features.map((feature) => (
+                <div key={feature.id} className="right-item">
+                  <p>{feature.title}</p>
+                  <div className="line"></div>
+                  <ul>
+                    {feature.points.map((point, pointIndex) => (
+                      <li key={pointIndex}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="solar-system">
-          <Image
-            src="/images/eco-friendly/anh 5 1.png"
-            alt="Factory overview"
-            width={1200}
-            height={800}
-            objectFit="cover"
-          />
-          <div className="content-animate">
-            <h2>SOLAR CELL SYSTEM</h2>
-            <p>
-              Pioneering the application of solar energy in production, adhering
-              to strict standards to optimize performance and reduce pressure on
-              traditional power sources.
-            </p>
-          </div>
-          <div className="stats">
-            <div className="d-flex align-items-center content-animate">
-              <strong>70%</strong>
-              <p>
-                WATER <br /> RECYCLING
-              </p>
-            </div>
-            <div className="line"></div>
-            <div className="stats-item content-animate">
-              <p>CAPACITY UP TO</p>
-              <div>
-                <strong>2,500</strong>
-                <span>m³/day</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="ai-revolution content-animate">
-          <Image
-            src="/images/eco-friendly/anh 6 1.png"
-            alt="Factory overview"
-            width={1200}
-            height={800}
-            objectFit="cover"
-          />
-          <h2>LEADING THE AI REVOLUTION</h2>
-          <p>
-            Applying AI and automation in the production process to optimize
-            performance, enhance quality, and minimize waste. The auto-dosing
-            system and smart dyeing washing control chemicals precisely, saving
-            water and energy, aiming for sustainable production.
-          </p>
-        </section>
-
-        <section className="biomass-boiler content-animate">
-          <Image
-            src="/images/eco-friendly/z6630648807114_da113af033725688c7e146b20f93957f 1.png"
-            alt="Factory overview"
-            width={1200}
-            height={800}
-            objectFit="cover"
-          />
-          <h2>Biomass Boiler</h2>
-          <p>
-            By using renewable fuel from organic materials, this system reduces
-            carbon emissions and conserves energy. It’s an eco-friendly solution
-            that promotes green and sustainable manufacturing
-          </p>
-        </section>
+        {/* Dynamic Sections từ API */}
+        {ecoFriendlyData.sections.map((section, index) => {
+          if (index === 0) {
+            // Section đầu tiên - Solar System với stats
+            return (
+              <section key={section.id} className="solar-system">
+                <Image
+                  src={`${BACKEND_DOMAIN}${section.image}`}
+                  alt={section.imageAlt}
+                  width={1200}
+                  height={800}
+                  objectFit="cover"
+                />
+                <div className="content-animate">
+                  <h2>{section.title}</h2>
+                  <p>{section.description}</p>
+                </div>
+                {section.stats.length > 0 && (
+                  <div className="stats">
+                    {section.stats.map((stat, statIndex) => (
+                      <React.Fragment key={stat.id}>
+                        {statIndex === 0 ? (
+                          <div className="d-flex align-items-center content-animate">
+                            <strong>{stat.value}</strong>
+                            <p dangerouslySetInnerHTML={{ __html: stat.label.replace(/\s/g, '<br />') }}></p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="line"></div>
+                            <div className="stats-item content-animate">
+                              <p>CAPACITY UP TO</p>
+                              <div>
+                                <strong>{stat.value}</strong>
+                                <span>{stat.label}</span>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+              </section>
+            );
+          } else {
+            // Các sections khác
+            return (
+              <section key={section.id} className={index === 1 ? "ai-revolution content-animate" : "biomass-boiler content-animate"}>
+                <Image
+                  src={`${BACKEND_DOMAIN}${section.image}`}
+                  alt={section.imageAlt}
+                  width={1200}
+                  height={800}
+                  objectFit="cover"
+                />
+                <h2>{section.title}</h2>
+                <p>{section.description}</p>
+              </section>
+            );
+          }
+        })}
       </main>
     </>
   );

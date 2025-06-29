@@ -2,9 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import ClientOnly from "./ClientOnly";
+
 
 export default function Footer() {
   return (
+    <ClientOnly>
     <footer className="bg-white footer-mobile-responsive py-4">
       <div className="container">
         <div className="row">
@@ -15,14 +18,11 @@ export default function Footer() {
               className="mb-3"
               width={100}
               height={100}
-              style={{ height: "50px" }}
+              style={{ height: "50px", width: "auto" }}
             />
             <div className="social-icons footer-mobile-social">
               <Link href="#" className="me-2">
                 <i className="fab fa-facebook-f"></i>
-              </Link>
-              <Link href="#" className="me-2">
-                <i className="fab fa-twitter"></i>
               </Link>
               <Link href="#" className="me-2">
                 <i className="fab fa-instagram"></i>
@@ -73,5 +73,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+    </ClientOnly>
   );
 }

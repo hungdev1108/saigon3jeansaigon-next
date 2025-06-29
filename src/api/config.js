@@ -2,16 +2,16 @@ import axios from "axios";
 
 const config = {
   development: {
-    baseURL: 'http://localhost:5001',
-    timeout: 30000
+    baseURL: "http://222.255.214.144:3007",
+    timeout: 3000,
   },
   production: {
-    baseURL: 'https://saigon3jeansaigon.com',
-    timeout: 30000
-  }
+    baseURL: "http://222.255.214.144:3007",
+    timeout: 3000,
+  },
 };
 
-const environment = process.env.NODE_ENV || 'development';
+const environment = process.env.NODE_ENV || "development";
 
 export const API_CONFIG = config[environment];
 

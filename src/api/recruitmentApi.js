@@ -1,6 +1,19 @@
 import apiClient from "./config";
 
 const recruitmentApi = {
+    /**
+     * Lấy toàn bộ dữ liệu recruitment (jobs, company info, contact HR)
+     * @returns {Promise} Promise object với dữ liệu recruitment
+     */
+    getRecruitmentData: async () => {
+        try {
+            const response = await apiClient.get('api/careers/data');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching recruitment data:', error);
+            throw error;
+        }
+    },
 
     load: async() => {
         try {

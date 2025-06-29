@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { productsService } from "../../services";
+import { BACKEND_DOMAIN } from "../../api/config";
 
 interface GalleryImage {
   id: string;
@@ -133,7 +134,7 @@ export default function Products() {
                               }`}
                             >
                               <Image
-                                src={image.url}
+                                src={`${BACKEND_DOMAIN}${image.url}`}
                                 alt={image.alt}
                                 className="img-fluid w-100"
                                 width={500}

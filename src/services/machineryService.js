@@ -1,31 +1,9 @@
 import machineryApi from "../api/machineryApi";
-import {BACKEND_DOMAIN} from '../api/config';
 
 /**
  * Service để xử lý dữ liệu machinery
  */
 class MachineryService {
-  /**
-   * Fix đường dẫn hình ảnh từ API
-   * @param {string} imagePath - Đường dẫn hình ảnh từ API
-   * @returns {string} Đường dẫn đã được sửa
-   */
-  fixImagePath(imagePath) {
-    if (!imagePath) return "";
-
-    // Nếu đã có http thì giữ nguyên
-    if (imagePath.startsWith("http")) {
-      return imagePath;
-    }
-
-    // Nếu đã có /uploads/ thì thêm base URL
-    if (imagePath.startsWith("/uploads/")) {
-      return `${BACKEND_DOMAIN}${imagePath}`;
-    }
-
-    // Fallback cho đường dẫn cũ - tất cả đều chuyển về backend
-    return `${BACKEND_DOMAIN}${imagePath}`;
-  }
 
   /**
    * Lấy và xử lý tất cả dữ liệu cho trang machinery
@@ -97,11 +75,28 @@ class MachineryService {
         id: machine._id || "",
         name: machine.name || "",
         description: machine.description || "",
-        image:
-          this.fixImagePath(machine.image) || "/images/placeholder-machine.jpg",
+        image: machine.image || "/images/placeholder-machine.jpg",
+        images: this.processImagesArray(machine.images),
         imageAlt: machine.imageAlt || `${machine.name}`,
         order: machine.order || 0,
         isActive: machine.isActive !== false,
+      }));
+  }
+
+  /**
+   * Xử lý mảng images từ API
+   * @param {Array} imagesArray - Mảng images từ API
+   * @returns {Array} Mảng images đã xử lý
+   */
+  processImagesArray(imagesArray) {
+    if (!Array.isArray(imagesArray)) return [];
+
+    return imagesArray
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((img) => ({
+        url: img.url || "",
+        alt: img.alt || "",
+        order: img.order || 0,
       }));
   }
 

@@ -1,39 +1,15 @@
-import { getHomeData } from '../api/homeApi';
-import {BACKEND_DOMAIN} from '../api/config';
+import { getHomeData } from "../api/homeApi";
 
 /**
  * Service để xử lý dữ liệu home
  */
 class HomeService {
   /**
-   * Fix đường dẫn hình ảnh từ API
-   * @param {string} imagePath - Đường dẫn hình ảnh từ API
-   * @returns {string} Đường dẫn đã được sửa
-   */
-  fixImagePath(imagePath) {
-    if (!imagePath) return "";
-
-    // Nếu đã có http thì giữ nguyên
-    if (imagePath.startsWith("http")) {
-      return imagePath;
-    }
-
-    // Nếu đã có /uploads/ thì thêm base URL
-    if (imagePath.startsWith("/uploads/")) {
-      return `${BACKEND_DOMAIN}${imagePath}`;
-    }
-
-    // Fallback cho đường dẫn cũ
-    return `${BACKEND_DOMAIN}${imagePath}`;
-  }
-
-  /**
    * Lấy và xử lý tất cả dữ liệu cho trang home
    * @returns {Promise<Object>} Dữ liệu đã được xử lý
    */
   async getCompleteHomeData() {
     try {
-      console.log("🔄 Đang tải dữ liệu trang chủ...");
       const response = await getHomeData();
 
       if (!response.success) {
@@ -41,7 +17,9 @@ class HomeService {
       }
 
       const { data } = response;
-      console.log("✅ Tải dữ liệu thành công từ API");
+      // console.log("🔄 Đang tải dữ liệu trang chủ...");
+      // console.log(data);
+      // console.log("✅ Tải dữ liệu thành công từ API");
 
       // Xử lý và format dữ liệu nếu cần
       return {
@@ -85,8 +63,7 @@ class HomeService {
       title: heroData.title || "WELCOME TO SAIGON 3 JEAN",
       subtitle: heroData.subtitle || "Leading garment manufacturer in Vietnam",
       backgroundImage:
-        this.fixImagePath(heroData.backgroundImage) ||
-        "/images/home_banner-section2.jpg",
+        heroData.backgroundImage || "/images/home_banner-section2.jpg",
       videoUrl: heroData.videoUrl || "",
       isActive: heroData.isActive !== false,
     };
@@ -106,9 +83,7 @@ class HomeService {
         title: section.title || "",
         content: section.content || "",
         mediaType: section.mediaType || "image",
-        mediaUrl:
-          this.fixImagePath(section.mediaUrl) ||
-          "/images/home_banner-section2.jpg",
+        mediaUrl: section.mediaUrl || "/images/home_banner-section2.jpg",
         buttonText: section.buttonText || "LEARN MORE",
         buttonLink: section.buttonLink || "#",
         backgroundColor: section.backgroundColor || "#007bff",
@@ -142,8 +117,7 @@ class HomeService {
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((customer) => ({
         name: customer.name || "",
-        logo:
-          this.fixImagePath(customer.logo) || "/images/placeholder-logo.png",
+        logo: customer.logo || "/images/placeholder-logo.png",
         website: customer.website || "",
         order: customer.order || 0,
       }));
@@ -163,7 +137,7 @@ class HomeService {
       .map((cert) => ({
         name: cert.name || "",
         description: cert.description || "",
-        image: this.fixImagePath(cert.image) || "/images/placeholder-cert.png",
+        image: cert.image || "/images/placeholder-cert.png",
         category: cert.category || "general",
         order: cert.order || 0,
         issuedDate: cert.issuedDate || null,
@@ -185,7 +159,7 @@ class HomeService {
         id: news._id || "",
         title: news.title || "",
         excerpt: news.excerpt || "",
-        image: this.fixImagePath(news.image) || "/images/placeholder-news.jpg",
+        image: news.image || "/images/placeholder-news.jpg",
         publishDate: news.publishDate || new Date().toISOString(),
         slug: news.slug || "",
         tags: news.tags || [],

@@ -1,32 +1,9 @@
 import productsApi from "../api/productsApi";
-import {BACKEND_DOMAIN} from '../api/config';
 
 /**
  * Service để xử lý dữ liệu products
  */
 class ProductsService {
-  /**
-   * Fix đường dẫn hình ảnh từ API
-   * @param {string} imagePath - Đường dẫn hình ảnh từ API
-   * @returns {string} Đường dẫn đã được sửa
-   */
-  fixImagePath(imagePath) {
-    if (!imagePath) return "";
-
-    // Nếu đã có http thì giữ nguyên
-    if (imagePath.startsWith("http")) {
-      return imagePath;
-    }
-
-    // Nếu đã có /uploads/ thì thêm base URL
-    if (imagePath.startsWith("/uploads/")) {
-      return `${BACKEND_DOMAIN}${imagePath}`;
-    }
-
-    // Fallback cho đường dẫn cũ - tất cả đều chuyển về backend
-    return `${BACKEND_DOMAIN}${imagePath}`;
-  }
-
   /**
    * Lấy và xử lý tất cả dữ liệu cho trang products
    * @returns {Promise<Object>} Dữ liệu đã được xử lý
@@ -92,7 +69,7 @@ class ProductsService {
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((image) => ({
         id: image._id || "",
-        url: this.fixImagePath(image.url) || "/images/placeholder-product.jpg",
+        url: image.url || "/uploads/images/placeholder-product.jpg", // Direct path từ BE
         alt: image.alt || "Product Image",
         order: image.order || 0,
         isActive: image.isActive !== false,
@@ -238,22 +215,22 @@ class ProductsService {
         galleryImages: [
           {
             id: "default-denim-1",
-            url: "/images/product-page/denim_1.png",
-            alt: "Denim Products 1",
+            url: "/uploads/images/product-page/denim_1.jpg",
+            alt: "Denim Gallery 1",
             order: 1,
             isActive: true,
           },
           {
             id: "default-denim-2",
-            url: "/images/product-page/denim_2.png",
-            alt: "Denim Products 2",
+            url: "/uploads/images/product-page/denim_2.jpg",
+            alt: "Denim Gallery 2",
             order: 2,
             isActive: true,
           },
           {
             id: "default-denim-3",
-            url: "/images/product-page/denim_3.png",
-            alt: "Denim Products 3",
+            url: "/uploads/images/product-page/denim_3.jpg",
+            alt: "Denim Gallery 3",
             order: 3,
             isActive: true,
           },
@@ -268,28 +245,28 @@ class ProductsService {
         isActive: true,
       },
       {
-        id: "default-woven",
-        name: "WOVEN",
-        slug: "woven",
+        id: "default-knit",
+        name: "KNIT",
+        slug: "knit",
         galleryImages: [
           {
-            id: "default-woven-1",
-            url: "/images/product-page/woven_1.png",
-            alt: "Woven Products 1",
+            id: "default-knit-1",
+            url: "/uploads/images/product-page/knit_1.jpg",
+            alt: "Knit Gallery 1",
             order: 1,
             isActive: true,
           },
           {
-            id: "default-woven-2",
-            url: "/images/product-page/woven_2.png",
-            alt: "Woven Products 2",
+            id: "default-knit-2",
+            url: "/uploads/images/product-page/knit_2.jpg",
+            alt: "Knit Gallery 2",
             order: 2,
             isActive: true,
           },
           {
-            id: "default-woven-3",
-            url: "/images/product-page/woven_3.png",
-            alt: "Woven Products 3",
+            id: "default-knit-3",
+            url: "/uploads/images/product-page/knit_3.jpg",
+            alt: "Knit Gallery 3",
             order: 3,
             isActive: true,
           },
@@ -297,36 +274,29 @@ class ProductsService {
         carouselSettings: {
           interval: 3500,
           autoplay: true,
-          showIndicators: true,
-          showControls: false,
+          showIndicators: false,
+          showControls: true,
         },
         order: 2,
         isActive: true,
       },
       {
-        id: "default-knit",
-        name: "KNIT",
-        slug: "knit",
+        id: "default-woven",
+        name: "WOVEN",
+        slug: "woven",
         galleryImages: [
           {
-            id: "default-knit-1",
-            url: "/images/product-page/knit_1.png",
-            alt: "Knit Products 1",
+            id: "default-woven-1",
+            url: "/uploads/images/product-page/woven_1.jpg",
+            alt: "Woven Gallery 1",
             order: 1,
             isActive: true,
           },
           {
-            id: "default-knit-2",
-            url: "/images/product-page/knit_2.png",
-            alt: "Knit Products 2",
+            id: "default-woven-2",
+            url: "/uploads/images/product-page/woven_2.jpg",
+            alt: "Woven Gallery 2",
             order: 2,
-            isActive: true,
-          },
-          {
-            id: "default-knit-3",
-            url: "/images/product-page/knit_3.png",
-            alt: "Knit Products 3",
-            order: 3,
             isActive: true,
           },
         ],
@@ -334,7 +304,7 @@ class ProductsService {
           interval: 4000,
           autoplay: true,
           showIndicators: true,
-          showControls: false,
+          showControls: true,
         },
         order: 3,
         isActive: true,
@@ -412,8 +382,7 @@ class ProductsService {
       slug: productData.slug || "",
       description: productData.description || "",
       mainImage:
-        this.fixImagePath(productData.mainImage) ||
-        "/images/placeholder-product.jpg",
+        productData.mainImage || "/images/placeholder-product.jpg",
       mainImageAlt: productData.mainImageAlt || `${productData.name} Products`,
       galleryImages: this.processGalleryImages(productData.galleryImages),
       features: this.processProductFeatures(productData.features),
@@ -442,7 +411,7 @@ class ProductsService {
       .filter((feature) => feature.isActive !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((feature) => ({
-        id: feature._id || "",
+        id: feature._id || feature.id || "",
         icon: feature.icon || "fas fa-check",
         text: feature.text || "",
         order: feature.order || 0,
@@ -461,24 +430,43 @@ class ProductsService {
     return applicationsData
       .filter((app) => app.isActive !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((app, index) => ({
-        id: app._id || `app-${index}`,
-        title: app.title || "",
-        content: {
-          heading: app.content?.heading || app.title || "",
-          description: app.content?.description || "",
-          features: Array.isArray(app.content?.features)
-            ? app.content.features
-            : [],
-          image:
-            this.fixImagePath(app.content?.image) ||
-            "/images/placeholder-application.jpg",
-          imageAlt: app.content?.imageAlt || `${app.title} Image`,
-        },
-        order: app.order || index + 1,
-        accordionId: `application${index + 1}`,
-        isExpanded: index === 0, // Mở accordion đầu tiên
-      }));
+      .map((app, index) => {
+        // Process images array if available, fallback to single image
+        let processedImages = [];
+        if (app.content?.images && Array.isArray(app.content.images)) {
+          processedImages = app.content.images
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((img) => ({
+              url: img.url || "",
+              alt: img.alt || `${app.title} Image`,
+              order: img.order || 1,
+            }));
+        }
+
+        return {
+          id: app._id || `app-${index}`,
+          title: app.title || "",
+          content: {
+            heading: app.content?.heading || app.title || "",
+            description: app.content?.description || "",
+            features: Array.isArray(app.content?.features)
+              ? app.content.features
+              : [],
+            // Use first image from images array if available, fallback to single image field
+            image: processedImages.length > 0 
+              ? processedImages[0].url 
+              : (app.content?.image || "/uploads/images/placeholder-application.jpg"),
+            imageAlt: processedImages.length > 0 
+              ? processedImages[0].alt 
+              : (app.content?.imageAlt || `${app.title} Image`),
+            // Add images array for potential future use
+            images: processedImages,
+          },
+          order: app.order || index + 1,
+          accordionId: `application${index + 1}`,
+          isExpanded: index === 0, // Mở accordion đầu tiên
+        };
+      });
   }
 
   /**
@@ -556,28 +544,28 @@ class ProductsService {
       name: "DENIM",
       slug: slug,
       description:
-        "Sensors continuously record data on chemical levels, temperature, pressure, and flow rate. The system integrates remote management and control through a digital interface, processing data to optimize chemical ratios and make automatic adjustments.",
-      mainImage: "/images/product-page/denim_1.png",
-      mainImageAlt: "DENIM Products",
+        "High-quality denim products with advanced fabric technology.",
+      mainImage: "/uploads/images/product-page/denim_main.jpg",
+      mainImageAlt: "Denim Main Image",
       galleryImages: [
         {
           id: "default-gallery-1",
-          url: "/images/product-page/denim_1.png",
-          alt: "Denim Products 1",
+          url: "/uploads/images/product-page/denim_1.jpg",
+          alt: "Denim Gallery 1",
           order: 1,
           isActive: true,
         },
         {
           id: "default-gallery-2",
-          url: "/images/product-page/denim_2.png",
-          alt: "Denim Products 2",
+          url: "/uploads/images/product-page/denim_2.jpg",
+          alt: "Denim Gallery 2",
           order: 2,
           isActive: true,
         },
         {
           id: "default-gallery-3",
-          url: "/images/product-page/denim_3.png",
-          alt: "Denim Products 3",
+          url: "/uploads/images/product-page/denim_3.jpg",
+          alt: "Denim Gallery 3",
           order: 3,
           isActive: true,
         },
@@ -602,26 +590,26 @@ class ProductsService {
     return [
       {
         id: "feature-1",
-        icon: "fas fa-chart-line",
-        text: "Sensors continuously record data on chemical levels, temperature, pressure, and flow rate.",
+        icon: "fas fa-cogs",
+        text: "Advanced stitching technology",
         order: 1,
       },
       {
         id: "feature-2",
-        icon: "fas fa-cogs",
-        text: "The system integrates advanced manufacturing processes.",
+        icon: "fas fa-leaf",
+        text: "Eco-friendly materials",
         order: 2,
       },
       {
         id: "feature-3",
-        icon: "fas fa-wifi",
-        text: "Remote management and control through a digital interface.",
+        icon: "fas fa-tachometer-alt",
+        text: "Fast production cycles",
         order: 3,
       },
       {
         id: "feature-4",
-        icon: "fas fa-brain",
-        text: "Processing data to optimize chemical ratios and make automatic adjustments.",
+        icon: "fas fa-shield-alt",
+        text: "Durability and performance",
         order: 4,
       },
     ];
@@ -635,19 +623,35 @@ class ProductsService {
     return [
       {
         id: "app-1",
-        title: "Advanced Manufacturing Process",
+        title: "Urban Wear",
         content: {
-          heading: "Advanced Manufacturing Process",
+          heading: "Urban Denim Fashion",
           description:
-            "Our denim manufacturing utilizes cutting-edge technology to ensure consistent quality and sustainable practices. The automated systems monitor every aspect of production from fiber selection to final finishing.",
+            "Designed for modern street style with durability.",
           features: [
-            "Real-time quality monitoring",
-            "Automated color matching",
-            "Precision cutting technology",
-            "Environmental compliance tracking",
+            "Breathable material",
+            "Fade-resistant",
+            "Durable seams",
           ],
-          image: "/images/product-page/denim_2.png",
-          imageAlt: "Advanced Manufacturing Process",
+          image: "/uploads/images/product-page/knit_1.png",
+          imageAlt: "Urban Denim",
+          images: [
+            {
+              url: "/uploads/images/product-page/knit_1.png",
+              alt: "Application Image 1",
+              order: 1,
+            },
+            {
+              url: "/uploads/images/product-page/knit_1.png",
+              alt: "Application Image 2",
+              order: 2,
+            },
+            {
+              url: "/uploads/images/product-page/knit_1.png",
+              alt: "Application Image 3",
+              order: 3,
+            },
+          ],
         },
         order: 1,
         accordionId: "application1",
@@ -655,62 +659,38 @@ class ProductsService {
       },
       {
         id: "app-2",
-        title: "Quality Control & Testing",
+        title: "Workwear Applications",
         content: {
-          heading: "Quality Control & Testing",
+          heading: "Durable Denim for Workwear",
           description:
-            "Comprehensive quality assurance protocols ensure every piece meets our high standards. Advanced testing equipment validates durability, comfort, and appearance retention.",
+            "Engineered for strength and flexibility in demanding work environments.",
           features: [
-            "Tensile strength testing",
-            "Color fastness verification",
-            "Shrinkage analysis",
-            "Wear resistance evaluation",
+            "Reinforced stitching",
+            "Comfort-fit design",
+            "Heavy-duty fabric",
           ],
-          image: "/images/product-page/denim_3.png",
-          imageAlt: "Quality Control & Testing",
+          image: "/uploads/images/product-page/knit_1.png",
+          imageAlt: "Workwear Denim",
+          images: [
+            {
+              url: "/uploads/images/product-page/knit_1.png",
+              alt: "Application Image 1",
+              order: 1,
+            },
+            {
+              url: "/uploads/images/product-page/knit_1.png",
+              alt: "Application Image 2",
+              order: 2,
+            },
+            {
+              url: "/uploads/images/product-page/knit_1.png",
+              alt: "Application Image 3",
+              order: 3,
+            },
+          ],
         },
         order: 2,
         accordionId: "application2",
-        isExpanded: false,
-      },
-      {
-        id: "app-3",
-        title: "Sustainable Production",
-        content: {
-          heading: "Sustainable Production",
-          description:
-            "Environmental responsibility is at the core of our operations. We implement eco-friendly processes and materials to minimize our environmental footprint while maintaining product excellence.",
-          features: [
-            "Water recycling systems",
-            "Organic cotton sourcing",
-            "Chemical-free treatments",
-            "Renewable energy usage",
-          ],
-          image: "/images/product-page/denim_4.png",
-          imageAlt: "Sustainable Production",
-        },
-        order: 3,
-        accordionId: "application3",
-        isExpanded: false,
-      },
-      {
-        id: "app-4",
-        title: "Innovation & Research",
-        content: {
-          heading: "Innovation & Research",
-          description:
-            "Continuous research and development drive our innovation in denim technology. Our R&D team works on developing new fabrics, treatments, and production methods.",
-          features: [
-            "Fabric innovation labs",
-            "Treatment technology research",
-            "Performance enhancement studies",
-            "Future trend analysis",
-          ],
-          image: "/images/product-page/denim_5.png",
-          imageAlt: "Research & Innovation",
-        },
-        order: 4,
-        accordionId: "application4",
         isExpanded: false,
       },
     ];
@@ -722,10 +702,10 @@ class ProductsService {
    */
   getDefaultProductSEO() {
     return {
-      metaTitle: "DENIM - Saigon 3 Jean",
+      metaTitle: "Denim Products - Saigon 3 Jean",
       metaDescription:
-        "Sensors continuously record data on chemical levels, temperature, pressure, and flow rate. The system integrates remote management and control through a digital interface, processing data to optimize chemical ratios and make automatic adjustments.",
-      keywords: ["denim", "manufacturing", "quality", "sustainable"],
+        "Explore high-quality denim products made with eco-friendly materials and modern technology.",
+      keywords: ["denim", "jeans", "eco-friendly", "durable", "streetwear", "workwear"],
     };
   }
 }

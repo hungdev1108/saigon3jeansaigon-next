@@ -1,33 +1,9 @@
 import facilitiesApi from "../api/facilitiesApi";
-import {BACKEND_DOMAIN} from '../api/config';
-
 
 /**
  * Service để xử lý dữ liệu facilities
  */
 class FacilitiesService {
-  /**
-   * Fix đường dẫn hình ảnh từ API
-   * @param {string} imagePath - Đường dẫn hình ảnh từ API
-   * @returns {string} Đường dẫn đã được sửa
-   */
-  fixImagePath(imagePath) {
-    if (!imagePath) return "";
-
-    // Nếu đã có http thì giữ nguyên
-    if (imagePath.startsWith("http")) {
-      return imagePath;
-    }
-
-    // Nếu đã có /uploads/ thì thêm base URL
-    if (imagePath.startsWith("/uploads/")) {
-      return `${BACKEND_DOMAIN}${imagePath}`;
-    }
-
-    // Fallback cho đường dẫn cũ - tất cả đều chuyển về backend
-    return `${BACKEND_DOMAIN}${imagePath}`;
-  }
-
   /**
    * Lấy và xử lý tất cả dữ liệu cho trang facilities
    * @returns {Promise<Object>} Dữ liệu đã được xử lý
@@ -95,17 +71,33 @@ class FacilitiesService {
 
     return facilityFeaturesData
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((feature) => ({
-        id: feature._id || "",
-        title: feature.title || "",
-        description: feature.description || "",
-        image:
-          this.fixImagePath(feature.image) ||
-          "/images/placeholder-facility.jpg",
-        imageAlt: feature.imageAlt || `${feature.title} Facilities`,
-        order: feature.order || 0,
-        layout: feature.layout || "left",
-      }));
+      .map((feature) => {
+        // Process images array - sử dụng direct paths từ BE
+        let processedImages = [];
+        if (feature.images && Array.isArray(feature.images)) {
+          processedImages = feature.images
+            .sort((a, b) => (a.order || 0) - (b.order || 0))
+            .map((img) => ({
+              url: img.url || "", // Direct path từ BE
+              alt: img.alt || `${feature.title} - Image`,
+              order: img.order || 1,
+              _id: img._id || "",
+            }));
+        }
+
+        return {
+          _id: feature._id || "",
+          title: feature.title || "",
+          description: feature.description || "",
+          // Keep legacy image field - sử dụng direct path từ BE
+          image: feature.image || "/uploads/images/placeholder-facility.jpg",
+          imageAlt: feature.imageAlt || `${feature.title} Facilities`,
+          // Add new images array field
+          images: processedImages,
+          order: feature.order || 0,
+          layout: feature.layout || "left",
+        };
+      });
   }
 
   /**
@@ -241,42 +233,122 @@ class FacilitiesService {
   getDefaultFacilityFeatures() {
     return [
       {
-        id: "default-1",
+        _id: "default-1",
         title: "OUT DOOR",
         description:
           "We are committed to creating a green, clean, and friendly working environment, contributing to the development of a sustainable ecosystem around the business.",
-        image: "/images/facilities-page/section_1-outdoor.jpg",
+        image: "/uploads/images/facilities-page/section_2-office.jpg",
         imageAlt: "Outdoor Facilities",
+        images: [
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Outdoor Facilities 1",
+            order: 1,
+            _id: "default-1-img-1",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Outdoor Facilities 2",
+            order: 2,
+            _id: "default-1-img-2",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Outdoor Facilities 3",
+            order: 3,
+            _id: "default-1-img-3",
+          },
+        ],
         order: 1,
         layout: "left",
       },
       {
-        id: "default-2",
+        _id: "default-2",
         title: "OFFICE",
         description:
           "The workspace is optimized to create a clean, safe, and comfortable environment, enhancing health, boosting productivity, and providing comfort for employees.",
-        image: "/images/facilities-page/section_2-office.jpg",
+        image: "/uploads/images/facilities-page/section_2-office.jpg",
         imageAlt: "Office Facilities",
+        images: [
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Office Facilities 1",
+            order: 1,
+            _id: "default-2-img-1",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Office Facilities 2",
+            order: 2,
+            _id: "default-2-img-2",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Office Facilities 3",
+            order: 3,
+            _id: "default-2-img-3",
+          },
+        ],
         order: 2,
         layout: "right",
       },
       {
-        id: "default-3",
+        _id: "default-3",
         title: "FACILITIES",
         description:
           "The modern infrastructure system is comprehensively invested, from advanced production lines and automation technology to strict quality control processes.",
-        image: "/images/facilities-page/section_3-facilities.jpg",
+        image: "/uploads/images/facilities-page/section_2-office.jpg",
         imageAlt: "Manufacturing Facilities",
+        images: [
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Manufacturing Facilities 1",
+            order: 1,
+            _id: "default-3-img-1",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Manufacturing Facilities 2",
+            order: 2,
+            _id: "default-3-img-2",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Manufacturing Facilities 3",
+            order: 3,
+            _id: "default-3-img-3",
+          },
+        ],
         order: 3,
         layout: "left",
       },
       {
-        id: "default-4",
+        _id: "default-4",
         title: "TALENTED WORKFORCE",
         description:
           "People are the core factor that drives the success and sustainable development of the business. Therefore, investing in training and skill development is always a priority to enhance capabilities and create sustainable value.",
-        image: "/images/facilities-page/section_4-talented.jpg",
+        image: "/uploads/images/facilities-page/section_2-office.jpg",
         imageAlt: "Talented Workforce",
+        images: [
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Talented Workforce 1",
+            order: 1,
+            _id: "default-4-img-1",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Talented Workforce 2",
+            order: 2,
+            _id: "default-4-img-2",
+          },
+          {
+            url: "/uploads/images/facilities-page/section_2-office.jpg",
+            alt: "Talented Workforce 3",
+            order: 3,
+            _id: "default-4-img-3",
+          },
+        ],
         order: 4,
         layout: "right",
       },

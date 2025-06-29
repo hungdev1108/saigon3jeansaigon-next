@@ -5,6 +5,7 @@ import recruitmentService from "@/services/recruitmentService";
 import { FormatTime } from "@/shared/format_time";
 import { toast } from "react-toastify";
 import Image from "next/image";
+import { BACKEND_DOMAIN } from "../../api/config";
 
 export default function Recruitment() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -21,6 +22,26 @@ export default function Recruitment() {
     description: string;
     requirements: string[];
     benefits: string[];
+    slug?: string;
+    isFeatured?: boolean;
+    applicationCount?: number;
+  }
+
+  interface Pagination {
+    currentPage: number;
+    totalPages: number;
+    totalJobs: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+    startIndex?: number;
+    endIndex?: number;
+  }
+
+  interface RecruitmentData {
+    jobs: Job[];
+    pagination: Pagination;
+    companyInfo: ContactInfo;
+    contactHR: ContactHr;
   }
 
   interface ApplicationForm {
@@ -55,28 +76,40 @@ export default function Recruitment() {
   }
 
   useEffect(() => {
+    // Use new complete data method
     recruitmentService
-      .load()
-      .then((res) => {
-        setJobs(res.data);
+      .getCompleteRecruitmentData()
+      .then((data) => {
+        const recruitmentData = data as RecruitmentData;
+        setJobs(recruitmentData.jobs);
+        setContactInfo(recruitmentData.companyInfo);
+        setContactHr(recruitmentData.contactHR);
       })
-      .catch((err) => console.error("Error loading jobs:", err))
+      .catch((err) => {
+        console.error("Error loading recruitment data:", err);
+        // Fallback to individual API calls
+        recruitmentService
+          .load()
+          .then((res) => {
+            setJobs(res.data);
+          })
+          .catch((err) => console.error("Error loading jobs:", err));
+
+        recruitmentService
+          .loadContactHr()
+          .then((res) => {
+            setContactHr(res.data);
+          })
+          .catch((err) => console.error("Error loading contact HR:", err));
+
+        recruitmentService
+          .loadCompanyInfo()
+          .then((res) => {
+            setContactInfo(res.data);
+          })
+          .catch((err) => console.error("Error loading company info:", err));
+      })
       .finally(() => setLoading(false));
-
-    // Load contact HR information
-    recruitmentService
-      .loadContactHr()
-      .then((res) => {
-        setContactHr(res.data);
-      })
-      .catch((err) => console.error("Error loading contact HR:", err));
-
-    recruitmentService
-      .loadCompanyInfo()
-      .then((res) => {
-        setContactInfo(res.data);
-      })
-      .catch((err) => console.error("Error loading contact HR:", err));
   }, []);
 
   // Component logic with proper types
@@ -408,9 +441,11 @@ export default function Recruitment() {
                   <div className="card h-100">
                     <div className="card-body text-center">
                       <Image
-                        src="../images/sg3jeans_logo.png"
+                        src={`${BACKEND_DOMAIN}${ContactInfo?.logo || "/uploads/images/sg3jeans_logo.png"}`}
                         alt="Saigon 3 Jean Logo"
                         className="company-logo mb-4"
+                        width={100}
+                        height={100}
                       />
                       <h4 className="card-title mb-4">{ContactInfo?.title}</h4>
                       <div className="company-description">
