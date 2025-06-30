@@ -64,7 +64,7 @@ export default function SettingsForm() {
       
       setMessage('✅ Cài đặt đã được lưu thành công!')
       setTimeout(() => setMessage(''), 3000)
-    } catch (error) {
+    } catch {
       setMessage('❌ Có lỗi xảy ra khi lưu cài đặt')
       setTimeout(() => setMessage(''), 3000)
     } finally {

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface EditableSectionProps {
   title: string
@@ -60,7 +61,13 @@ function EditableSection({
               />
               {imagePreview && (
                 <div className="image-preview">
-                  <img src={imagePreview} alt="Preview" style={{maxWidth: '200px', maxHeight: '200px'}} />
+                  <Image 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    width={200} 
+                    height={200}
+                    style={{maxWidth: '200px', maxHeight: '200px', objectFit: 'contain'}} 
+                  />
                 </div>
               )}
             </div>
@@ -89,7 +96,13 @@ function EditableSection({
         <div className="view-mode">
           {type === 'image' && imagePreview ? (
             <div className="image-display">
-              <img src={imagePreview} alt={title} style={{maxWidth: '300px', maxHeight: '200px'}} />
+              <Image 
+                src={imagePreview} 
+                alt={title} 
+                width={300} 
+                height={200}
+                style={{maxWidth: '300px', maxHeight: '200px', objectFit: 'contain'}} 
+              />
               <p className="image-path">{content}</p>
             </div>
           ) : (

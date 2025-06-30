@@ -1,14 +1,87 @@
 import { getHomeData } from "../api/homeApi";
 
+// Define types for the service
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export interface HeroData {
+  title: string;
+  subtitle: string;
+  backgroundImage: string;
+  videoUrl: string;
+  isActive: boolean;
+}
+
+export interface SectionData {
+  title: string;
+  content: string;
+  mediaType: string;
+  mediaUrl: string;
+  buttonText: string;
+  buttonLink: string;
+  backgroundColor: string;
+  order: number;
+}
+
+export interface CustomerItem {
+  name: string;
+  logo: string;
+  website: string;
+  order: number;
+}
+
+export interface CustomersData {
+  denimWoven: CustomerItem[];
+  knit: CustomerItem[];
+  [key: string]: CustomerItem[];
+}
+
+export interface CertificationItem {
+  name: string;
+  description: string;
+  image: string;
+  category: string;
+  order: number;
+  issuedDate: string | null;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  excerpt: string;
+  content?: string;
+  image: string;
+  publishDate: string;
+  slug: string;
+  tags: string[];
+  author: string;
+  _id?: string;
+}
+
+export interface HomeData {
+  hero: HeroData;
+  sections: SectionData[];
+  customers: CustomersData;
+  certifications: CertificationItem[];
+  featuredNews: NewsItem[];
+}
+
+interface FileUploadMap {
+  [key: string]: File;
+}
+
 /**
  * Service để xử lý dữ liệu home
  */
 class HomeService {
   /**
    * Lấy và xử lý tất cả dữ liệu cho trang home
-   * @returns {Promise<Object>} Dữ liệu đã được xử lý
+   * @returns Promise<HomeData> Dữ liệu đã được xử lý
    */
-  async getCompleteHomeData() {
+  async getCompleteHomeData(): Promise<HomeData> {
     try {
       const response = await getHomeData();
 
@@ -17,9 +90,6 @@ class HomeService {
       }
 
       const { data } = response;
-      // console.log("🔄 Đang tải dữ liệu trang chủ...");
-      // console.log(data);
-      // console.log("✅ Tải dữ liệu thành công từ API");
 
       // Xử lý và format dữ liệu nếu cần
       return {
@@ -29,22 +99,11 @@ class HomeService {
         certifications: this.processCertificationsData(data.certifications),
         featuredNews: this.processNewsData(data.featuredNews),
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         "❌ HomeService - Error getting complete home data:",
         error.message
       );
-
-      // Kiểm tra loại lỗi
-      if (error.code === "ECONNREFUSED") {
-        console.warn(
-          "🔌 Backend server không khả dụng, sử dụng dữ liệu mặc định"
-        );
-      } else if (error.code === "ECONNABORTED") {
-        console.warn("⏱️ API timeout, sử dụng dữ liệu mặc định");
-      } else {
-        console.warn("🚨 Lỗi API khác, sử dụng dữ liệu mặc định");
-      }
 
       // Trả về dữ liệu mặc định nếu API fail
       return this.getDefaultHomeData();
@@ -53,10 +112,10 @@ class HomeService {
 
   /**
    * Xử lý dữ liệu hero section
-   * @param {Object} heroData - Dữ liệu hero từ API
-   * @returns {Object} Dữ liệu hero đã xử lý
+   * @param heroData - Dữ liệu hero từ API
+   * @returns HeroData Dữ liệu hero đã xử lý
    */
-  processHeroData(heroData) {
+  processHeroData(heroData: any): HeroData {
     if (!heroData) return this.getDefaultHeroData();
 
     return {
@@ -71,10 +130,10 @@ class HomeService {
 
   /**
    * Xử lý dữ liệu sections (3 cards)
-   * @param {Array} sectionsData - Dữ liệu sections từ API
-   * @returns {Array} Dữ liệu sections đã xử lý
+   * @param sectionsData - Dữ liệu sections từ API
+   * @returns SectionData[] Dữ liệu sections đã xử lý
    */
-  processSectionsData(sectionsData) {
+  processSectionsData(sectionsData: any[]): SectionData[] {
     if (!Array.isArray(sectionsData)) return this.getDefaultSectionsData();
 
     return sectionsData
@@ -93,10 +152,10 @@ class HomeService {
 
   /**
    * Xử lý dữ liệu customers
-   * @param {Object} customersData - Dữ liệu customers từ API
-   * @returns {Object} Dữ liệu customers đã xử lý
+   * @param customersData - Dữ liệu customers từ API
+   * @returns CustomersData Dữ liệu customers đã xử lý
    */
-  processCustomersData(customersData) {
+  processCustomersData(customersData: any): CustomersData {
     if (!customersData) return this.getDefaultCustomersData();
 
     return {
@@ -107,10 +166,10 @@ class HomeService {
 
   /**
    * Xử lý danh sách customer
-   * @param {Array} customerList - Danh sách customer
-   * @returns {Array} Danh sách customer đã xử lý
+   * @param customerList - Danh sách customer
+   * @returns CustomerItem[] Danh sách customer đã xử lý
    */
-  processCustomerList(customerList) {
+  processCustomerList(customerList: any[]): CustomerItem[] {
     if (!Array.isArray(customerList)) return [];
 
     return customerList
@@ -125,10 +184,10 @@ class HomeService {
 
   /**
    * Xử lý dữ liệu certifications
-   * @param {Array} certificationsData - Dữ liệu certifications từ API
-   * @returns {Array} Dữ liệu certifications đã xử lý
+   * @param certificationsData - Dữ liệu certifications từ API
+   * @returns CertificationItem[] Dữ liệu certifications đã xử lý
    */
-  processCertificationsData(certificationsData) {
+  processCertificationsData(certificationsData: any[]): CertificationItem[] {
     if (!Array.isArray(certificationsData))
       return this.getDefaultCertificationsData();
 
@@ -146,20 +205,20 @@ class HomeService {
 
   /**
    * Xử lý dữ liệu news
-   * @param {Array} newsData - Dữ liệu news từ API
-   * @returns {Array} Dữ liệu news đã xử lý
+   * @param newsData - Dữ liệu news từ API
+   * @returns NewsItem[] Dữ liệu news đã xử lý
    */
-  processNewsData(newsData) {
+  processNewsData(newsData: any[]): NewsItem[] {
     if (!Array.isArray(newsData)) return this.getDefaultNewsData();
 
     return newsData
       .filter((news) => news.isPublished && news.isFeatured)
-      .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
+      .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime())
       .map((news) => ({
         id: news._id || "",
         title: news.title || "",
         excerpt: news.excerpt || "",
-        content: news.content || "", // Add content here
+        content: news.content || "",
         image: news.image || "/images/placeholder-news.jpg",
         publishDate: news.publishDate || new Date().toISOString(),
         slug: news.slug || "",
@@ -170,7 +229,7 @@ class HomeService {
   }
 
   // Dữ liệu mặc định khi API fail
-  getDefaultHomeData() {
+  getDefaultHomeData(): HomeData {
     return {
       hero: this.getDefaultHeroData(),
       sections: this.getDefaultSectionsData(),
@@ -180,7 +239,7 @@ class HomeService {
     };
   }
 
-  getDefaultHeroData() {
+  getDefaultHeroData(): HeroData {
     return {
       title: "WELCOME TO SAIGON 3 JEAN",
       subtitle: "Leading garment manufacturer in Vietnam",
@@ -190,7 +249,7 @@ class HomeService {
     };
   }
 
-  getDefaultSectionsData() {
+  getDefaultSectionsData(): SectionData[] {
     return [
       {
         title: "FASHION-DRIVEN MANUFACTURING IN VIETNAM",
@@ -228,7 +287,7 @@ class HomeService {
     ];
   }
 
-  getDefaultCustomersData() {
+  getDefaultCustomersData(): CustomersData {
     return {
       denimWoven: [
         {
@@ -285,7 +344,7 @@ class HomeService {
     };
   }
 
-  getDefaultCertificationsData() {
+  getDefaultCertificationsData(): CertificationItem[] {
     return [
       {
         name: "LEED GOLD",
@@ -306,7 +365,7 @@ class HomeService {
     ];
   }
 
-  getDefaultNewsData() {
+  getDefaultNewsData(): NewsItem[] {
     return [
       {
         id: "1",
@@ -327,11 +386,11 @@ class HomeService {
 
   /**
    * Cập nhật thông tin hero section
-   * @param {Object} heroData - Dữ liệu hero cần cập nhật
-   * @param {File} imageFile - File hình ảnh mới (nếu có)
-   * @returns {Promise<Object>} Kết quả cập nhật
+   * @param heroData - Dữ liệu hero cần cập nhật
+   * @param imageFile - File hình ảnh mới (nếu có)
+   * @returns Promise<ApiResponse<HeroData>> Kết quả cập nhật
    */
-  async updateHero(heroData, imageFile = null) {
+  async updateHero(heroData: HeroData, imageFile: File | null = null): Promise<ApiResponse<HeroData>> {
     try {
       // Tạm thời trả về giả lập thành công cho dev
       console.log("Updating hero data:", heroData);
@@ -347,7 +406,7 @@ class HomeService {
         message: "Hero section updated successfully",
         data: heroData
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating hero:", error);
       return {
         success: false,
@@ -359,11 +418,11 @@ class HomeService {
 
   /**
    * Cập nhật thông tin các sections
-   * @param {Array} sectionsData - Dữ liệu sections cần cập nhật
-   * @param {Object} imageFiles - Object chứa các file hình ảnh mới (key là index, value là File)
-   * @returns {Promise<Object>} Kết quả cập nhật
+   * @param sectionsData - Dữ liệu sections cần cập nhật
+   * @param imageFiles - Object chứa các file hình ảnh mới (key là index, value là File)
+   * @returns Promise<ApiResponse<SectionData[]>> Kết quả cập nhật
    */
-  async updateHomeSections(sectionsData, imageFiles = {}) {
+  async updateHomeSections(sectionsData: SectionData[], imageFiles: FileUploadMap = {}): Promise<ApiResponse<SectionData[]>> {
     try {
       console.log("Updating sections data:", sectionsData);
       
@@ -378,7 +437,7 @@ class HomeService {
         message: "Sections updated successfully",
         data: sectionsData
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating sections:", error);
       return {
         success: false,
@@ -390,11 +449,11 @@ class HomeService {
 
   /**
    * Cập nhật thông tin customers
-   * @param {Object} customersData - Dữ liệu customers cần cập nhật
-   * @param {Object} imageFiles - Object chứa các file logo mới
-   * @returns {Promise<Object>} Kết quả cập nhật
+   * @param customersData - Dữ liệu customers cần cập nhật
+   * @param imageFiles - Object chứa các file logo mới
+   * @returns Promise<ApiResponse<CustomersData>> Kết quả cập nhật
    */
-  async updateCustomers(customersData, imageFiles = {}) {
+  async updateCustomers(customersData: CustomersData, imageFiles: FileUploadMap = {}): Promise<ApiResponse<CustomersData>> {
     try {
       console.log("Updating customers data:", customersData);
       
@@ -409,7 +468,7 @@ class HomeService {
         message: "Customers updated successfully",
         data: customersData
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating customers:", error);
       return {
         success: false,
@@ -421,12 +480,12 @@ class HomeService {
 
   /**
    * Cập nhật thông tin tin tức
-   * @param {string} newsId - ID của tin tức cần cập nhật
-   * @param {Object} newsData - Dữ liệu tin tức cần cập nhật
-   * @param {File} imageFile - File hình ảnh mới (nếu có)
-   * @returns {Promise<Object>} Kết quả cập nhật
+   * @param newsId - ID của tin tức cần cập nhật
+   * @param newsData - Dữ liệu tin tức cần cập nhật
+   * @param imageFile - File hình ảnh mới (nếu có)
+   * @returns Promise<ApiResponse<NewsItem>> Kết quả cập nhật
    */
-  async updateNews(newsId, newsData, imageFile = null) {
+  async updateNews(newsId: string, newsData: NewsItem, imageFile: File | null = null): Promise<ApiResponse<NewsItem>> {
     try {
       console.log("Updating news item:", newsId, newsData);
       
@@ -441,7 +500,7 @@ class HomeService {
         message: "News updated successfully",
         data: newsData
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating news:", error);
       return {
         success: false,
@@ -456,4 +515,4 @@ class HomeService {
 const homeServiceInstance = new HomeService();
 
 // Export the instance
-export default homeServiceInstance;
+export default homeServiceInstance; 
