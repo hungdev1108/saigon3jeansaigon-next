@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
   // Kiểm tra nếu đã đăng nhập thì chuyển hướng
   useEffect(() => {
     if (authService.isAuthenticated()) {
-      router.push("/admin/home");
+      router.push("/admin");
     }
   }, [router]);
 
@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
 
       if (result.success) {
         // Đăng nhập thành công, chuyển hướng
-        router.push("/admin/home");
+        router.push("/admin");
       } else {
         setError(result.message || "Đăng nhập thất bại");
       }

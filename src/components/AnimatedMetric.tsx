@@ -36,31 +36,25 @@ export default function AnimatedMetric({
   // Parse target value để so sánh với animated value
   const parseVietnameseNumber = (value: string): number => {
     if (typeof value !== "string") return 0;
-
     const cleanValue = value.trim();
     const dotCount = (cleanValue.match(/\./g) || []).length;
     const commaCount = (cleanValue.match(/,/g) || []).length;
-
     if (dotCount === 0 && commaCount === 0) {
       return parseFloat(cleanValue) || 0;
     }
-
     if (dotCount > 0 && commaCount === 0) {
       const parts = cleanValue.split(".");
       if (dotCount > 1) {
         const numberString = cleanValue.replace(/\./g, "");
         return parseFloat(numberString) || 0;
       }
-
       const lastPart = parts[parts.length - 1];
       if (lastPart.length === 3 && parts.length === 2) {
         const numberString = cleanValue.replace(/\./g, "");
         return parseFloat(numberString) || 0;
       }
-
       return parseFloat(cleanValue) || 0;
     }
-
     return parseFloat(cleanValue.replace(/[^\d]/g, "")) || 0;
   };
 
@@ -69,14 +63,17 @@ export default function AnimatedMetric({
   // Check if currently animating
   const isAnimating = startAnimation && animatedValue < targetValue;
 
+  // If not animating and original value is decimal, show original string
+  const isDecimal = value.includes('.') && !/^\d+$/.test(value.replace(/\./g, ''));
+  const displayValue = !isAnimating && isDecimal ? value : formattedValue;
+
   return (
     <div className="metric-item">
       <div className="metric-icon">
         <i className={icon}></i>
       </div>
       <div className={`metric-value ${isAnimating ? "animating" : ""}`}>
-        {formattedValue}{" "}
-        {unit && (
+        {displayValue} {unit && (
           <span className="metric-unit">
             {unit.includes("²") ? (
               <>

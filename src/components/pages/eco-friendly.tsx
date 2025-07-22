@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import { ecoFriendlyService } from "../../services";
+import React, { useEffect } from "react";
 import { BACKEND_DOMAIN } from "../../api/config";
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 // Interfaces for TypeScript
 interface Hero {
@@ -46,33 +46,11 @@ interface EcoFriendlyData {
   sections: Section[];
 }
 
-export default function EcoFriendly() {
-  const [ecoFriendlyData, setEcoFriendlyData] = useState<EcoFriendlyData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface EcoFriendlyProps {
+  ecoFriendlyData: EcoFriendlyData | null;
+}
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchEcoFriendlyData = async () => {
-      try {
-        setLoading(true);
-        const data = await ecoFriendlyService.getCompleteEcoFriendlyData();
-        setEcoFriendlyData(data as EcoFriendlyData);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching eco-friendly data:", err);
-        setError("Failed to load eco-friendly data");
-        // Sử dụng dữ liệu mặc định khi có lỗi
-        const defaultData = ecoFriendlyService.getDefaultEcoFriendlyData();
-        setEcoFriendlyData(defaultData as EcoFriendlyData);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEcoFriendlyData();
-  }, []);
-
+export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
   useEffect(() => {
     const dots = document.querySelectorAll(
       "#eco-friendly .left-select-item .dot"
@@ -127,28 +105,13 @@ export default function EcoFriendly() {
     };
   }, [ecoFriendlyData]);
 
-  if (loading) {
-    return (
-      <main id="eco-friendly">
-        <section className="hero d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading eco-friendly data...</p>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   if (!ecoFriendlyData) {
     return (
       <main id="eco-friendly">
         <section className="hero d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
           <div className="text-center">
             <h2 className="text-danger">Error loading eco-friendly data</h2>
-            <p>{error}</p>
+            <p>Không thể tải dữ liệu eco-friendly.</p>
           </div>
         </section>
       </main>
@@ -158,17 +121,6 @@ export default function EcoFriendly() {
   return (
     <>
       <main id="eco-friendly">
-        {/* Eco-friendly Overview */}
-        <section className="hero">
-          <Image
-            src={`${BACKEND_DOMAIN}${ecoFriendlyData.hero.image}`}
-            alt={ecoFriendlyData.hero.imageAlt}
-            width={1920}
-            height={1080}
-            objectFit="cover"
-            style={{ width: "100%", height: "100%" }}
-          />
-        </section>
 
         <section className="features">
           <div className="circle-layout">
@@ -180,17 +132,18 @@ export default function EcoFriendly() {
               </div>
               <div className="left-item">
                 <Image
-                  src={`${BACKEND_DOMAIN}${ecoFriendlyData.mainImage}`}
+                  // src={`${BACKEND_DOMAIN}${ecoFriendlyData.mainImage}`}
+                  src="/images/eco-friendly/quadiacau1.png"
                   alt={ecoFriendlyData.mainImageAlt}
-                  width={800}
-                  height={600}
+                  width={500}
+                  height={500}
                   objectFit="cover"
                 />
               </div>
             </div>
             <div className="features-right">
-              {ecoFriendlyData.features.map((feature) => (
-                <div key={feature.id} className="right-item">
+              {ecoFriendlyData.features.map((feature, idx) => (
+                <div key={feature.id || idx} className="right-item">
                   <p>{feature.title}</p>
                   <div className="line"></div>
                   <ul>
@@ -205,53 +158,11 @@ export default function EcoFriendly() {
         </section>
 
         {/* Dynamic Sections từ API */}
-        {ecoFriendlyData.sections.map((section, index) => {
-          if (index === 0) {
+        {ecoFriendlyData.sections.map((section, idx) => {
+          if (section.title.toLowerCase().includes('solar')) {
             // Section đầu tiên - Solar System với stats
             return (
-              <section key={section.id} className="solar-system">
-                <Image
-                  src={`${BACKEND_DOMAIN}${section.image}`}
-                  alt={section.imageAlt}
-                  width={1200}
-                  height={800}
-                  objectFit="cover"
-                />
-                <div className="content-animate">
-                  <h2>{section.title}</h2>
-                  <p>{section.description}</p>
-                </div>
-                {section.stats.length > 0 && (
-                  <div className="stats">
-                    {section.stats.map((stat, statIndex) => (
-                      <React.Fragment key={stat.id}>
-                        {statIndex === 0 ? (
-                          <div className="d-flex align-items-center content-animate">
-                            <strong>{stat.value}</strong>
-                            <p dangerouslySetInnerHTML={{ __html: stat.label.replace(/\s/g, '<br />') }}></p>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="line"></div>
-                            <div className="stats-item content-animate">
-                              <p>CAPACITY UP TO</p>
-                              <div>
-                                <strong>{stat.value}</strong>
-                                <span>{stat.label}</span>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          } else {
-            // Các sections khác
-            return (
-              <section key={section.id} className={index === 1 ? "ai-revolution content-animate" : "biomass-boiler content-animate"}>
+              <section key={section.id || idx} className="solar-system">
                 <Image
                   src={`${BACKEND_DOMAIN}${section.image}`}
                   alt={section.imageAlt}
@@ -261,9 +172,133 @@ export default function EcoFriendly() {
                 />
                 <h2>{section.title}</h2>
                 <p>{section.description}</p>
+                <div className="stats">
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-building-fill-check"></i>
+                    </div>
+                    <div className="stat-title">EVN COLLABORATION</div>
+                    <div className="stat-value">
+                      <strong>STANDARD</strong>
+                      <span style={{opacity: 0}}>&nbsp;</span>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-plug-fill"></i>
+                    </div>
+                    <div className="stat-title">POWER CAPACITY</div>
+                    <div className="stat-value">
+                      <strong>1</strong>
+                      <span>Megawatt/hour</span>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-battery-charging"></i>
+                    </div>
+                    <div className="stat-title">ELECTRICITY USAGE</div>
+                    <div className="stat-value">
+                      <strong>50%</strong>
+                      <span>coverage</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          } else if (section.title.toLowerCase().includes('ai') || section.title.toLowerCase().includes('effluent')) {
+            // Section thứ hai - AI Revolution với water stats
+            return (
+              <section key={section.id || idx} className="ai-revolution content-animate">
+                <Image
+                  src={`${BACKEND_DOMAIN}${section.image}`}
+                  alt={section.imageAlt}
+                  width={1200}
+                  height={800}
+                  objectFit="cover"
+                />
+                <h2>{section.title}</h2>
+                <p>{section.description}</p>
+                <div className="stats">
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-recycle"></i>
+                    </div>
+                    <div className="stat-title">WATER RECYCLING</div>
+                    <div className="stat-value">
+                      <strong>70%</strong>
+                      <span>target</span>
+                    </div>
+                  </div>
+                  
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-water"></i>
+                    </div>
+                    <div className="stat-title">CAPACITY</div>
+                    <div className="stat-value">
+                      <strong>2,500</strong>
+                      <span>m³/day</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            );
+          } else if (section.title.toLowerCase().includes('biomass')) {
+            // Luôn luôn hardcode 2 box cho Biomass Boiler
+            return (
+              <section key={section.id || idx} className="biomass-boiler content-animate">
+                <Image
+                  src={`${BACKEND_DOMAIN}${section.image}`}
+                  alt={section.imageAlt}
+                  width={1200}
+                  height={800}
+                  objectFit="cover"
+                />
+                <h2>{section.title}</h2>
+                <p>{section.description}</p>
+                <div className="stats">
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-fire"></i>
+                    </div>
+                    <div className="stat-title">BOILERS</div>
+                    <div className="stat-value">
+                      <strong>2</strong>
+                      <span>boilers with 8-ton capacity</span>
+                    </div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-icon">
+                      <i className="bi bi-tree"></i>
+                    </div>
+                    <div className="stat-title">BIOMASS FUEL</div>
+                    <div className="stat-value">
+                      <strong>2025</strong>
+                      <span>stage started</span>
+                    </div>
+                  </div>
+                </div>
               </section>
             );
           }
+          // Các section khác (nếu có)
+          console.log("Rendering other section:", section.title);
+          return (
+            <section key={section.id || idx} className="content-animate">
+              <Image
+                src={`${BACKEND_DOMAIN}${section.image}`}
+                alt={section.imageAlt}
+                width={1200}
+                height={800}
+                objectFit="cover"
+              />
+              <h2>{section.title}</h2>
+              <p>{section.description}</p>
+            </section>
+          );
         })}
       </main>
     </>

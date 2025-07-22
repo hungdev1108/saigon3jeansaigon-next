@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { productsService } from "../../services";
+import { useEffect } from "react";
 import { BACKEND_DOMAIN } from "../../api/config";
 
 interface GalleryImage {
@@ -36,46 +35,36 @@ interface ProductsData {
   totalProducts: number;
 }
 
-export default function Products() {
-  const [productsData, setProductsData] = useState<ProductsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface ProductsProps {
+  productsData: ProductsData | null;
+}
 
+function generateCarouselId(productSlug: string) {
+  return `${productSlug}Carousel`;
+}
+
+function generateCarouselTarget(productSlug: string) {
+  return `#${generateCarouselId(productSlug)}`;
+}
+
+export default function Products({ productsData }: ProductsProps) {
+  // Khởi tạo Bootstrap carousel sau khi component mount
   useEffect(() => {
-    const fetchProductsData = async () => {
-      try {
-        setLoading(true);
-        const data = await productsService.getCompleteProductsData();
-        setProductsData(data as ProductsData);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching products data:", err);
-        setError("Failed to load products data");
-        // Sử dụng dữ liệu mặc định khi có lỗi
-        const defaultData = productsService.getDefaultProductsData();
-        setProductsData(defaultData as ProductsData);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProductsData();
-  }, []);
-
-  if (loading) {
-    return (
-      <section className="product-section py-5">
-        <div className="container">
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading products...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+    if (productsData && typeof window !== 'undefined') {
+      const timer = setTimeout(() => {
+        const carousels = document.querySelectorAll('.carousel') as NodeListOf<Element>;
+        carousels.forEach((carousel: Element) => {
+          if ((window as any).bootstrap && (window as any).bootstrap.Carousel) {
+            new (window as any).bootstrap.Carousel(carousel, {
+              interval: 3500,
+              wrap: true
+            });
+          }
+        });
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [productsData]);
 
   if (!productsData) {
     return (
@@ -83,7 +72,7 @@ export default function Products() {
         <div className="container">
           <div className="text-center">
             <h2 className="text-danger">Error loading products</h2>
-            <p>{error}</p>
+            <p>Không thể tải dữ liệu sản phẩm.</p>
           </div>
         </div>
       </section>
@@ -97,12 +86,8 @@ export default function Products() {
           <h2 className="section-title mt-5">PRODUCT</h2>
           <div className="row g-4 product-row">
             {productsData.products.map((product) => {
-              const carouselId = productsService.generateCarouselId(
-                product.slug
-              );
-              const carouselTarget = productsService.generateCarouselTarget(
-                product.slug
-              );
+              const carouselId = generateCarouselId(product.slug);
+              const carouselTarget = generateCarouselTarget(product.slug);
 
               return (
                 <div key={product.id} className="col-lg-4 col-md-6 col-sm-12">
@@ -128,7 +113,7 @@ export default function Products() {
                         <div className="carousel-inner">
                           {product.galleryImages.map((image, index) => (
                             <div
-                              key={image.id}
+                              key={image.id || index}
                               className={`carousel-item ${
                                 index === 0 ? "active" : ""
                               }`}
@@ -170,37 +155,36 @@ export default function Products() {
                           )}
 
                         {/* Carousel Controls */}
-                        {product.carouselSettings.showControls &&
-                          product.galleryImages.length > 1 && (
-                            <>
-                              <button
-                                className="carousel-control-prev"
-                                type="button"
-                                data-bs-target={carouselTarget}
-                                data-bs-slide="prev"
-                              >
-                                <span
-                                  className="carousel-control-prev-icon"
-                                  aria-hidden="true"
-                                ></span>
-                                <span className="visually-hidden">
-                                  Previous
-                                </span>
-                              </button>
-                              <button
-                                className="carousel-control-next"
-                                type="button"
-                                data-bs-target={carouselTarget}
-                                data-bs-slide="next"
-                              >
-                                <span
-                                  className="carousel-control-next-icon"
-                                  aria-hidden="true"
-                                ></span>
-                                <span className="visually-hidden">Next</span>
-                              </button>
-                            </>
-                          )}
+                        {product.galleryImages.length > 1 && (
+                          <>
+                            <button
+                              className="carousel-control-prev"
+                              type="button"
+                              data-bs-target={carouselTarget}
+                              data-bs-slide="prev"
+                            >
+                              <span
+                                className="carousel-control-prev-icon"
+                                aria-hidden="true"
+                              ></span>
+                              <span className="visually-hidden">
+                                Previous
+                              </span>
+                            </button>
+                            <button
+                              className="carousel-control-next"
+                              type="button"
+                              data-bs-target={carouselTarget}
+                              data-bs-slide="next"
+                            >
+                              <span
+                                className="carousel-control-next-icon"
+                                aria-hidden="true"
+                              ></span>
+                              <span className="visually-hidden">Next</span>
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </Link>

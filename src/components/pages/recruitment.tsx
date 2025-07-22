@@ -7,12 +7,6 @@ import { toast } from "react-toastify";
 import Image from "next/image";
 import { BACKEND_DOMAIN } from "../../api/config";
 
-export default function Recruitment() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [, setLoading] = useState(true);
-  const [contactHr, setContactHr] = useState<ContactHr | null>(null);
-  const [ContactInfo, setContactInfo] = useState<ContactInfo | null>(null);
-
   interface Job {
     _id: string;
     title: string;
@@ -25,23 +19,7 @@ export default function Recruitment() {
     slug?: string;
     isFeatured?: boolean;
     applicationCount?: number;
-  }
-
-  interface Pagination {
-    currentPage: number;
-    totalPages: number;
-    totalJobs: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-    startIndex?: number;
-    endIndex?: number;
-  }
-
-  interface RecruitmentData {
-    jobs: Job[];
-    pagination: Pagination;
-    companyInfo: ContactInfo;
-    contactHR: ContactHr;
+    isActive?: boolean;
   }
 
   interface ApplicationForm {
@@ -75,43 +53,13 @@ export default function Recruitment() {
     };
   }
 
-  useEffect(() => {
-    // Use new complete data method
-    recruitmentService
-      .getCompleteRecruitmentData()
-      .then((data) => {
-        const recruitmentData = data as RecruitmentData;
-        setJobs(recruitmentData.jobs);
-        setContactInfo(recruitmentData.companyInfo);
-        setContactHr(recruitmentData.contactHR);
-      })
-      .catch((err) => {
-        console.error("Error loading recruitment data:", err);
-        // Fallback to individual API calls
-        recruitmentService
-          .load()
-          .then((res) => {
-            setJobs(res.data);
-          })
-          .catch((err) => console.error("Error loading jobs:", err));
+interface RecruitmentProps {
+  jobs: Job[];
+  contactHr: ContactHr | null;
+  contactInfo: ContactInfo | null;
+}
 
-        recruitmentService
-          .loadContactHr()
-          .then((res) => {
-            setContactHr(res.data);
-          })
-          .catch((err) => console.error("Error loading contact HR:", err));
-
-        recruitmentService
-          .loadCompanyInfo()
-          .then((res) => {
-            setContactInfo(res.data);
-          })
-          .catch((err) => console.error("Error loading company info:", err));
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
+export default function Recruitment({ jobs, contactHr, contactInfo }: RecruitmentProps) {
   // Component logic with proper types
   const jobsPerPage = 5;
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -138,12 +86,13 @@ export default function Recruitment() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const totalPages = Math.ceil(jobs.length / jobsPerPage);
+  const totalPages = Math.ceil((jobs?.length || 0) / jobsPerPage);
 
   // Pagination logic
   const startIndex = (currentPage - 1) * jobsPerPage;
   const endIndex = startIndex + jobsPerPage;
-  const pageJobs = jobs.slice(startIndex, endIndex);
+  const pageJobs = Array.isArray(jobs) ? jobs.slice(startIndex, endIndex) : [];
+  console.log('pageJobs:', pageJobs);
 
   // Handlers with proper typing
   const handleJobClick = (job: Job) => {
@@ -210,6 +159,7 @@ export default function Recruitment() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     // Reset previous errors
     setFormError("");
@@ -342,7 +292,7 @@ export default function Recruitment() {
                       <i className="fas fa-briefcase me-2"></i>OPEN POSITIONS
                     </h3>
                     <small className="opacity-75">
-                      {jobs.length} jobs found
+                      {jobs?.length || 0} jobs found
                     </small>
                   </div>
                   <div className="card-body p-0">
@@ -424,8 +374,8 @@ export default function Recruitment() {
                       </nav>
                       <div className="pagination-info text-center">
                         <small className="text-muted">
-                          {startIndex + 1} - {Math.min(endIndex, jobs.length)}{" "}
-                          of {jobs.length} jobs
+                          {startIndex + 1} - {Math.min(endIndex, jobs?.length || 0)}{" "}
+                          of {jobs?.length || 0} jobs
                         </small>
                       </div>
                     </div>
@@ -441,15 +391,14 @@ export default function Recruitment() {
                   <div className="card h-100">
                     <div className="card-body text-center">
                       <Image
-                        src={`${BACKEND_DOMAIN}${ContactInfo?.logo || "/uploads/images/sg3jeans_logo.png"}`}
+                        src={`${BACKEND_DOMAIN}${contactInfo?.logo || "/uploads/images/sg3jeans_logo.png"}`}
                         alt="Saigon 3 Jean Logo"
                         className="company-logo mb-4"
                         width={100}
                         height={100}
                       />
-                      <h4 className="card-title mb-4">{ContactInfo?.title}</h4>
                       <div className="company-description">
-                        {ContactInfo?.description.map((desc, index) => (
+                        {contactInfo?.description.map((desc, index) => (
                           <p key={index} className="text-muted">
                             {desc}
                           </p>
@@ -457,20 +406,24 @@ export default function Recruitment() {
                       </div>
                       <div className="company-stats mt-4">
                         <div className="row">
-                          {Object.entries(ContactInfo?.stats || {}).map(
-                            ([key, value]) => (
-                              <div className="col-4" key={key}>
-                                <div className="stat-item">
-                                  <h5 className="stat-number">
-                                    {value.number}
-                                  </h5>
-                                  <small className="text-muted">
-                                    {value.label}
-                                  </small>
-                                </div>
-                              </div>
-                            )
-                          )}
+                          <div className="col-4">
+                            <div className="stat-item">
+                              <h5 className="stat-number">300+</h5>
+                              <small className="text-muted">Employees</small>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="stat-item">
+                              <h5 className="stat-number">1.200.000</h5>
+                              <small className="text-muted">pcs/year</small>
+                            </div>
+                          </div>
+                          <div className="col-4">
+                            <div className="stat-item">
+                              <h5 className="stat-number">30</h5>
+                              <small className="text-muted">Global Partners</small>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -1,12 +1,32 @@
 import { getHomeData } from "../api/homeApi";
+import authService from "./authService";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+
+const getAuthHeaders = (isFormData = false) => {
+  const token = authService.getToken();
+  if (!token) {
+    // Handle case where user is not logged in
+    console.error("No auth token found. User might be logged out.");
+    // Optionally redirect to login or throw an error
+    return {};
+  }
+  const headers = {
+    'Authorization': `Bearer ${token}`
+  };
+  if (!isFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+  return headers;
+};
 
 /**
  * Service để xử lý dữ liệu home
  */
 class HomeService {
   /**
-   * Lấy và xử lý tất cả dữ liệu cho trang home
-   * @returns {Promise<Object>} Dữ liệu đã được xử lý
+   * Lấy tất cả dữ liệu cho trang chủ
+   * @returns {Promise<Object>} Dữ liệu trang chủ đã xử lý
    */
   async getCompleteHomeData() {
     try {
@@ -17,36 +37,23 @@ class HomeService {
       }
 
       const { data } = response;
-      // console.log("🔄 Đang tải dữ liệu trang chủ...");
-      // console.log(data);
-      // console.log("✅ Tải dữ liệu thành công từ API");
+      // console.log("API response:", data);
 
-      // Xử lý và format dữ liệu nếu cần
+      // Gộp tin nổi bật và tin thường vào một danh sách để hiển thị
+      const combinedNews = [
+        ...(data.featuredNews || []),
+        ...(data.regularNews || []),
+      ];
+
       return {
         hero: this.processHeroData(data.hero),
         sections: this.processSectionsData(data.sections),
         customers: this.processCustomersData(data.customers),
         certifications: this.processCertificationsData(data.certifications),
-        featuredNews: this.processNewsData(data.featuredNews),
+        featuredNews: this.processNewsData(combinedNews),
       };
     } catch (error) {
-      console.error(
-        "❌ HomeService - Error getting complete home data:",
-        error.message
-      );
-
-      // Kiểm tra loại lỗi
-      if (error.code === "ECONNREFUSED") {
-        console.warn(
-          "🔌 Backend server không khả dụng, sử dụng dữ liệu mặc định"
-        );
-      } else if (error.code === "ECONNABORTED") {
-        console.warn("⏱️ API timeout, sử dụng dữ liệu mặc định");
-      } else {
-        console.warn("🚨 Lỗi API khác, sử dụng dữ liệu mặc định");
-      }
-
-      // Trả về dữ liệu mặc định nếu API fail
+      console.error("❌ HomeService - Error getting home data:", error.message);
       return this.getDefaultHomeData();
     }
   }
@@ -116,6 +123,7 @@ class HomeService {
     return customerList
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((customer) => ({
+        _id: customer._id || "",
         name: customer.name || "",
         logo: customer.logo || "/images/placeholder-logo.png",
         website: customer.website || "",
@@ -150,23 +158,20 @@ class HomeService {
    * @returns {Array} Dữ liệu news đã xử lý
    */
   processNewsData(newsData) {
-    if (!Array.isArray(newsData)) return this.getDefaultNewsData();
+    if (!Array.isArray(newsData)) return [];
 
-    return newsData
-      .filter((news) => news.isPublished && news.isFeatured)
-      .sort((a, b) => new Date(b.publishDate) - new Date(a.publishDate))
-      .map((news) => ({
-        id: news._id || "",
-        title: news.title || "",
-        excerpt: news.excerpt || "",
-        content: news.content || "", // Add content here
-        image: news.image || "/images/placeholder-news.jpg",
-        publishDate: news.publishDate || new Date().toISOString(),
-        slug: news.slug || "",
-        tags: news.tags || [],
-        author: news.author || "Saigon 3 Jean",
-        _id: news._id,
-      }));
+    return newsData.map((news) => ({
+      id: news._id || "",
+      title: news.title || "",
+      excerpt: news.excerpt || "",
+      content: news.content || "",
+      image: news.image || "/images/placeholder-news.jpg",
+      publishDate: news.publishDate || new Date().toISOString(),
+      slug: news.slug || "",
+      tags: news.tags || [],
+      author: news.author || "Saigon 3 Jean",
+      _id: news._id,
+    }));
   }
 
   // Dữ liệu mặc định khi API fail
@@ -328,63 +333,77 @@ class HomeService {
   /**
    * Cập nhật thông tin hero section
    * @param {Object} heroData - Dữ liệu hero cần cập nhật
-   * @param {File} imageFile - File hình ảnh mới (nếu có)
+   * @param {Object} files - Object chứa các file (backgroundImage, videoUrl)
    * @returns {Promise<Object>} Kết quả cập nhật
    */
-  async updateHero(heroData, imageFile = null) {
-    try {
-      // Tạm thời trả về giả lập thành công cho dev
-      console.log("Updating hero data:", heroData);
-      
-      if (imageFile) {
-        console.log("Image file uploaded:", imageFile.name);
-        // Thực hiện xử lý upload file ở đây nếu có backend
-      }
-      
-      // Mock API response
-      return {
-        success: true,
-        message: "Hero section updated successfully",
-        data: heroData
-      };
-    } catch (error) {
-      console.error("Error updating hero:", error);
-      return {
-        success: false,
-        message: error.message || "Failed to update hero section",
-        data: heroData
-      };
+  async updateHero(heroData, files = {}) {
+    const formData = new FormData();
+    Object.keys(heroData).forEach(key => formData.append(key, heroData[key]));
+    
+    // Xử lý files
+    if (files['backgroundImage']) {
+      formData.append('heroImage', files['backgroundImage']);
     }
+    
+    if (files['videoUrl']) {
+      formData.append('heroVideo', files['videoUrl']);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/home/hero`, {
+      method: 'PUT',
+      headers: getAuthHeaders(true),
+      body: formData,
+    });
+    return response.json();
   }
 
   /**
    * Cập nhật thông tin các sections
    * @param {Array} sectionsData - Dữ liệu sections cần cập nhật
-   * @param {Object} imageFiles - Object chứa các file hình ảnh mới (key là index, value là File)
+   * @param {Object} files - Object chứa các file hình ảnh mới
    * @returns {Promise<Object>} Kết quả cập nhật
    */
-  async updateHomeSections(sectionsData, imageFiles = {}) {
+  async updateHomeSections(sectionsData, files = {}) {
+    const formData = new FormData();
+    formData.append('sections', JSON.stringify(sectionsData));
+    
+    console.log('Files to upload:', Object.keys(files));
+    
+    // Xử lý files theo đúng định dạng mà backend mong đợi
+    Object.keys(files).forEach(key => {
+      if (files[key]) {
+        // Kiểm tra nếu key có định dạng 'sections-{index}-mediaUrl'
+        const match = key.match(/sections-(\d+)-mediaUrl/);
+        if (match && match[1]) {
+          const index = match[1];
+          // Gửi file với tên trường đúng định dạng của backend
+          formData.append(`card_${index}`, files[key]);
+          console.log(`Appending file with field name: card_${index}`);
+        } else {
+          // Fallback cho các trường hợp khác (nếu có)
+          formData.append(key, files[key]);
+          console.log(`Appending file with original field name: ${key}`);
+        }
+      }
+    });
+
     try {
-      console.log("Updating sections data:", sectionsData);
+      const response = await fetch(`${API_BASE_URL}/home/sections`, {
+        method: 'PUT',
+        headers: getAuthHeaders(true),
+        body: formData,
+      });
       
-      if (Object.keys(imageFiles).length > 0) {
-        console.log("Image files uploaded:", Object.keys(imageFiles).map(k => `${k}:${imageFiles[k].name}`).join(', '));
-        // Thực hiện xử lý upload file ở đây nếu có backend
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Server error: ${response.status} ${errorText}`);
       }
       
-      // Mock API response
-      return {
-        success: true,
-        message: "Sections updated successfully",
-        data: sectionsData
-      };
+      return response.json();
     } catch (error) {
-      console.error("Error updating sections:", error);
-      return {
-        success: false,
-        message: error.message || "Failed to update sections",
-        data: sectionsData
-      };
+      console.error("Error updating home sections:", error);
+      throw error;
     }
   }
 
@@ -394,28 +413,81 @@ class HomeService {
    * @param {Object} imageFiles - Object chứa các file logo mới
    * @returns {Promise<Object>} Kết quả cập nhật
    */
-  async updateCustomers(customersData, imageFiles = {}) {
+  async updateCustomers(customersData, files = {}) {
+    const formData = new FormData();
+    formData.append('customers', JSON.stringify(customersData));
+    
+    console.log('Files to upload for customers:', Object.keys(files));
+    
+    // Process files before appending to formData
+    Object.keys(files).forEach(key => {
+      if(files[key]) {
+        // Xử lý đặc biệt cho khách hàng mới có ID tạm thời
+        if (key.includes('temp_')) {
+          // Trích xuất danh mục (denimWoven hoặc knit)
+          let category = 'denimWoven'; // Giá trị mặc định
+          
+          if (key.includes('denimWoven')) {
+            category = 'denimWoven';
+          } else if (key.includes('knit')) {
+            category = 'knit';
+          }
+          
+          // Sử dụng tên trường đơn giản hóa cho khách hàng mới
+          const newKey = `${category}_new`;
+          formData.append(newKey, files[key]);
+          console.log(`Appending file with simplified field name: ${newKey} (original: ${key})`);
+        } else {
+          // Đối với khách hàng hiện có, sử dụng tên trường gốc
+          formData.append(key, files[key]);
+          console.log(`Appending file with field name: ${key}`);
+        }
+      }
+    });
+
     try {
-      console.log("Updating customers data:", customersData);
+      const response = await fetch(`${API_BASE_URL}/home/customers`, {
+        method: 'PUT',
+        headers: getAuthHeaders(true),
+        body: formData,
+      });
       
-      if (Object.keys(imageFiles).length > 0) {
-        console.log("Logo files uploaded:", Object.keys(imageFiles).map(k => `${k}:${imageFiles[k].name}`).join(', '));
-        // Thực hiện xử lý upload file ở đây nếu có backend
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Server error: ${response.status} ${errorText}`);
       }
       
-      // Mock API response
-      return {
-        success: true,
-        message: "Customers updated successfully",
-        data: customersData
-      };
+      return response.json();
     } catch (error) {
       console.error("Error updating customers:", error);
-      return {
-        success: false,
-        message: error.message || "Failed to update customers",
-        data: customersData
-      };
+      throw error;
+    }
+  }
+
+  /**
+   * Xóa một khách hàng
+   * @param {string} category - Danh mục khách hàng (denimWoven hoặc knit)
+   * @param {string} id - ID của khách hàng cần xóa
+   * @returns {Promise<Object>} Kết quả xóa
+   */
+  async deleteCustomer(category, id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/home/customers/${category}/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Server error: ${response.status} ${errorText}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error(`Error deleting customer ${id} from ${category}:`, error);
+      throw error;
     }
   }
 
@@ -426,34 +498,149 @@ class HomeService {
    * @param {File} imageFile - File hình ảnh mới (nếu có)
    * @returns {Promise<Object>} Kết quả cập nhật
    */
-  async updateNews(newsId, newsData, imageFile = null) {
+  async updateNews(newsId, newsData, newsImage) {
+    const formData = new FormData();
+    if (Array.isArray(newsData.tags)) {
+        newsData.tags = newsData.tags.join(',');
+    }
+    Object.keys(newsData).forEach(key => formData.append(key, newsData[key]));
+    if (newsImage) formData.append('newsImage', newsImage);
+    
+    const response = await fetch(`${API_BASE_URL}/home/news/${newsId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(true),
+      body: formData
+    });
+    return response.json();
+  }
+
+  async deleteNews(id) {
     try {
-      console.log("Updating news item:", newsId, newsData);
+      const response = await fetch(`${API_BASE_URL}/home/news/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      return response.json();
+    } catch (error) {
+      console.error(`❌ HomeService - Error deleting news ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy TẤT CẢ tin tức cho trang admin (không filter)
+   * @returns {Promise<Array>}
+   */
+  async getHomepageNews() {
+    try {
+      // Temporarily use the admin endpoint to get ALL news
+      // This allows managing featured status even for unpublished news
+      const response = await fetch(`${API_BASE_URL}/home/admin/news`, {
+        headers: getAuthHeaders(),
+      });
       
-      if (imageFile) {
-        console.log("Image file uploaded:", imageFile.name);
-        // Thực hiện xử lý upload file ở đây nếu có backend
+      if (!response.ok) {
+        throw new Error(`Failed to fetch homepage news: ${response.statusText}`);
       }
       
-      // Mock API response
-      return {
-        success: true,
-        message: "News updated successfully",
-        data: newsData
-      };
+      const result = await response.json();
+      console.log("API response for news:", result);
+      
+      // Kiểm tra cấu trúc dữ liệu trả về
+      if (result.success && result.data) {
+        // Kiểm tra nếu data chứa thuộc tính news (cấu trúc mới)
+        if (result.data.news && Array.isArray(result.data.news)) {
+          return result.data.news;
+        }
+        // Nếu data là một mảng trực tiếp
+        else if (Array.isArray(result.data)) {
+          return result.data;
+        }
+      }
+      
+      console.warn("Unexpected API response structure:", result);
+      return [];
     } catch (error) {
-      console.error("Error updating news:", error);
-      return {
-        success: false,
-        message: error.message || "Failed to update news",
-        data: newsData
-      };
+       console.error("❌ HomeService - Error getting homepage news:", error.message);
+       return [];
+    }
+  }
+
+  /**
+   * Upload video cho hero section
+   * @param {File} videoFile - File video cần upload
+   * @returns {Promise<Object>} Kết quả upload
+   */
+  async uploadHeroVideo(videoFile) {
+    try {
+      const formData = new FormData();
+      formData.append('heroVideo', videoFile);
+
+      const response = await fetch(`${API_BASE_URL}/home/hero/video`, {
+        method: 'POST',
+        headers: getAuthHeaders(true),
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed with status: ${response.status}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error("❌ HomeService - Error uploading hero video:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Lấy chi tiết tin tức theo ID
+   * @param {string} id - ID của tin tức cần lấy
+   * @returns {Promise<Object>} Thông tin chi tiết tin tức
+   */
+  async getNewsById(id) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/home/news/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news: ${response.statusText}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error(`❌ HomeService - Error getting news ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Tạo tin tức mới
+   * @param {FormData} formData - Form data chứa thông tin tin tức và hình ảnh
+   * @returns {Promise<Object>} Kết quả tạo tin tức
+   */
+  async createNews(formData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/home/news`, {
+        method: 'POST',
+        headers: getAuthHeaders(true),
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`Server error: ${response.status} ${errorText}`);
+      }
+      
+      return response.json();
+    } catch (error) {
+      console.error("❌ HomeService - Error creating news:", error);
+      throw error;
     }
   }
 }
 
-// Create a named instance
-const homeServiceInstance = new HomeService();
-
-// Export the instance
-export default homeServiceInstance;
+const homeService = new HomeService();
+export default homeService;

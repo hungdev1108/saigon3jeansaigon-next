@@ -1,9 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
 import Slider from "react-slick";
-import { facilitiesService } from "../../services";
 import { BACKEND_DOMAIN } from "../../api/config";
 import { useIntersectionObserver } from "../../app/hooks/useCounterAnimation";
 import AnimatedMetric from "../AnimatedMetric";
@@ -142,39 +140,16 @@ function FacilityImageSlider({
   );
 }
 
-export default function Facilities() {
-  const [facilitiesData, setFacilitiesData] = useState<FacilitiesData | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface FacilitiesProps {
+  facilitiesData: FacilitiesData;
+}
 
+export default function Facilities({ facilitiesData }: FacilitiesProps) {
   // Intersection Observer để trigger animation khi metrics section vào viewport
   const [metricsRef, shouldStartAnimation] = useIntersectionObserver({
     threshold: 0.3,
     rootMargin: "-50px",
   });
-
-  useEffect(() => {
-    const fetchFacilitiesData = async () => {
-      try {
-        setLoading(true);
-        const data = await facilitiesService.getCompleteFacilitiesData();
-        setFacilitiesData(data as FacilitiesData);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching facilities data:", err);
-        setError("Failed to load facilities data");
-        // Sử dụng dữ liệu mặc định khi có lỗi
-        const defaultData = facilitiesService.getDefaultFacilitiesData();
-        setFacilitiesData(defaultData as FacilitiesData);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFacilitiesData();
-  }, []);
 
   // Type guard to check if feature is new format
   const isNewFeatureFormat = (
@@ -223,28 +198,12 @@ export default function Facilities() {
     return [];
   };
 
-  if (loading) {
-    return (
-      <section className="facilities-overview py-5">
-        <div className="container">
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading facilities data...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   if (!facilitiesData) {
     return (
       <section className="facilities-overview py-5">
         <div className="container">
           <div className="text-center">
             <h2 className="text-danger">Error loading facilities data</h2>
-            <p>{error}</p>
           </div>
         </div>
       </section>
@@ -279,19 +238,11 @@ export default function Facilities() {
           {/* Facility Features */}
           <div className="facility-features">
             {facilitiesData.facilityFeatures.map((feature) => {
-              console.log("[DEBUG] Processing facility feature:", feature);
               const images = processFeatureImages(feature);
-              console.log("[DEBUG] Processed images for feature:", images);
-
-              // Skip rendering if no images available
-              if (images.length === 0) {
-                return null;
-              }
-
+              if (images.length === 0) return null;
               const featureKey = isNewFeatureFormat(feature)
                 ? feature._id
                 : feature.id;
-
               return (
                 <div
                   key={featureKey}

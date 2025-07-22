@@ -16,14 +16,15 @@ class ContactService {
         throw new Error("Failed to fetch contact data");
       }
 
-      const { data } = response;
+      // Sửa lại để xử lý đúng cấu trúc dữ liệu từ API
+      const contactInfo = response.contactInfo;
 
       // Xử lý và format dữ liệu
       return {
-        pageTitle: data.pageTitle || "Contact Us - Saigon 3 Jean",
-        pageDescription: data.pageDescription || "Get in touch with Saigon 3 Jean for all your denim manufacturing needs",
-        contactInfo: this.processContactInfo(data.contactInfo || data),
-        seo: this.processSeoData(data.seo),
+        pageTitle: "Contact Us - Saigon 3 Jean",
+        pageDescription: "Get in touch with Saigon 3 Jean for all your denim manufacturing needs",
+        contactInfo: this.processContactInfo(contactInfo),
+        seo: this.getDefaultSeoData(),
       };
     } catch (error) {
       console.error(

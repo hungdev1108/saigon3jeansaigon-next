@@ -1,17 +1,27 @@
-// src/app/admin/home/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
-import EditableSection from "@/components/admin/EditableSection";
+import { useState, useEffect, ChangeEvent } from "react";
+import Image from "next/image";
 import homeService from "@/services/homeService";
+import { BACKEND_DOMAIN } from "@/api/config";
+import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX } from 'react-icons/fi';
+import { toast, ToastOptions } from "react-toastify";
 
-// Define API response type
+// Toast config
+const toastOptions: ToastOptions = {
+  position: "top-right" as const,
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: true,
+};
+
 interface ApiResponse {
   success: boolean;
   message: string;
-  data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  data: any;
 }
-
 interface HeroData {
   title: string;
   subtitle: string;
@@ -19,7 +29,6 @@ interface HeroData {
   videoUrl: string;
   isActive: boolean;
 }
-
 interface SectionData {
   title: string;
   content: string;
@@ -30,683 +39,807 @@ interface SectionData {
   backgroundColor: string;
   order: number;
 }
-
-interface CustomerItem {
+interface CustomerData {
+  _id: string;
   name: string;
   logo: string;
   website: string;
   order: number;
 }
-
 interface CustomersData {
-  denimWoven: CustomerItem[];
-  knit: CustomerItem[];
-  [key: string]: CustomerItem[];
+  denimWoven: CustomerData[];
+  knit: CustomerData[];
+  [key: string]: CustomerData[];
 }
-
-interface CertificationItem {
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-  order: number;
-}
-
-interface NewsItem {
-  id: string;
+interface NewsData {
+  _id: string;
   title: string;
   excerpt: string;
-  content: string; // Make content required instead of optional
   image: string;
+  isPublished: boolean;
+  isFeatured: boolean;
+  id: string;
   publishDate: string;
   slug: string;
   tags: string[];
   author: string;
-  _id?: string;
 }
-
 interface HomeData {
   hero: HeroData;
   sections: SectionData[];
   customers: CustomersData;
-  certifications: CertificationItem[];
-  featuredNews: NewsItem[];
+  featuredNews: NewsData[];
 }
 
-export default function AdminHomePage() {
-  const [homeData, setHomeData] = useState<HomeData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("hero");
+// Preview states
+type PreviewMap = { [key: string]: string };
+
+// FormItem và AdminSectionCard giữ nguyên như cũ
+const FormItem = ({ label, icon, children }: { label: string; icon?: React.ReactNode, children: React.ReactNode }) => (
+  <div className="form-item">
+    <label className="form-item-label">
+      {icon}
+      <span>{label}</span>
+    </label>
+    {children}
+  </div>
+);
+
+const AdminSectionCard = ({ title, children, onSave, isSaving, hasChanges }: { title: string, children: React.ReactNode, onSave?: () => void, isSaving?: boolean, hasChanges?: boolean }) => (
+  <div className="admin-section-card">
+      <div className="card-header">
+          <h3 className="card-title">{title}</h3>
+          {onSave && (
+            <button onClick={onSave} className="btn-save" disabled={isSaving || !hasChanges}>
+                <FiSave />
+                {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}
+            </button>
+          )}
+      </div>
+      <div className="card-content">
+          {children}
+      </div>
+  </div>
+);
+
+interface EditNewsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  news: NewsData | null;
+  onSave: (newsData: NewsData, file?: File) => Promise<void>;
+  isSaving: boolean;
+}
+const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModalProps) => {
+  const [formData, setFormData] = useState<NewsData | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
+    if (news) {
+      setFormData({ ...news });
+      setImagePreview(news.image ? `${BACKEND_DOMAIN}${news.image}` : null);
+    } else {
+      setFormData({
+        _id: '',
+        title: '',
+        excerpt: '',
+        content: '',
+        image: '',
+        isPublished: true,
+        isFeatured: false,
+        publishDate: new Date().toISOString().split('T')[0],
+        id: '',
+        slug: '',
+        tags: [],
+        author: 'Saigon 3 Jean'
+      });
+      setImagePreview(null);
+    }
+    setImageFile(null);
+  }, [news]);
+
+  if (!isOpen || !formData) return null;
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const isCheckbox = type === 'checkbox';
+    setFormData(prev => ({ ...prev!, [name]: isCheckbox ? e.target.checked : value }));
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData) return;
+    await onSave(formData, imageFile || undefined);
+  };
+
+  return (
+    <div className={`modal-overlay ${isOpen ? 'active' : ''}`}>
+      <div className="modal-container">
+        <div className="modal-header">
+          <h3>{news?._id ? 'Chỉnh sửa tin tức' : 'Thêm tin tức mới'}</h3>
+          <button className="btn-close" onClick={onClose}><FiX /></button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            <div className="form-group">
+              <label>Tiêu đề</label>
+              <input 
+                type="text" 
+                name="title" 
+                value={formData.title} 
+                onChange={handleInputChange} 
+                className="form-input" 
+                required 
+              />
+            </div>
+            <div className="form-group">
+              <label>Tóm tắt</label>
+              <textarea 
+                name="excerpt" 
+                value={formData.excerpt} 
+                onChange={handleInputChange} 
+                className="form-textarea" 
+                rows={2}
+              />
+            </div>
+            <div className="form-group">
+              <label>Nội dung</label>
+              <textarea 
+                name="content" 
+                value={formData.content} 
+                onChange={handleInputChange} 
+                className="form-textarea" 
+                rows={5}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Hình ảnh</label>
+              {imagePreview && (
+                <div className="image-preview-container">
+                  <Image 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    width={200} 
+                    height={120} 
+                    className="image-preview" 
+                  />
+                </div>
+              )}
+              <input 
+                type="file" 
+                onChange={handleFileChange} 
+                className="form-file-input" 
+                accept="image/*" 
+              />
+            </div>
+            <div className="form-group form-inline">
+              <div className="form-check">
+                <input 
+                  type="checkbox" 
+                  id="isPublished" 
+                  name="isPublished" 
+                  checked={formData.isPublished} 
+                  onChange={handleInputChange} 
+                  className="form-checkbox" 
+                />
+                <label htmlFor="isPublished">Đăng ngay</label>
+              </div>
+              <div className="form-check">
+                <input 
+                  type="checkbox" 
+                  id="isFeatured" 
+                  name="isFeatured" 
+                  checked={formData.isFeatured} 
+                  onChange={handleInputChange} 
+                  className="form-checkbox" 
+                />
+                <label htmlFor="isFeatured">Tin nổi bật</label>
+              </div>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSaving}>
+              Hủy
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={isSaving}>
+              {isSaving ? 'Đang lưu...' : 'Lưu tin tức'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// === Main component ===
+export default function AdminHomePage() {
+  const [homeData, setHomeData] = useState<HomeData | null>(null);
+  const [initialHomeData, setInitialHomeData] = useState<HomeData | null>(null);
+  const [homepageNews, setHomepageNews] = useState<NewsData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | boolean>(false);
+
+  // Files for upload, preview for UI
+  const [files, setFiles] = useState<{ [key: string]: File }>({});
+  const [logoPreview, setLogoPreview] = useState<PreviewMap>({});
+  const [mediaPreview, setMediaPreview] = useState<PreviewMap>({});
+  const [heroPreview, setHeroPreview] = useState<PreviewMap>({});
+
+  // Modal news
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentEditNews, setCurrentEditNews] = useState<NewsData | null>(null);
+
+  useEffect(() => {
+    loadHomepageData();
   }, []);
 
-  const loadData = async () => {
+  const loadHomepageData = async () => {
     try {
       setLoading(true);
-      const data = await homeService.getCompleteHomeData();
-      // @ts-expect-error - Ignore type checking for setting data
-      setHomeData(data);
+      const [homeDataResult, homepageNewsResult] = await Promise.all([
+          homeService.getCompleteHomeData(),
+          homeService.getHomepageNews()
+      ]);
+      setHomeData(homeDataResult as HomeData);
+      setInitialHomeData(JSON.parse(JSON.stringify(homeDataResult)) as HomeData);
+      setHomepageNews(homepageNewsResult as NewsData[]);
     } catch (error) {
-      console.error("Error loading home data:", error);
-      setMessage("❌ Lỗi khi tải dữ liệu");
+      handleError(error, "tải dữ liệu trang");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveSection = async (section: string, newContent: string) => {
-    try {
-      setSaving(true);
-      console.log("Saving:", section, newContent);
+  const hasChanges = (section: keyof Omit<HomeData, 'featuredNews'>) => {
+    if (!initialHomeData || !homeData) return false;
+    return JSON.stringify(initialHomeData[section]) !== JSON.stringify(homeData[section]) ||
+      Object.keys(files).some(key => key.startsWith(section.toString()));
+  };
 
-      const keys = section.split(".");
-      const mainSection = keys[0];
-
-      let result: ApiResponse;
-
-      if (mainSection === "hero") {
-        // Update hero section
-        const updatedHero = { ...homeData?.hero };
-        // @ts-expect-error - Ignore type checking for this conversion
-        let current = updatedHero as Record<string, unknown>;
-
-        for (let i = 1; i < keys.length - 1; i++) {
-          if (!current[keys[i]]) current[keys[i]] = {};
-          current = current[keys[i]] as Record<string, unknown>;
+  // --- Handlers ---
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, section: string, index?: number, subSection?: string) => {
+    const { name, value } = e.target;
+    setHomeData(prevData => {
+        if (!prevData) return null;
+        const newData = JSON.parse(JSON.stringify(prevData));
+        if (subSection && index === undefined) { // customers
+            const nameParts = name.split('_');
+            if (nameParts.length >= 2) {
+                const fieldName = nameParts[0];
+                // Lấy phần còn lại làm ID (để hỗ trợ ID tạm thời dài)
+                const customerId = nameParts.slice(1).join('_');
+                
+                // Tìm khách hàng theo ID
+                const customerIndex = newData.customers[subSection].findIndex(
+                    (c: CustomerData) => String(c._id) === String(customerId)
+                );
+                
+            if (customerIndex !== -1) {
+                newData.customers[subSection][customerIndex][fieldName] = value;
+                } else {
+                    console.error(`Không tìm thấy khách hàng với ID: ${customerId}`);
+                }
+            }
+        } else if (index !== undefined) { // sections
+            newData[section][index][name] = value;
+        } else { // hero
+            newData[section][name] = value;
         }
+        return newData;
+    });
+  };
 
-        current[keys[keys.length - 1]] = newContent;
-        // @ts-expect-error - Ignore type checking for API call
-        result = await homeService.updateHero(updatedHero);
-      } else if (mainSection === "sections") {
-        // Update sections
-        const sectionIndex = parseInt(keys[1]);
-        const updatedSections = [...(homeData?.sections || [])];
-
-        updatedSections[sectionIndex] = {
-          ...updatedSections[sectionIndex],
-          [keys[2]]: newContent,
-        };
-
-        // @ts-expect-error - Ignore type checking for API call
-        result = await homeService.updateHomeSections(updatedSections);
-      } else if (mainSection === "customers") {
-        // Update customers
-        const updatedCustomers = { ...homeData?.customers };
-        const category = keys[1];
-        const customerIndex = parseInt(keys[2]);
-
-        updatedCustomers[category][customerIndex] = {
-          ...updatedCustomers[category][customerIndex],
-          [keys[3]]: newContent,
-        };
-
-        // @ts-expect-error - Ignore type checking for API call
-        result = await homeService.updateCustomers(updatedCustomers);
-      } else if (mainSection === "featuredNews") {
-        // Update featured news
-        const newsIndex = parseInt(keys[1]);
-        const newsItem = homeData?.featuredNews?.[newsIndex];
-
-        if (newsItem?._id) {
-          const updatedNews = {
-            ...newsItem,
-            [keys[2]]: newContent,
-          };
-
-          result = await homeService.updateNews(newsItem._id, updatedNews);
-        } else {
-          throw new Error("News item ID not found");
-        }
-      } else {
-        throw new Error("Invalid section type");
-      }
-
-      if (result?.success) {
-        // Update local state with API response
-        setHomeData((prev) => {
-          if (!prev) return prev;
-          const updated = { ...prev };
-
-          if (mainSection === "hero") {
-            updated.hero = result.data;
-          } else if (mainSection === "sections") {
-            updated.sections = result.data;
-          } else if (mainSection === "customers") {
-            updated.customers = result.data;
-          } else if (mainSection === "featuredNews" && result.data) {
-            const newsIndex = parseInt(keys[1]);
-            updated.featuredNews[newsIndex] = result.data;
+  const handleCheckboxChange = async (newsId: string, field: 'isFeatured' | 'isPublished', checked: boolean) => {
+      const newsItem = homepageNews.find(n => n._id === newsId);
+      if (!newsItem) return;
+      const updatedNewsItem = { ...newsItem, [field]: checked };
+      setSaving(newsId);
+      try {
+          const result = await homeService.updateNews(newsId, updatedNewsItem, undefined);
+          if (result.success) {
+              toast.success("Đã cập nhật trạng thái tin tức!", { ...toastOptions, icon: <FiCheck /> });
+              setHomepageNews(prevNews =>
+                prevNews.map(n => (n._id === newsId ? updatedNewsItem : n))
+              );
+          } else {
+              throw new Error(result.message || "Cập nhật thất bại");
           }
-
-          return updated;
-        });
-
-        setMessage("✅ Đã lưu thành công!");
-      } else {
-        throw new Error(result?.message || "Failed to save");
+      } catch (error) {
+          handleError(error, `cập nhật tin tức`);
+      } finally {
+          setSaving(false);
       }
+  };
 
-      setTimeout(() => setMessage(""), 3000);
-    } catch (error: unknown) {
-      console.error("Error saving:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      setMessage(`❌ Lỗi khi lưu: ${errorMessage}`);
-      setTimeout(() => setMessage(""), 3000);
+  // ==================== ĐÂY LÀ CHỖ ĐÃ SỬA ==================== 
+  // Xử lý file và preview cho UI (KHÔNG ghi base64 vào homeData)
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, key: string) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFiles(prevFiles => ({ ...prevFiles, [key]: file }));
+
+      // Preview cho từng loại:
+      if (key.startsWith("customers")) {
+        const reader = new FileReader();
+        reader.onload = (event) => setLogoPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
+        reader.readAsDataURL(file);
+      } else if (key.startsWith("sections")) {
+        const reader = new FileReader();
+        reader.onload = (event) => setMediaPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
+        reader.readAsDataURL(file);
+      } else if (key.startsWith("hero")) {
+        const reader = new FileReader();
+        reader.onload = (event) => setHeroPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
+        reader.readAsDataURL(file);
+      }
+      e.target.value = '';
+    }
+  };
+  // ==================== HẾT CHỖ SỬA ==================== 
+
+  const handleError = (error: any, action: string) => {
+    console.error(`Lỗi khi ${action}:`, error);
+    const errorMessage = error instanceof Error ? error.message : "Lỗi không xác định";
+    toast.error(`Lỗi khi ${action}: ${errorMessage}`, {
+      ...toastOptions,
+      icon: <FiAlertTriangle />
+    });
+  };
+
+  const handleSave = async (section: "hero" | "sections" | "customers") => {
+    if (!homeData || !hasChanges(section)) return;
+    setSaving(section);
+
+    try {
+        let result: ApiResponse;
+        const dataToSave = homeData[section];
+        // Chỉ gửi file (không gửi base64)
+        const filesToSave = Object.keys(files)
+          .filter(key => key.startsWith(section))
+          .reduce((obj, key) => {
+            if (section === 'customers') {
+              const parts = key.split('-');
+              if (parts.length >= 2) {
+                const categoryAndId = parts[1];
+                const underscoreIndex = categoryAndId.indexOf('_');
+                if (underscoreIndex !== -1) {
+                  const category = categoryAndId.substring(0, underscoreIndex);
+                  const id = categoryAndId.substring(underscoreIndex + 1);
+                  const newKey = `${category}_${id}_logo`;
+                  obj[newKey] = files[key];
+                  return obj;
+                }
+              }
+            }
+            const fileKey = key.substring(section.length + 1);
+            obj[fileKey] = files[key];
+            return obj;
+          }, {} as Record<string, File>);
+        switch(section) {
+          case 'hero':
+              result = await homeService.updateHero(dataToSave as HeroData, filesToSave);
+              break;
+          case 'sections':
+              result = await homeService.updateHomeSections(dataToSave as SectionData[], filesToSave);
+              break;
+          case 'customers':
+              result = await homeService.updateCustomers(dataToSave as CustomersData, filesToSave);
+              break;
+          default:
+              throw new Error("Section chưa được hỗ trợ lưu.");
+        }
+        if (result.success) {
+          toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
+          setFiles({});
+          setLogoPreview({});
+          setMediaPreview({});
+          setHeroPreview({});
+          await loadHomepageData();
+        } else {
+          throw new Error(result.message || "Lưu thất bại");
+        }
+    } catch (error) {
+      handleError(error, `lưu ${section}`);
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleAddSection = () => {
-    if (!homeData) return;
-
-    const newSection: SectionData = {
-      title: "New Section",
-      content: "Section content...",
-      mediaType: "image",
-      mediaUrl: "/images/placeholder.jpg",
-      buttonText: "LEARN MORE",
-      buttonLink: "#",
-      backgroundColor: "#007bff",
-      order: homeData.sections.length,
-    };
-
-    setHomeData((prev) => ({
-      ...prev!,
-      sections: [...prev!.sections, newSection],
-    }));
-  };
-
-  const handleDeleteSection = (index: number) => {
-    if (!homeData) return;
-
-    setHomeData((prev) => ({
-      ...prev!,
-      sections: prev!.sections.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleImageUpload = async (section: string, file: File) => {
-    try {
-      setSaving(true);
-      console.log("Uploading image for:", section);
-
-      const keys = section.split(".");
-      const mainSection = keys[0];
-
-      let result: ApiResponse;
-
-      if (mainSection === "hero") {
-        // Update hero with new image
-        const updatedHero = { ...homeData?.hero };
-        // @ts-expect-error - Ignore type checking for API call
-        result = await homeService.updateHero(updatedHero, file);
-      } else if (mainSection === "sections") {
-        // Update section with new image
-        const sectionIndex = parseInt(keys[1]);
-        const updatedSections = [...(homeData?.sections || [])];
-
-        // @ts-expect-error - Ignore type checking for API call
-        result = await homeService.updateHomeSections(updatedSections, {
-          [sectionIndex]: file,
-        });
-      } else if (mainSection === "customers") {
-        // Update customers with new logo
-        const updatedCustomers = { ...homeData?.customers };
-        const category = keys[1];
-        const customerIndex = parseInt(keys[2]);
-
-        // @ts-expect-error - Ignore type checking for API call
-        result = await homeService.updateCustomers(updatedCustomers, {
-          [`${category}_${customerIndex}`]: file,
-        });
-      } else if (mainSection === "featuredNews") {
-        // Update news with new image
-        const newsIndex = parseInt(keys[1]);
-        const newsItem = homeData?.featuredNews?.[newsIndex];
-
-        if (newsItem?._id) {
-          result = await homeService.updateNews(newsItem._id, newsItem, file);
-        } else {
-          throw new Error("News item ID not found");
-        }
-      } else {
-        throw new Error("Invalid section type");
-      }
-
-      if (result?.success) {
-        // Update local state with API response
-        setHomeData((prev) => {
-          if (!prev) return prev;
-          const updated = { ...prev };
-
-          if (mainSection === "hero") {
-            updated.hero = result.data;
-          } else if (mainSection === "sections") {
-            updated.sections = result.data;
-          } else if (mainSection === "customers") {
-            updated.customers = result.data;
-          } else if (mainSection === "featuredNews" && result.data) {
-            const newsIndex = parseInt(keys[1]);
-            updated.featuredNews[newsIndex] = result.data;
-          }
-
-          return updated;
-        });
-
-        setMessage("✅ Đã tải lên hình ảnh thành công!");
-      } else {
-        throw new Error(result?.message || "Failed to upload image");
-      }
-
-      setTimeout(() => setMessage(""), 3000);
-    } catch (error: unknown) {
-      console.error("Error uploading image:", error);
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      setMessage(`❌ Lỗi khi tải lên: ${errorMessage}`);
-      setTimeout(() => setMessage(""), 3000);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="admin-loading">
-        <div className="loading-spinner"></div>
-        <p>Đang tải dữ liệu...</p>
-      </div>
-    );
   }
 
+  const handleDeleteCustomer = async (subSection: string, id: string) => {
+      if (window.confirm("Bạn có chắc chắn muốn xóa khách hàng này?")) {
+          setSaving(`delete-${subSection}-${id}`);
+          try {
+              const deleteCustomerMethod = (homeService as any).deleteCustomer;
+              const result = await deleteCustomerMethod(subSection, id);
+              if (result.success) {
+                  toast.success("Đã xóa khách hàng thành công!", { ...toastOptions, icon: <FiCheck /> });
+                  setHomeData(prevData => {
+                      if (!prevData) return null;
+                      const newData = JSON.parse(JSON.stringify(prevData));
+                      newData.customers[subSection] = newData.customers[subSection].filter(
+                          (c: CustomerData) => c._id !== id
+                      );
+                      return newData;
+                  });
+              } else {
+                  throw new Error(result.message || "Xóa thất bại");
+              }
+          } catch (error) {
+              handleError(error, `xóa khách hàng`);
+          } finally {
+              setSaving(false);
+          }
+      }
+  };
+
+  const handleAddCustomer = (subSection: 'denimWoven' | 'knit') => {
+    const newCustomer: CustomerData = {
+        _id: `temp_${Date.now()}_${Math.random()}`,
+        name: 'Tên khách hàng mới',
+        logo: "/images/310x300.png",
+        website: '',
+        order: homeData?.customers[subSection]?.length || 0
+    };
+    setHomeData(prevData => {
+        if (!prevData) return null;
+        const newData = JSON.parse(JSON.stringify(prevData));
+        newData.customers[subSection] = [...newData.customers[subSection], newCustomer];
+        return newData;
+    });
+    toast.info("Đã thêm khách hàng mới. Vui lòng cập nhật thông tin và lưu lại.", { ...toastOptions, icon: <FiInfo /> });
+  };
+
+  const handleVideoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const videoFile = e.target.files[0];
+      if (videoFile.size > 100 * 1024 * 1024) {
+        toast.error("Video quá lớn. Kích thước tối đa là 100MB.", { ...toastOptions, icon: <FiAlertTriangle /> });
+        return;
+      }
+      setSaving('hero-video');
+      toast.info("Đang tải video lên, vui lòng đợi...", { ...toastOptions, icon: <FiInfo /> });
+      try {
+        const formData = new FormData();
+        formData.append('heroVideo', videoFile);
+        const response = await fetch(`${BACKEND_DOMAIN}/api/home/hero/video`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+          body: formData
+        });
+        if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
+        const result = await response.json();
+        if (result.success) {
+          toast.success("Upload video thành công!", { ...toastOptions, icon: <FiCheck /> });
+          setHomeData(prevData => {
+            if (!prevData) return null;
+            const newData = JSON.parse(JSON.stringify(prevData));
+            newData.hero.videoUrl = result.data.videoUrl;
+            return newData;
+          });
+          e.target.value = '';
+        } else {
+          throw new Error(result.message || "Upload thất bại");
+        }
+      } catch (error) {
+        handleError(error, "upload video");
+      } finally {
+        setSaving(false);
+      }
+    }
+  };
+
+  // News modal, news add/edit/delete như cũ
+  const handleAddNews = () => {
+    setCurrentEditNews(null);
+    setIsEditModalOpen(true);
+  };
+  const handleEditNews = (news: NewsData) => {
+    setCurrentEditNews(news);
+    setIsEditModalOpen(true);
+  };
+  const handleSaveNews = async (newsData: NewsData, file?: File) => {
+    setSaving('news');
+    try {
+      let result;
+      if (newsData._id) {
+        result = await homeService.updateNews(newsData._id, newsData, file);
+      } else {
+        const formData = new FormData();
+        Object.entries(newsData).forEach(([key, value]) => {
+          if (key !== 'image' && key !== '_id' && key !== 'id') {
+            if (Array.isArray(value)) formData.append(key, value.join(','));
+            else formData.append(key, String(value));
+          }
+        });
+        if (file) formData.append('newsImage', file);
+        result = await homeService.createNews(formData);
+      }
+      if (result.success) {
+        toast.success(newsData._id ? "Đã cập nhật tin tức!" : "Đã thêm tin tức mới!", { ...toastOptions, icon: <FiCheck /> });
+        const updatedNews = await homeService.getHomepageNews();
+        setHomepageNews(updatedNews as NewsData[]);
+        setIsEditModalOpen(false);
+      } else {
+        throw new Error(result.message || "Lưu tin tức thất bại");
+      }
+    } catch (error) {
+      handleError(error, newsData._id ? "cập nhật tin tức" : "thêm tin tức mới");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handleDeleteNews = async (newsId: string) => {
+    setSaving(`delete-news-${newsId}`);
+    try {
+      const result = await homeService.deleteNews(newsId);
+      if (result.success) {
+        toast.success("Đã xóa tin tức thành công!", { ...toastOptions, icon: <FiCheck /> });
+        setHomepageNews(prevNews => prevNews.filter(news => news._id !== newsId));
+      } else {
+        throw new Error(result.message || "Xóa tin tức thất bại");
+      }
+    } catch (error) {
+      handleError(error, "xóa tin tức");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // --- Render Functions ---
+  const renderLoading = () => <div className="admin-loading">Đang tải dữ liệu...</div>;
+
+  if (loading) return renderLoading();
+  if (!homeData) return <div>Không thể tải dữ liệu trang chủ.</div>;
+
   return (
-    <div className="admin-page">
-      <div className="page-header">
-        <h1>🏠 Quản lý Trang Chủ</h1>
-        <p>Chỉnh sửa nội dung trang chủ của website</p>
-
-        {message && (
-          <div
-            className={`message ${
-              message.includes("✅") ? "success" : "error"
-            }`}
-          >
-            {message}
-          </div>
-        )}
-        
-        {saving && (
-          <div className="saving-indicator">
-            <div className="spinner"></div>
-            <span>Đang lưu...</span>
-          </div>
-        )}
+    <div className="admin-page-container">
+      <div className="admin-page-header">
+        <h1 className="admin-page-title">Quản lý trang chủ</h1>
+        <p className="admin-page-description">Chỉnh sửa nội dung sẽ được hiển thị trên trang chủ của website.</p>
       </div>
-
-      {/* Tab Navigation */}
-      <div className="admin-tabs">
-        <button
-          className={`tab-btn ${activeTab === "hero" ? "active" : ""}`}
-          onClick={() => setActiveTab("hero")}
-        >
-          🎯 Hero Section
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "sections" ? "active" : ""}`}
-          onClick={() => setActiveTab("sections")}
-        >
-          📄 Content Sections
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "customers" ? "active" : ""}`}
-          onClick={() => setActiveTab("customers")}
-        >
-          🏢 Customers
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "news" ? "active" : ""}`}
-          onClick={() => setActiveTab("news")}
-        >
-          📰 Featured News
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      <div className="tab-content">
-        {activeTab === "hero" && (
-          <div className="hero-section">
-            <h2>🎯 Hero Section</h2>
-
-            <EditableSection
-              title="Hero Title"
-              content={homeData?.hero?.title || ""}
-              type="text"
-              onSave={(content) => handleSaveSection("hero.title", content)}
-            />
-
-            <EditableSection
-              title="Hero Subtitle"
-              content={homeData?.hero?.subtitle || ""}
-              type="textarea"
-              onSave={(content) => handleSaveSection("hero.subtitle", content)}
-            />
-
-            <EditableSection
-              title="Background Image"
-              content={homeData?.hero?.backgroundImage || ""}
-              type="image"
-              imagePreview={homeData?.hero?.backgroundImage}
-              onImageUpload={(file) =>
-                handleImageUpload("hero.backgroundImage", file)
-              }
-              onSave={(content) =>
-                handleSaveSection("hero.backgroundImage", content)
-              }
-            />
-
-            <EditableSection
-              title="Video URL"
-              content={homeData?.hero?.videoUrl || ""}
-              type="text"
-              onSave={(content) => handleSaveSection("hero.videoUrl", content)}
-            />
-          </div>
-        )}
-
-        {activeTab === "sections" && (
-          <div className="sections-tab">
-            <div className="section-header">
-              <h2>📄 Content Sections</h2>
-              <button onClick={handleAddSection} className="add-btn">
-                ➕ Thêm Section
-              </button>
+      
+      {/* Hero Section */}
+      <AdminSectionCard title="Hero Section" onSave={() => handleSave('hero')} isSaving={saving === 'hero'} hasChanges={hasChanges('hero')}>
+        <div className="grid-2-col">
+            <div className="form-column">
+                <FormItem label="Tiêu đề chính" icon={<FiType />}>
+                    <input type="text" value={homeData.hero.title || ''} name="title" onChange={(e) => handleInputChange(e, 'hero')} className="form-input" />
+                </FormItem>
+                 <FormItem label="Phụ đề" icon={<FiFileText />}>
+                    <textarea value={homeData.hero.subtitle || ''} name="subtitle" onChange={(e) => handleInputChange(e, 'hero')} className="form-textarea" />
+                </FormItem>
+                 <FormItem label="Video URL" icon={<FiLink />}>
+                    <input type="text" placeholder="Dán link Youtube vào đây" value={homeData.hero.videoUrl || ''} name="videoUrl" onChange={(e) => handleInputChange(e, 'hero')} className="form-input" />
+                </FormItem>
+                 <FormItem label="Hoặc Upload video mới" icon={<FiVideo />}>
+                     <input type="file" onChange={handleVideoUpload} accept="video/*" className="form-file-input"/>
+                 </FormItem>
             </div>
+            <div className="form-column">
+                <FormItem label="Ảnh nền" icon={<FiImage />}>
+                    <div className="image-preview-container">
+                       {homeData.hero.videoUrl ? (
+                           <video 
+                               src={`${BACKEND_DOMAIN}${homeData.hero.videoUrl}`} 
+                               width="300" 
+                               height="150" 
+                               controls 
+                               className="image-preview" 
+                           />
+                       ) : (
+                           <Image 
+                               src={
+                                  heroPreview['hero-backgroundImage']
+                                  ? heroPreview['hero-backgroundImage']
+                                  : (files['hero-backgroundImage']
+                                    ? URL.createObjectURL(files['hero-backgroundImage'])
+                                    : `${BACKEND_DOMAIN}${homeData.hero.backgroundImage}`)
+                               }
+                               alt="Ảnh nền" width={300} height={150} className="image-preview" 
+                           />
+                       )}
+                    </div>
+                    <input type="file" onChange={(e) => handleFileChange(e, 'hero-backgroundImage')} accept="image/*" className="form-file-input"/>
+                </FormItem>
+            </div>
+        </div>
+      </AdminSectionCard>
 
-            {homeData?.sections?.map((section, index) => (
-              <div key={index} className="section-item">
-                <div className="section-item-header">
-                  <h3>Section {index + 1}</h3>
-                  <button
-                    onClick={() => handleDeleteSection(index)}
-                    className="delete-btn"
-                  >
-                    🗑️ Xóa
+      {/* Content Sections */}
+      <AdminSectionCard title="Content Sections" onSave={() => handleSave('sections')} isSaving={saving === 'sections'} hasChanges={hasChanges('sections')}>
+        {homeData.sections.map((section, index) => (
+          <div key={index} className="subsection-card">
+              <h4>Section {index + 1}: {section.title}</h4>
+              <div className="grid-2-col">
+                  <div className="form-column">
+                      <FormItem label="Tiêu đề Section" icon={<FiType />}>
+                        <input type="text" value={section.title} name="title" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
+                      </FormItem>
+                      <FormItem label="Nội dung" icon={<FiFileText />}>
+                        <textarea value={section.content} name="content" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-textarea"/>
+                      </FormItem>
+                      <FormItem label="Chữ trên nút" icon={<FiLink />}>
+                        <input type="text" value={section.buttonText} name="buttonText" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
+                      </FormItem>
+                      <FormItem label="Link cho nút" icon={<FiLink />}>
+                        <input type="text" value={section.buttonLink} name="buttonLink" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
+                      </FormItem>
+                  </div>
+                  <div className="form-column">
+                    <FormItem label="Media (Ảnh/Video)" icon={<FiImage />}>
+                      <div className="image-preview-container">
+                        {section.mediaType === 'image' ? (
+                            <Image 
+                                src={
+                                  mediaPreview[`sections-${index}-mediaUrl`]
+                                    ? mediaPreview[`sections-${index}-mediaUrl`]
+                                    : (files[`sections-${index}-mediaUrl`]
+                                      ? URL.createObjectURL(files[`sections-${index}-mediaUrl`])
+                                      : `${BACKEND_DOMAIN}${section.mediaUrl}`)
+                                }
+                                alt={section.title} width={300} height={150} className="image-preview" 
+                            />
+                        ) : (
+                            <video 
+                              src={
+                                mediaPreview[`sections-${index}-mediaUrl`]
+                                  ? mediaPreview[`sections-${index}-mediaUrl`]
+                                  : (files[`sections-${index}-mediaUrl`]
+                                    ? URL.createObjectURL(files[`sections-${index}-mediaUrl`])
+                                    : `${BACKEND_DOMAIN}${section.mediaUrl}`)
+                              }
+                              width="300" height="150" controls className="image-preview" />
+                        )}
+                      </div>
+                       <input 
+                          type="file" 
+                          onChange={(e) => handleFileChange(e, `sections-${index}-mediaUrl`)} 
+                          accept="image/*,video/*" 
+                          className="form-file-input"
+                       />
+                    </FormItem>
+                  </div>
+              </div>
+          </div>
+        ))}
+      </AdminSectionCard>
+      
+      {/* Customers Section */}
+      <AdminSectionCard title="Đối tác & Khách hàng" onSave={() => handleSave('customers')} isSaving={saving === 'customers'} hasChanges={hasChanges('customers')}>
+         {Object.keys(homeData.customers).map(subSectionKey => (
+             <div key={subSectionKey} className="subsection-card">
+                 <div className="subsection-header">
+                     <h4>{subSectionKey === 'denimWoven' ? 'Denim / Woven' : 'Knit'}</h4>
+                      <button className="btn-add" onClick={() => handleAddCustomer(subSectionKey as 'denimWoven' | 'knit')}><FiPlusCircle /> Thêm mới</button>
+                 </div>
+                 <div className="customer-grid">
+                     {homeData.customers[subSectionKey].map((customer, idx) => (
+                         <div key={customer._id || idx} className="customer-card">
+                            <div className="image-preview-container">
+                               <Image 
+                                   src={
+                                    logoPreview[`customers-${subSectionKey}_${customer._id}-logo`]
+                                    ? logoPreview[`customers-${subSectionKey}_${customer._id}-logo`]
+                                    : (files[`customers-${subSectionKey}_${customer._id}-logo`]
+                                      ? URL.createObjectURL(files[`customers-${subSectionKey}_${customer._id}-logo`])
+                                      : customer.logo.startsWith('/images/')
+                                        ? customer.logo
+                                      : `${BACKEND_DOMAIN}${customer.logo}`)
+                                   }
+                                   alt={customer.name} 
+                                   width={100} 
+                                   height={50} 
+                                   className="image-preview-customer"
+                               />
+                            </div>
+                             <input 
+                                type="file" 
+                                onChange={(e) => handleFileChange(e, `customers-${subSectionKey}_${customer._id}-logo`)} 
+                                accept="image/*" 
+                                className="form-file-input small"
+                                id={`file-${subSectionKey}-${customer._id}`}
+                            />
+                            <input 
+                                type="text" 
+                                value={customer.name || ""} 
+                                name={`name_${customer._id}`} 
+                                onChange={(e) => handleInputChange(e, 'customers', undefined, subSectionKey)} 
+                                placeholder="Tên khách hàng" 
+                                className="form-input small"
+                            />
+                            <input 
+                                type="text" 
+                                value={customer.website || ""} 
+                                name={`website_${customer._id}`} 
+                                onChange={(e) => handleInputChange(e, 'customers', undefined, subSectionKey)} 
+                                placeholder="Website" 
+                                className="form-input small"
+                            />
+                             <button className="btn-delete" onClick={() => handleDeleteCustomer(subSectionKey, customer._id)}><FiTrash2 /></button>
+                         </div>
+                     ))}
+                 </div>
+             </div>
+         ))}
+      </AdminSectionCard>
+
+      {/* Featured News Section */}
+      <AdminSectionCard title="Tin tức hiển thị trên trang chủ">
+          <div className="card-content">
+              <div className="subsection-header">
+                  <p className="admin-page-description">Quản lý tin tức hiển thị trên trang chủ website.</p>
+                  <button className="btn-add" onClick={handleAddNews}><FiPlusCircle /> Thêm tin tức mới</button>
+              </div>
+              {homepageNews.length > 0 ? (
+                <div className="news-grid">
+                  {homepageNews.map(news => (
+                      <div key={news._id} className="news-card">
+                        <div className="news-image-container">
+                          <Image 
+                            src={`${BACKEND_DOMAIN}${news.image}`} 
+                            alt={news.title} 
+                            width={200} 
+                            height={120} 
+                            className="news-thumbnail"
+                          />
+                          <div className="news-actions">
+                            <button 
+                              className="btn-icon btn-edit" 
+                              onClick={() => handleEditNews(news)}
+                              title="Chỉnh sửa tin tức"
+                            >
+                              <FiEdit />
+                            </button>
+                            <button 
+                              className="btn-icon btn-delete" 
+                              onClick={() => {
+                                if(window.confirm('Bạn có chắc chắn muốn xóa tin tức này?')) {
+                                  handleDeleteNews(news._id);
+                                }
+                              }}
+                              title="Xóa tin tức"
+                            >
+                              <FiTrash2 />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="news-content">
+                          <h4 className="news-title">{news.title}</h4>
+                          <p className="news-date">{new Date(news.publishDate).toLocaleDateString()}</p>
+                          <p className="news-excerpt">{news.excerpt}</p>
+                          {news.isFeatured && <span className="news-featured-badge">Tin nổi bật</span>}
+                        </div>
+                      </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-news">
+                  <p>Không có tin tức nào để hiển thị.</p>
+                  <button className="btn-add" onClick={handleAddNews}>
+                    <FiPlusCircle /> Tạo tin tức đầu tiên
                   </button>
                 </div>
-
-                <EditableSection
-                  title="Section Title"
-                  content={section.title}
-                  type="text"
-                  onSave={(content) =>
-                    handleSaveSection(`sections.${index}.title`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Section Content"
-                  content={section.content}
-                  type="textarea"
-                  onSave={(content) =>
-                    handleSaveSection(`sections.${index}.content`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Media URL"
-                  content={section.mediaUrl}
-                  type="image"
-                  imagePreview={section.mediaUrl}
-                  onImageUpload={(file) =>
-                    handleImageUpload(`sections.${index}.mediaUrl`, file)
-                  }
-                  onSave={(content) =>
-                    handleSaveSection(`sections.${index}.mediaUrl`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Media Type"
-                  content={section.mediaType}
-                  type="text"
-                  onSave={(content) =>
-                    handleSaveSection(`sections.${index}.mediaType`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Background Color"
-                  content={section.backgroundColor}
-                  type="text"
-                  onSave={(content) =>
-                    handleSaveSection(
-                      `sections.${index}.backgroundColor`,
-                      content
-                    )
-                  }
-                />
-
-                <EditableSection
-                  title="Button Text"
-                  content={section.buttonText}
-                  type="text"
-                  onSave={(content) =>
-                    handleSaveSection(`sections.${index}.buttonText`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Button Link"
-                  content={section.buttonLink}
-                  type="text"
-                  onSave={(content) =>
-                    handleSaveSection(`sections.${index}.buttonLink`, content)
-                  }
-                />
-              </div>
-            ))}
+              )}
           </div>
-        )}
-
-        {activeTab === "customers" && (
-          <div className="customers-tab">
-            <h2>🏢 Customers</h2>
-
-            <div className="customer-categories">
-              <div className="category">
-                <h3>Denim Woven</h3>
-                {homeData?.customers?.denimWoven?.map(
-                  (customer: CustomerItem, index: number) => (
-                    <div key={index} className="customer-item">
-                      <EditableSection
-                        title={`Customer ${index + 1} - Name`}
-                        content={customer.name}
-                        onSave={(content) =>
-                          handleSaveSection(
-                            `customers.denimWoven.${index}.name`,
-                            content
-                          )
-                        }
-                      />
-                      <EditableSection
-                        title={`Customer ${index + 1} - Logo`}
-                        content={customer.logo}
-                        type="image"
-                        imagePreview={customer.logo}
-                        onImageUpload={(file) =>
-                          handleImageUpload(
-                            `customers.denimWoven.${index}.logo`,
-                            file
-                          )
-                        }
-                        onSave={(content) =>
-                          handleSaveSection(
-                            `customers.denimWoven.${index}.logo`,
-                            content
-                          )
-                        }
-                      />
-                      <EditableSection
-                        title={`Customer ${index + 1} - Website`}
-                        content={customer.website}
-                        onSave={(content) =>
-                          handleSaveSection(
-                            `customers.denimWoven.${index}.website`,
-                            content
-                          )
-                        }
-                      />
-                    </div>
-                  )
-                )}
-              </div>
-
-              <div className="category">
-                <h3>Knit</h3>
-                {homeData?.customers?.knit?.map(
-                  (customer: CustomerItem, index: number) => (
-                    <div key={index} className="customer-item">
-                      <EditableSection
-                        title={`Customer ${index + 1} - Name`}
-                        content={customer.name}
-                        onSave={(content) =>
-                          handleSaveSection(
-                            `customers.knit.${index}.name`,
-                            content
-                          )
-                        }
-                      />
-                      <EditableSection
-                        title={`Customer ${index + 1} - Logo`}
-                        content={customer.logo}
-                        type="image"
-                        imagePreview={customer.logo}
-                        onImageUpload={(file) =>
-                          handleImageUpload(
-                            `customers.knit.${index}.logo`,
-                            file
-                          )
-                        }
-                        onSave={(content) =>
-                          handleSaveSection(
-                            `customers.knit.${index}.logo`,
-                            content
-                          )
-                        }
-                      />
-                      <EditableSection
-                        title={`Customer ${index + 1} - Website`}
-                        content={customer.website}
-                        onSave={(content) =>
-                          handleSaveSection(
-                            `customers.knit.${index}.website`,
-                            content
-                          )
-                        }
-                      />
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "news" && (
-          <div className="news-tab">
-            <h2>📰 Featured News</h2>
-
-            {homeData?.featuredNews?.map((news: NewsItem, index: number) => (
-              <div key={index} className="news-item">
-                <h3>News {index + 1}</h3>
-
-                <EditableSection
-                  title="Title"
-                  content={news.title}
-                  onSave={(content) =>
-                    handleSaveSection(`featuredNews.${index}.title`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Excerpt"
-                  content={news.excerpt}
-                  type="textarea"
-                  onSave={(content) =>
-                    handleSaveSection(`featuredNews.${index}.excerpt`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Image"
-                  content={news.image}
-                  type="image"
-                  imagePreview={news.image}
-                  onImageUpload={(file) =>
-                    handleImageUpload(`featuredNews.${index}.image`, file)
-                  }
-                  onSave={(content) =>
-                    handleSaveSection(`featuredNews.${index}.image`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Content"
-                  content={news.content}
-                  type="textarea"
-                  onSave={(content) =>
-                    handleSaveSection(`featuredNews.${index}.content`, content)
-                  }
-                />
-
-                <EditableSection
-                  title="Publish Date"
-                  content={news.publishDate}
-                  onSave={(content) =>
-                    handleSaveSection(
-                      `featuredNews.${index}.publishDate`,
-                      content
-                    )
-                  }
-                />
-
-                <EditableSection
-                  title="Author"
-                  content={news.author}
-                  onSave={(content) =>
-                    handleSaveSection(`featuredNews.${index}.author`, content)
-                  }
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Preview Section */}
-      <div className="preview-section">
-        <h3>🔍 Preview</h3>
-        <div className="website-preview">
-          <div className="hero-preview">
-            <h1>{homeData?.hero?.title}</h1>
-            <p>{homeData?.hero?.subtitle}</p>
-          </div>
-          <div className="sections-preview">
-            {homeData?.sections?.map((section, index) => (
-              <div key={index} className="section-preview">
-                <h3>{section.title}</h3>
-                <p>{section.content}</p>
-                <button>{section.buttonText}</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </AdminSectionCard>
+      
+      {/* Modal chỉnh sửa tin tức */}
+      <EditNewsModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        news={currentEditNews}
+        onSave={handleSaveNews}
+        isSaving={saving === 'news'}
+      />
     </div>
   );
 }

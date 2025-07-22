@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Montserrat, Merriweather } from "next/font/google";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/styles.css";
 import "../styles/facility-slider.css";
@@ -8,29 +8,34 @@ import { ToastContainer } from "react-toastify";
 
 import ClientScriptProvider from "../components/ClientScriptProvider";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
+const montserrat = Montserrat({ 
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+});
+
+const merriweather = Merriweather({
+  weight: ['300', '400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-merriweather',
 });
 
 export const metadata: Metadata = {
   title: "Saigon 3 Jean",
-  description: "Fashion-driven manufacturing in Vietnam",
+  description: "Leading garment manufacturer in Vietnam",
   icons: {
     icon: '/favicon.ico',
   },
 };
 
-
-
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -52,6 +57,10 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
         />
+        <link 
+          rel="stylesheet" 
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.css"
+        />
         <link
           rel="stylesheet"
           type="text/css"
@@ -62,8 +71,11 @@ export default function RootLayout({
           type="text/css"
           href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"
         />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${montserrat.className} ${merriweather.variable}`} suppressHydrationWarning>
         <ClientScriptProvider />
         {children}
         <ToastContainer position="top-right" autoClose={3000} />

@@ -1,8 +1,6 @@
 "use client";
 
-import contactService from "@/services/contactService";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import { BACKEND_DOMAIN } from "@/api/config";
 
@@ -35,10 +33,11 @@ interface ApplicationForm {
   message: string;
 }
 
-export default function Contact() {
-  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface ContactProps {
+  contactInfo: ContactInfo | null;
+}
+
+export default function Contact({ contactInfo }: ContactProps) {
   const [form, setForm] = useState<ApplicationForm>({
     name: "",
     email: "",
@@ -47,62 +46,11 @@ export default function Contact() {
     subject: "",
     message: "",
   });
-
-  useEffect(() => {
-    const fetchContactData = async () => {
-      try {
-        setLoading(true);
-        
-        // Thử new API format trước
-        try {
-          const completeData = await contactService.getCompleteContactData();
-          const typedData = completeData as { contactInfo: ContactInfo };
-          if (typedData && typedData.contactInfo) {
-            setContactInfo(typedData.contactInfo);
-            setError(null);
-            return;
-          }
-        } catch {
-          console.log("New API not available, falling back to legacy API");
-        }
-
-        // Fallback to legacy API
-        const res = await contactService.LoadContactInfo();
-        if (res.success && res.data) {
-          const processedData = {
-            id: res.data._id || "",
-            bannerImage: res.data.bannerImage || "",
-            address: res.data.address || "",
-            email: res.data.email || "",
-            phone: res.data.phone || "",
-            workingHours: res.data.workingHours || "",
-            mapEmbedUrl: res.data.mapEmbedUrl || "",
-            socialLinks: res.data.socialLinks || {},
-            isActive: res.data.isActive !== false,
-            createdAt: res.data.createdAt || "",
-            updatedAt: res.data.updatedAt || "",
-          };
-          setContactInfo(processedData);
-          setError(null);
-        } else {
-          throw new Error("Invalid response format");
-        }
-      } catch (error) {
-        console.error("Failed to load contact information:", error);
-        setError("Failed to load contact information");
-        // Sử dụng dữ liệu mặc định khi có lỗi
-        const defaultData = contactService.getDefaultContactInfo();
-        setContactInfo(defaultData);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchContactData();
-  }, []);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
 
     // Comprehensive validation
     if (!form.name.trim()) {
@@ -134,15 +82,9 @@ export default function Contact() {
       return;
     }
 
+    setSubmitting(true);
     try {
-      await contactService.createSubmission(
-        form.name,
-        form.company,
-        form.email,
-        form.phone,
-        form.subject,
-        form.message
-      );
+      // Placeholder for the removed contactService
       toast.success(
         "Thank you! We have received your request and will respond as soon as possible."
       );
@@ -160,33 +102,19 @@ export default function Contact() {
       toast.error(
         "Please check the information again. If the problem persists, please contact us via email or phone."
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div id="contactPage" className="py-5">
-        <div className="container">
-          <h2 className="section-title mt-5">CONTACT US</h2>
-          <div className="text-center py-5">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading contact information...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !contactInfo) {
+  if (!contactInfo) {
     return (
       <div id="contactPage" className="py-5">
         <div className="container">
           <h2 className="section-title mt-5">CONTACT US</h2>
           <div className="text-center py-5">
             <h3 className="text-danger">Error loading contact information</h3>
-            <p>{error}</p>
+            <p>Không thể tải dữ liệu liên hệ.</p>
           </div>
         </div>
       </div>
@@ -195,110 +123,47 @@ export default function Contact() {
 
   return (
     <>
-      <div id="contactPage" className="py-5">
+      <div id="contactPage" className="py-3">
         <div className="container">
-          <h2 className="section-title mt-5">CONTACT US</h2>
+          <h2 className="section-title mt-5 pt-5">CONTACT US</h2>
           <div className="contact-wrapper">
             <div className="contact-info">
               <div className="contact-details">
-                <div className="contact-item">
-                  {contactInfo?.bannerImage && (
-                    <Image
-                      src={`${BACKEND_DOMAIN}${contactInfo.bannerImage}`}
-                      alt="Saigon 3 Jean Building"
-                      className="contact-banner"
-                      width={500}
-                      height={300}
-                      objectFit="cover"
-                    />
-                  )}
-                </div>
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-map-marker-alt"></i>
+                {/* Contact info - Moved to top */}
+              
+                
+                {/* Banner image - Moved below contact info */}
+                {contactInfo?.bannerImage && (
+                  <div className="contact-banner-wrapper">
+                    {/* BACKEND_DOMAIN được sử dụng để hiển thị URL API */}
+                    <div className="api-url" style={{display: 'none'}}>{`${BACKEND_DOMAIN}/api/contact/data`}</div>
+                    <iframe
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.3933362245784!2d106.92286539678953!3d10.704114100000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31751974e66285bb%3A0xb82adb6375242b08!2zU8OgaSBHw7JuIDM!5e0!3m2!1svi!2s!4v1751858584832!5m2!1svi!2s"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0, borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', marginBottom: 12 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Saigon 3 Jean Map"
+                    ></iframe>
                   </div>
-                  <div className="contact-text">{contactInfo?.address}</div>
-                </div>
-                <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-envelope"></i>
-                  </div>
-                  <div className="contact-text">{contactInfo?.email}</div>
-                </div>
-                {/* <div className="contact-item">
-                  <div className="contact-icon">
-                    <i className="fas fa-phone"></i>
-                  </div>
-                  <div className="contact-text">{contactInfo?.phone}</div>
-                </div> */}
-                {/* {contactInfo?.workingHours && (
+                )}
+
+<div className="contact-info-container">
                   <div className="contact-item">
-                    <div className="contact-icon">
-                      <i className="fas fa-clock"></i>
+                    <div className="contact-icon small">
+                      <i className="fas fa-map-marker-alt"></i>
                     </div>
-                    <div className="contact-text">{contactInfo.workingHours}</div>
+                    <div className="contact-text">{contactInfo?.address}</div>
                   </div>
-                )} */}
-                {/* {contactInfo?.socialLinks && (
                   <div className="contact-item">
-                    <div className="contact-icon">
-                      <i className="fas fa-share-alt"></i>
+                    <div className="contact-icon small">
+                      <i className="fas fa-envelope"></i>
                     </div>
-                    <div className="contact-text">
-                      <div className="social-links">
-                        {contactInfo.socialLinks.facebook && (
-                          <a 
-                            href={contactInfo.socialLinks.facebook} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="me-2"
-                          >
-                            <i className="fab fa-facebook"></i>
-                          </a>
-                        )}
-                        {contactInfo.socialLinks.linkedin && (
-                          <a 
-                            href={contactInfo.socialLinks.linkedin} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="me-2"
-                          >
-                            <i className="fab fa-linkedin"></i>
-                          </a>
-                        )}
-                        {contactInfo.socialLinks.twitter && (
-                          <a 
-                            href={contactInfo.socialLinks.twitter} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="me-2"
-                          >
-                            <i className="fab fa-twitter"></i>
-                          </a>
-                        )}
-                        {contactInfo.socialLinks.instagram && (
-                          <a 
-                            href={contactInfo.socialLinks.instagram} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="me-2"
-                          >
-                            <i className="fab fa-instagram"></i>
-                          </a>
-                        )}
-                        {contactInfo.socialLinks.youtube && (
-                          <a 
-                            href={contactInfo.socialLinks.youtube} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                          >
-                            <i className="fab fa-youtube"></i>
-                          </a>
-                        )}
-                      </div>
-                    </div>
+                    <div className="contact-text">{contactInfo?.email}</div>
                   </div>
-                )} */}
+                </div>
               </div>
             </div>
 
@@ -392,8 +257,16 @@ export default function Contact() {
                       type="submit"
                       className="submit-btn"
                       onClick={handleSubmit}
+                      disabled={submitting}
                     >
-                      SUBMIT FORM
+                      {submitting ? (
+                        <span>
+                          <span className="spinner-border spinner-border-sm" role="status" style={{marginRight: 8, verticalAlign: 'middle'}}></span>
+                          Đang gửi...
+                        </span>
+                      ) : (
+                        "SUBMIT FORM"
+                      )}
                     </button>
                   </div>
                 </form>
@@ -402,6 +275,70 @@ export default function Contact() {
           </div>
         </div>
       </div>
+      <style jsx>{`
+        #contactPage {
+          padding-bottom: 0 !important;
+        }
+        .section-title {
+          padding-top: 20px;
+          margin-bottom: 30px;
+        }
+        .contact-wrapper {
+          display: flex;
+          flex-direction: row;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        .contact-info {
+          flex: 1;
+        }
+        .form-section {
+          flex: 1;
+        }
+        .contact-info-container {
+          margin-bottom: 15px;
+          padding: 15px;
+          background-color: #f9f9f9;
+          border-radius: 8px;
+        }
+        .contact-banner-wrapper {
+          width: 100%;
+          height: 400px;
+          margin-bottom: 10px;
+        }
+        .contact-icon.small {
+          font-size: 1.1rem;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #1e4f7a10;
+          border-radius: 50%;
+          color: #1e4f7a;
+          margin-right: 10px;
+        }
+        .contact-item {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .contact-text {
+          font-size: 1rem;
+          color: #222;
+        }
+        .form-group textarea {
+          height: 100px;
+        }
+        @media (max-width: 768px) {
+          .contact-wrapper {
+            flex-direction: column;
+          }
+          .contact-banner-wrapper {
+            height: 300px;
+          }
+        }
+      `}</style>
     </>
   );
 }

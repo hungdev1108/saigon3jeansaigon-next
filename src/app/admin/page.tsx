@@ -17,22 +17,10 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Kiểm tra authentication
-    if (!authService.isAuthenticated()) {
-      router.push("/admin/login");
-      return;
-    }
-
-    // Lấy thông tin user
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     setLoading(false);
   }, [router]);
-
-  const handleLogout = () => {
-    authService.logout();
-    router.push("/admin/login");
-  };
 
   if (loading) {
     return (
@@ -46,332 +34,180 @@ export default function AdminDashboard() {
   return (
     <div className="admin-dashboard">
       <div className="dashboard-header">
-        <div className="welcome-section">
-          <h1>🎉 Chào mừng đến với Admin Panel</h1>
-          <p>
-            Xin chào, <strong>{user?.username || "Admin"}</strong>! Quản lý nội
-            dung website Saigon3Jeans của bạn.
-          </p>
-        </div>
-
-        <button onClick={handleLogout} className="logout-btn">
-          🚪 Đăng xuất
-        </button>
-      </div>
-
-      <div className="dashboard-grid">
-        {/* Trang chủ */}
-        <Link href="/admin/home" className="dashboard-card">
-          <div className="card-icon">🏠</div>
-          <h3>Trang Chủ</h3>
-          <p>
-            Quản lý nội dung trang chủ, hero section, sections và featured news
-          </p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Sản phẩm */}
-        <Link href="/admin/products" className="dashboard-card">
-          <div className="card-icon">👕</div>
-          <h3>Sản Phẩm</h3>
-          <p>Quản lý danh mục sản phẩm, thêm/sửa/xóa sản phẩm</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Máy móc */}
-        <Link href="/admin/machinery" className="dashboard-card">
-          <div className="card-icon">⚙️</div>
-          <h3>Máy Móc</h3>
-          <p>Quản lý thông tin máy móc, thiết bị sản xuất</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Cơ sở vật chất */}
-        <Link href="/admin/facilities" className="dashboard-card">
-          <div className="card-icon">🏭</div>
-          <h3>Cơ Sở Vật Chất</h3>
-          <p>Quản lý thông tin nhà xưởng, cơ sở vật chất</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Tự động hóa */}
-        <Link href="/admin/automation" className="dashboard-card">
-          <div className="card-icon">🤖</div>
-          <h3>Tự Động Hóa</h3>
-          <p>Quản lý thông tin về hệ thống tự động hóa</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Thân thiện môi trường */}
-        <Link href="/admin/eco-friendly" className="dashboard-card">
-          <div className="card-icon">🌱</div>
-          <h3>Thân Thiện Môi Trường</h3>
-          <p>Quản lý nội dung về các sáng kiến xanh</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Tuyển dụng */}
-        <Link href="/admin/recruitment" className="dashboard-card">
-          <div className="card-icon">👥</div>
-          <h3>Tuyển Dụng</h3>
-          <p>Quản lý tin tuyển dụng và ứng viên</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Liên hệ */}
-        <Link href="/admin/contact" className="dashboard-card">
-          <div className="card-icon">📞</div>
-          <h3>Liên Hệ</h3>
-          <p>Quản lý thông tin liên hệ và tin nhắn</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Tổng quan */}
-        <Link href="/admin/overview" className="dashboard-card">
-          <div className="card-icon">📊</div>
-          <h3>Tổng Quan</h3>
-          <p>Quản lý nội dung trang tổng quan về công ty</p>
-          <div className="card-arrow">→</div>
-        </Link>
-
-        {/* Cài đặt */}
-        <Link href="/admin/settings" className="dashboard-card">
-          <div className="card-icon">⚙️</div>
-          <h3>Cài Đặt</h3>
-          <p>Cài đặt hệ thống và cấu hình website</p>
-          <div className="card-arrow">→</div>
-        </Link>
+        <h1>🎉 Chào mừng đến với Admin Panel</h1>
+        <p>
+          Xin chào, <strong>{user?.username || "Admin"}</strong>! Quản lý nội dung website Saigon3Jeans của bạn.
+        </p>
       </div>
 
       <div className="dashboard-stats">
-        <h2>📈 Thống Kê Nhanh</h2>
-        <div className="stats-grid">
-          <div className="stat-item">
-            <div className="stat-icon">📄</div>
-            <div className="stat-info">
-              <h3>Content</h3>
-              <p>Quản lý nội dung</p>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <div className="stat-card-icon" style={{ backgroundColor: 'rgba(92, 124, 250, 0.1)', color: '#5C7CFA' }}>
+              🏠
+            </div>
+            <div>
+              <p className="stat-card-title">Trang chủ</p>
             </div>
           </div>
+          <div className="stat-card-value">5</div>
+          <div className="stat-card-description">
+            <span className="stat-trend-up">↑ 20%</span>
+            <span>so với tuần trước</span>
+          </div>
+        </div>
 
-          <div className="stat-item">
-            <div className="stat-icon">🖼️</div>
-            <div className="stat-info">
-              <h3>Media</h3>
-              <p>Quản lý hình ảnh</p>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <div className="stat-card-icon" style={{ backgroundColor: 'rgba(64, 192, 87, 0.1)', color: '#40C057' }}>
+              👕
+            </div>
+            <div>
+              <p className="stat-card-title">Sản phẩm</p>
             </div>
           </div>
+          <div className="stat-card-value">24</div>
+          <div className="stat-card-description">
+            <span className="stat-trend-up">↑ 12%</span>
+            <span>so với tuần trước</span>
+          </div>
+        </div>
 
-          <div className="stat-item">
-            <div className="stat-icon">🎨</div>
-            <div className="stat-info">
-              <h3>Design</h3>
-              <p>Tùy chỉnh giao diện</p>
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <div className="stat-card-icon" style={{ backgroundColor: 'rgba(22, 177, 255, 0.1)', color: '#16B1FF' }}>
+              📞
+            </div>
+            <div>
+              <p className="stat-card-title">Liên hệ</p>
             </div>
           </div>
-
-          <div className="stat-item">
-            <div className="stat-icon">🔧</div>
-            <div className="stat-info">
-              <h3>Settings</h3>
-              <p>Cấu hình hệ thống</p>
-            </div>
+          <div className="stat-card-value">18</div>
+          <div className="stat-card-description">
+            <span className="stat-trend-up">↑ 8%</span>
+            <span>so với tuần trước</span>
           </div>
         </div>
       </div>
 
-      <style jsx>{`
-        .admin-dashboard {
-          padding: 20px;
-          max-width: 1200px;
-          margin: 0 auto;
-        }
+      <div className="dashboard-card">
+        <div className="card-header">
+          <h2 className="card-title">Các trang quản lý</h2>
+          <Link href="/admin/settings" className="btn btn-secondary">Xem tất cả</Link>
+        </div>
 
-        .dashboard-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 40px;
-          padding: 20px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 15px;
-          color: white;
-        }
+        <div className="dashboard-grid">
+          {/* Trang chủ */}
+          <Link href="/admin/home" className="info-card" style={{cursor: 'pointer'}}>
+            <div className="info-card-icon" style={{ backgroundColor: 'rgba(92, 124, 250, 0.1)', color: '#5C7CFA' }}>
+              🏠
+            </div>
+            <div className="info-card-content">
+              <h3>Trang Chủ</h3>
+              <p>Quản lý nội dung trang chủ</p>
+            </div>
+          </Link>
 
-        .welcome-section h1 {
-          margin: 0 0 10px 0;
-          font-size: 28px;
-          font-weight: 700;
-        }
+          {/* Sản phẩm */}
+          <Link href="/admin/products" className="info-card" style={{cursor: 'pointer'}}>
+            <div className="info-card-icon" style={{ backgroundColor: 'rgba(64, 192, 87, 0.1)', color: '#40C057' }}>
+              👕
+            </div>
+            <div className="info-card-content">
+              <h3>Sản Phẩm</h3>
+              <p>Quản lý danh mục sản phẩm</p>
+            </div>
+          </Link>
 
-        .welcome-section p {
-          margin: 0;
-          opacity: 0.9;
-          font-size: 16px;
-        }
+          {/* Máy móc */}
+          <Link href="/admin/machinery" className="info-card" style={{cursor: 'pointer'}}>
+            <div className="info-card-icon" style={{ backgroundColor: 'rgba(250, 82, 82, 0.1)', color: '#FA5252' }}>
+              ⚙️
+            </div>
+            <div className="info-card-content">
+              <h3>Máy Móc</h3>
+              <p>Quản lý thông tin máy móc</p>
+            </div>
+          </Link>
 
-        .logout-btn {
-          background: rgba(255, 255, 255, 0.2);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          padding: 10px 20px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          font-weight: 600;
-        }
+          {/* Cơ sở vật chất */}
+          <Link href="/admin/facilities" className="info-card" style={{cursor: 'pointer'}}>
+            <div className="info-card-icon" style={{ backgroundColor: 'rgba(255, 171, 0, 0.1)', color: '#FFAB00' }}>
+              🏭
+            </div>
+            <div className="info-card-content">
+              <h3>Cơ Sở Vật Chất</h3>
+              <p>Quản lý thông tin nhà xưởng</p>
+            </div>
+          </Link>
 
-        .logout-btn:hover {
-          background: rgba(255, 255, 255, 0.3);
-          transform: translateY(-2px);
-        }
+          {/* Tự động hóa */}
+          <Link href="/admin/automation" className="info-card" style={{cursor: 'pointer'}}>
+            <div className="info-card-icon" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', color: '#8B5CF6' }}>
+              🤖
+            </div>
+            <div className="info-card-content">
+              <h3>Tự Động Hóa</h3>
+              <p>Quản lý thông tin tự động hóa</p>
+            </div>
+          </Link>
 
-        .dashboard-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 20px;
-          margin-bottom: 40px;
-        }
+          {/* Thân thiện môi trường */}
+          <Link href="/admin/eco-friendly" className="info-card" style={{cursor: 'pointer'}}>
+            <div className="info-card-icon" style={{ backgroundColor: 'rgba(64, 192, 87, 0.1)', color: '#40C057' }}>
+              🌱
+            </div>
+            <div className="info-card-content">
+              <h3>Thân Thiện Môi Trường</h3>
+              <p>Quản lý nội dung xanh</p>
+            </div>
+          </Link>
+        </div>
+      </div>
 
-        .dashboard-card {
-          background: white;
-          border-radius: 15px;
-          padding: 25px;
-          text-decoration: none;
-          color: inherit;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-          transition: all 0.3s ease;
-          position: relative;
-          border: 1px solid #e1e5e9;
-        }
-
-        .dashboard-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-          border-color: #667eea;
-        }
-
-        .card-icon {
-          font-size: 48px;
-          margin-bottom: 15px;
-        }
-
-        .dashboard-card h3 {
-          margin: 0 0 10px 0;
-          font-size: 20px;
-          font-weight: 700;
-          color: #333;
-        }
-
-        .dashboard-card p {
-          margin: 0;
-          color: #666;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-
-        .card-arrow {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          font-size: 20px;
-          color: #667eea;
-          opacity: 0;
-          transition: all 0.3s ease;
-        }
-
-        .dashboard-card:hover .card-arrow {
-          opacity: 1;
-          transform: translateX(5px);
-        }
-
-        .dashboard-stats {
-          background: white;
-          border-radius: 15px;
-          padding: 25px;
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        }
-
-        .dashboard-stats h2 {
-          margin: 0 0 20px 0;
-          color: #333;
-          font-size: 24px;
-        }
-
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 20px;
-        }
-
-        .stat-item {
-          display: flex;
-          align-items: center;
-          padding: 15px;
-          background: #f8f9fa;
-          border-radius: 10px;
-        }
-
-        .stat-icon {
-          font-size: 32px;
-          margin-right: 15px;
-        }
-
-        .stat-info h3 {
-          margin: 0 0 5px 0;
-          font-size: 16px;
-          color: #333;
-        }
-
-        .stat-info p {
-          margin: 0;
-          color: #666;
-          font-size: 12px;
-        }
-
-        .admin-loading {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          min-height: 50vh;
-        }
-
-        .loading-spinner {
-          width: 40px;
-          height: 40px;
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #667eea;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin-bottom: 20px;
-        }
-
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-
-        @media (max-width: 768px) {
-          .dashboard-header {
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
-          }
-
-          .dashboard-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .stats-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
+      <div className="dashboard-card">
+        <div className="card-header">
+          <h2 className="card-title">Hoạt động gần đây</h2>
+          <button className="btn btn-secondary">Làm mới</button>
+        </div>
+        
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Người dùng</th>
+              <th>Hoạt động</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Hôm nay, 10:30</td>
+              <td>{user?.username || "Admin"}</td>
+              <td>Đăng nhập vào hệ thống</td>
+              <td><span className="badge badge-success">Thành công</span></td>
+            </tr>
+            <tr>
+              <td>Hôm nay, 10:35</td>
+              <td>{user?.username || "Admin"}</td>
+              <td>Truy cập trang quản trị</td>
+              <td><span className="badge badge-success">Thành công</span></td>
+            </tr>
+            <tr>
+              <td>Hôm qua, 15:42</td>
+              <td>{user?.username || "Admin"}</td>
+              <td>Cập nhật nội dung trang chủ</td>
+              <td><span className="badge badge-success">Thành công</span></td>
+            </tr>
+            <tr>
+              <td>Hôm qua, 14:20</td>
+              <td>{user?.username || "Admin"}</td>
+              <td>Thêm sản phẩm mới</td>
+              <td><span className="badge badge-info">Hoàn tất</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

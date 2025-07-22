@@ -1,10 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
-import homeService from "../../services/homeService";
 import { BACKEND_DOMAIN } from "../../api/config";
 import ClientOnly from "../ClientOnly";
 
@@ -66,63 +65,85 @@ interface HomeData {
   featuredNews: NewsData[];
 }
 
-export default function Home() {
-  // Sử dụng hook để khởi tạo tất cả JavaScript functionality
+interface HomeProps {
+  homeData: HomeData | null;
+}
+
+export default function Home({ homeData }: HomeProps) {
   useClientScript();
 
-  // State để lưu dữ liệu từ API
-  const [homeData, setHomeData] = useState<HomeData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      document.body.classList.add("loaded");
+    }
+    return () => {
+      document.body.classList.remove("loaded");
+    };
+  }, []);
 
-  // Function to get customer slider settings based on item count
-  const getCustomerSliderSettings = (itemCount: number) => ({
+  // Nếu không có dữ liệu
+  if (!homeData) {
+    return (
+      <div className="alert alert-danger m-3" role="alert">
+        Không thể tải dữ liệu trang chủ
+      </div>
+    );
+  }
+
+  const { hero, sections, customers, certifications, featuredNews } = homeData;
+
+  // Function to get customer slider settings
+  const getCustomerSliderSettings = () => ({
     dots: false,
     arrows: false,
-    infinite: itemCount > 4,
+    infinite: true,
     speed: 500,
-    slidesToShow: Math.min(4, itemCount),
+    slidesToShow: 4,
     slidesToScroll: 1,
-    autoplay: itemCount > 4,
+    autoplay: true,
     autoplaySpeed: 3000,
     pauseOnHover: true,
     centerMode: false,
     centerPadding: "0px",
     variableWidth: false,
     swipeToSlide: true,
+    cssEase: "linear",
     responsive: [
       {
         breakpoint: 1200,
         settings: {
-          slidesToShow: Math.min(3, itemCount),
+          slidesToShow: 3,
           slidesToScroll: 1,
-          infinite: itemCount > 3,
+          infinite: true,
           arrows: false,
           centerMode: false,
           centerPadding: "0px",
+          autoplay: true,
         },
       },
       {
         breakpoint: 992,
         settings: {
-          slidesToShow: Math.min(2, itemCount),
+          slidesToShow: 2,
           slidesToScroll: 1,
-          infinite: itemCount > 2,
+          infinite: true,
           arrows: false,
           centerMode: false,
           centerPadding: "0px",
+          autoplay: true,
         },
       },
       {
         breakpoint: 768,
         settings: {
-          slidesToShow: Math.min(2, itemCount),
+          slidesToShow: 2,
           slidesToScroll: 1,
           dots: false,
           arrows: false,
-          infinite: itemCount > 2,
+          infinite: true,
           centerMode: false,
           centerPadding: "0px",
+          autoplay: true,
         },
       },
       {
@@ -132,80 +153,42 @@ export default function Home() {
           slidesToScroll: 1,
           dots: false,
           arrows: false,
-          infinite: itemCount > 1,
-          centerMode: itemCount === 1,
-          centerPadding: itemCount === 1 ? "30px" : "0px",
+          infinite: true,
+          centerMode: false,
+          centerPadding: "0px",
+          autoplay: true,
         },
       },
     ],
   });
-
-  // Fetch dữ liệu khi component mount
-  useEffect(() => {
-    const fetchHomeData = async () => {
-      try {
-        setLoading(true);
-        const data = await homeService.getCompleteHomeData();
-        setHomeData(data as HomeData);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching home data:", err);
-        setError("Không thể tải dữ liệu trang chủ");
-        // Sử dụng dữ liệu mặc định khi có lỗi
-        const defaultData = homeService.getDefaultHomeData();
-        setHomeData(defaultData as HomeData);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHomeData();
-  }, []);
-
-  // Hiển thị loading state
-  if (loading) {
-    return (
-      <ClientOnly>
-        <div
-          className="d-flex justify-content-center align-items-center"
-          style={{ minHeight: "100vh" }}
-        >
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Đang tải...</span>
-          </div>
-        </div>
-      </ClientOnly>
-    );
-  }
-
-  // Hiển thị error state (nhưng vẫn có dữ liệu mặc định)
-  if (error && !homeData) {
-    return (
-      <div className="alert alert-danger m-3" role="alert">
-        {error}
-      </div>
-    );
-  }
-
-  const { hero, sections, customers, certifications, featuredNews } =
-    homeData || {};
 
   return (
     <ClientOnly>
       {/* Hero Section */}
       <section className="hero-section">
         <div className="video-container">
-          <Image
-            src={
-              hero?.backgroundImage
-                ? `${BACKEND_DOMAIN}${hero.backgroundImage}`
-                : "/images/home_banner-section2.jpg"
-            }
-            alt="Factory Aerial View"
-            className="img-fluid w-100"
-            width={1920}
-            height={1080}
-          />
+          {hero?.videoUrl ? (
+            <video 
+              src={`${BACKEND_DOMAIN}${hero.videoUrl}`}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-100 h-100 object-fit-cover"
+            />
+          ) : (
+            <Image
+              src={
+                hero?.backgroundImage
+                  ? `${BACKEND_DOMAIN}${hero.backgroundImage}`
+                  : "/images/home_banner-section2.jpg"
+              }
+              alt="Factory Aerial View"
+              className="img-fluid w-100"
+              width={1920}
+              height={1080}
+            />
+          )}
           <div className="overlay"></div>
         </div>
         <div className="text-overlay">
@@ -313,9 +296,9 @@ export default function Home() {
       <section className="ai-integration">
         <div className="container-fluid p-0">
           <div className="row g-0">
-            <div className="col-12 position-relative">
+            <div className="col-12 position-relative ai-integration-banner">
               <Image
-                src="/images/home_banner-section2.jpg"
+                src="/images/SectionAI.jpg"
                 alt="Conference Room"
                 className="img-fluid w-100"
                 width={1920}
@@ -324,9 +307,8 @@ export default function Home() {
               <div className="overlay"></div>
               <div className="ai-content text-center text-white">
                 <h2 className="fw-bold">
-                  AI INTEGRATION FOR
-                  <br />
-                  AUTOMATED PRODUCTION
+                SMARTER FUTURE 
+                WITH AI AND AUTOMATION
                 </h2>
                 <a
                   href="/automation"
@@ -354,12 +336,14 @@ export default function Home() {
       {/* Factory View Section */}
       <section className="factory-view mb-4">
         <div className="container-fluid p-0">
-          <Image
-            src="/images/home_banner-section3.png"
-            alt="Factory Aerial View"
+          <video
+            src="/videos/STORY_SG3J.mp4"
+            autoPlay
+            muted
+            loop
+            playsInline
             className="img-fluid w-100"
-            width={1920}
-            height={1080}
+            style={{ objectFit: "cover", width: "100%", height: "auto" }}
           />
         </div>
       </section>
@@ -390,9 +374,7 @@ export default function Home() {
                     {customers?.denimWoven &&
                     customers.denimWoven.length > 0 ? (
                       <Slider
-                        {...getCustomerSliderSettings(
-                          customers.denimWoven.length
-                        )}
+                        {...getCustomerSliderSettings()}
                         className="customer-slider"
                       >
                         {customers.denimWoven.map(
@@ -429,7 +411,7 @@ export default function Home() {
                   <div className="customer-slider-container">
                     {customers?.knit && customers.knit.length > 0 ? (
                       <Slider
-                        {...getCustomerSliderSettings(customers.knit.length)}
+                        {...getCustomerSliderSettings()}
                         className="customer-slider"
                       >
                         {customers.knit.map(
@@ -537,7 +519,7 @@ export default function Home() {
                         !cert.name.includes("ISO")
                     )
                     .map((cert, index) => (
-                      <div key={index} className="cert-row mb-3">
+                      <div key={index} className="cert-row">
                         <div
                           className={`cert-row-content ${cert.name
                             .toLowerCase()
@@ -633,8 +615,8 @@ export default function Home() {
                     </div>
                   ))}
 
-                {/* Fallback news nếu không đủ dữ liệu từ API */}
-                {(!featuredNews || featuredNews.length < 2) && (
+                {/* Fallback news nếu không có dữ liệu từ API */}
+                {(!featuredNews || featuredNews.length === 0) && (
                   <>
                     <div className="news-list-item mb-3">
                       <div className="news-item-content">
@@ -735,10 +717,8 @@ export default function Home() {
             <div className="col-md-4 mb-4">
               <div className="contact-box">
                 <h4>CONTACT</h4>
-                <h5 className="contact-subtitle">Sustainable Partnership</h5>
                 <p className="contact-description">
-                  We seek like-minded provide high-quality manufacturing
-                  services innovation, and work together sustainable growth
+                Seeking us and you&apos;ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint
                 </p>
                 <a href="/contact" className="btn btn-dark">
                   CONTACT US

@@ -271,8 +271,17 @@
 .machine-image-slider {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  aspect-ratio: 5 / 3; /* Giữ tỉ lệ khung hình, có thể chỉnh 4/3 hoặc 16/9 nếu muốn */
+  max-width: 100%;
   margin: 0 auto;
+  overflow: hidden;
+}
+
+.machine-image-slider img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
 }
 
 .machine-image-slider .slick-slider {

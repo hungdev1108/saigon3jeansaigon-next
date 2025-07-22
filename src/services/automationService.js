@@ -11,18 +11,16 @@ class AutomationService {
   async getCompleteAutomationData() {
     try {
       const response = await automationApi.getAutomationData();
-
       if (!response.success) {
         throw new Error("Failed to fetch automation data");
       }
-
       const { data } = response;
-
-      // Xử lý và format dữ liệu
+      // Ưu tiên lấy automationItems, fallback sang items nếu không có
+      const itemsArr = Array.isArray(data.automationItems) ? data.automationItems : data.items;
       return {
         pageTitle: data.pageTitle || "AUTOMATION",
         pageDescription: data.pageDescription || "Advanced automation systems for precision manufacturing",
-        items: this.processItemsData(data.items),
+        items: this.processItemsData(itemsArr),
         seo: this.processSeoData(data.seo),
       };
     } catch (error) {
@@ -30,8 +28,8 @@ class AutomationService {
         "AutomationService - Error getting complete automation data:",
         error
       );
-      // Trả về dữ liệu mặc định nếu API fail
-      return this.getDefaultAutomationData();
+      // Không trả về dữ liệu mặc định nữa
+      return { items: [] };
     }
   }
 
@@ -41,7 +39,7 @@ class AutomationService {
    * @returns {Array} Dữ liệu items đã xử lý
    */
   processItemsData(itemsData) {
-    if (!Array.isArray(itemsData)) return this.getDefaultItems();
+    if (!Array.isArray(itemsData)) return [];
 
     return itemsData
       .filter((item) => item.isActive !== false)
@@ -54,6 +52,13 @@ class AutomationService {
         imageAlt: item.imageAlt || item.title,
         order: item.order || 0,
         isActive: item.isActive !== false,
+        contentItems: Array.isArray(item.contentItems) ? item.contentItems.map(content => ({
+          _id: content._id || `content-${content.title}`,
+          title: content.title || "",
+          description: content.description || "",
+          order: content.order || 0,
+          isActive: content.isActive !== false
+        })) : []
       }));
   }
 
@@ -95,7 +100,236 @@ class AutomationService {
       return this.processItemsData(response.data);
     } catch (error) {
       console.error("AutomationService - Error getting items:", error);
-      return this.getDefaultItems();
+      return [];
+    }
+  }
+
+  /**
+   * Cập nhật danh sách automation items
+   * @param {Array} items - Danh sách automation items
+   * @param {Object} files - Các file ảnh cần upload
+   * @returns {Promise<Object>} Kết quả cập nhật
+   */
+  async updateItems(items, files = {}) {
+    try {
+      // Xử lý upload files nếu có
+      if (Object.keys(files).length > 0) {
+        const formData = new FormData();
+        
+        // Thêm các file vào formData
+        Object.entries(files).forEach(([key, file]) => {
+          formData.append(key, file);
+        });
+        
+        // Thêm dữ liệu items dưới dạng JSON
+        formData.append('items', JSON.stringify(items));
+        
+        // Gọi API với formData
+        const response = await fetch(`${automationApi.baseUrl}/api/automation/items/with-files`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update items: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } else {
+        // Nếu không có file, gọi API thông thường
+        return await automationApi.updateItems(items);
+      }
+    } catch (error) {
+      console.error("AutomationService - Error updating items:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cập nhật cài đặt trang automation
+   * @param {Object} settings - Cài đặt trang (title, description, SEO)
+   * @param {Object} files - Các file cần upload
+   * @returns {Promise<Object>} Kết quả cập nhật
+   */
+  async updatePageSettings(settings, files = {}) {
+    try {
+      // Xử lý upload files nếu có
+      if (Object.keys(files).length > 0) {
+        const formData = new FormData();
+        
+        // Thêm các file vào formData
+        Object.entries(files).forEach(([key, file]) => {
+          formData.append(key, file);
+        });
+        
+        // Thêm dữ liệu settings dưới dạng JSON
+        formData.append('settings', JSON.stringify(settings));
+        
+        // Gọi API với formData
+        const response = await fetch(`${automationApi.baseUrl}/api/automation/settings/with-files`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update settings: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } else {
+        // Nếu không có file, gọi API thông thường
+        return await automationApi.updatePageSettings(settings);
+      }
+    } catch (error) {
+      console.error("AutomationService - Error updating page settings:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cập nhật một automation item
+   * @param {string} itemId - ID của item cần cập nhật
+   * @param {Object} itemData - Dữ liệu cập nhật
+   * @param {File|null} file - File ảnh mới (nếu có)
+   * @returns {Promise<Object>} Kết quả cập nhật
+   */
+  async updateItem(itemId, itemData, file) {
+    try {
+      if (file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        // Thêm các trường dữ liệu khác
+        Object.entries(itemData).forEach(([key, value]) => {
+          if (key !== 'image' && key !== 'contentItems') {
+            formData.append(key, typeof value === 'string' ? value : JSON.stringify(value));
+          }
+        });
+        
+        // Xử lý contentItems riêng vì là array
+        if (itemData.contentItems) {
+          formData.append('contentItems', JSON.stringify(itemData.contentItems));
+        }
+        
+        // Gọi API với formData
+        const response = await fetch(`${automationApi.baseUrl}/api/automation/items/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update item: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      } else {
+        // Nếu không có file, gửi dữ liệu dưới dạng JSON
+        const response = await fetch(`${automationApi.baseUrl}/api/automation/items/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(itemData)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to update item: ${response.statusText}`);
+        }
+        
+        return await response.json();
+      }
+    } catch (error) {
+      console.error(`AutomationService - Error updating item ${itemId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Thêm mới một automation item
+   * @param {Object} itemData - Dữ liệu item mới
+   * @param {File|null} file - File ảnh (nếu có)
+   * @returns {Promise<Object>} Kết quả thêm mới
+   */
+  async addItem(itemData, file) {
+    try {
+      if (file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        // Thêm các trường dữ liệu khác
+        Object.entries(itemData).forEach(([key, value]) => {
+          if (key !== 'image' && key !== 'contentItems' && key !== 'id' && key !== '_id') {
+            formData.append(key, typeof value === 'string' ? value : JSON.stringify(value));
+          }
+        });
+        // Đảm bảo contentItems luôn là array khi gửi lên
+        if (Array.isArray(itemData.contentItems)) {
+          formData.append('contentItems', JSON.stringify(itemData.contentItems));
+        }
+        // Gọi API với formData
+        const response = await fetch(`${automationApi.baseUrl}/api/automation/items`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: formData
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to add item: ${response.statusText}`);
+        }
+        return await response.json();
+      } else {
+        // Nếu không có file, gửi dữ liệu dưới dạng JSON
+        const response = await fetch(`${automationApi.baseUrl}/api/automation/items`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(itemData)
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to add item: ${response.statusText}`);
+        }
+        return await response.json();
+      }
+    } catch (error) {
+      console.error("AutomationService - Error adding item:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Xóa một automation item
+   * @param {string} itemId - ID của item cần xóa
+   * @returns {Promise<Object>} Kết quả xóa
+   */
+  async deleteItem(itemId) {
+    try {
+      const response = await fetch(`${automationApi.baseUrl}/api/automation/items/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to delete item: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`AutomationService - Error deleting item ${itemId}:`, error);
+      throw error;
     }
   }
 
@@ -137,6 +371,29 @@ class AutomationService {
         imageAlt: "Automated Quality Control System",
         order: 1,
         isActive: true,
+        contentItems: [
+          {
+            _id: "content-automated-1",
+            title: "AUTOMATED QUALITY CONTROL",
+            description: "Advanced automation systems ensure consistent quality and precision in every product through real-time monitoring and control.",
+            order: 1,
+            isActive: true
+          },
+          {
+            _id: "content-automated-2",
+            title: "REAL-TIME MONITORING",
+            description: "Continuous monitoring of production metrics with instant feedback to maintain optimal performance and quality standards.",
+            order: 2,
+            isActive: true
+          },
+          {
+            _id: "content-automated-3",
+            title: "PRECISION TESTING",
+            description: "Automated testing procedures that ensure each product meets exact specifications before proceeding to the next stage.",
+            order: 3,
+            isActive: true
+          }
+        ]
       },
       {
         id: "default-2",
@@ -146,6 +403,29 @@ class AutomationService {
         imageAlt: "Smart Manufacturing System",
         order: 2,
         isActive: true,
+        contentItems: [
+          {
+            _id: "content-smart-1",
+            title: "SMART MANUFACTURING",
+            description: "Intelligent manufacturing processes with IoT integration and data analytics for optimal efficiency and reduced waste.",
+            order: 1,
+            isActive: true
+          },
+          {
+            _id: "content-smart-2",
+            title: "IoT CONNECTIVITY",
+            description: "Connected devices throughout our factory floor communicate seamlessly to optimize production flow.",
+            order: 2,
+            isActive: true
+          },
+          {
+            _id: "content-smart-3",
+            title: "DATA ANALYTICS",
+            description: "Advanced analytics provide insights for continuous improvement and proactive maintenance scheduling.",
+            order: 3,
+            isActive: true
+          }
+        ]
       },
       {
         id: "default-3",
@@ -155,6 +435,29 @@ class AutomationService {
         imageAlt: "Process Automation System",
         order: 3,
         isActive: true,
+        contentItems: [
+          {
+            _id: "content-process-1",
+            title: "PROCESS AUTOMATION",
+            description: "Streamlined production workflows with automated material handling and processing for increased productivity.",
+            order: 1,
+            isActive: true
+          },
+          {
+            _id: "content-process-2",
+            title: "MATERIAL HANDLING",
+            description: "Robotic systems that efficiently move materials between production stages with precision and reliability.",
+            order: 2,
+            isActive: true
+          },
+          {
+            _id: "content-process-3",
+            title: "WORKFLOW OPTIMIZATION",
+            description: "Automated workflows that reduce downtime and maximize throughput across production lines.",
+            order: 3,
+            isActive: true
+          }
+        ]
       },
       {
         id: "default-4",
@@ -164,7 +467,30 @@ class AutomationService {
         imageAlt: "Digital Integration System",
         order: 4,
         isActive: true,
-      },
+        contentItems: [
+          {
+            _id: "content-digital-1",
+            title: "DIGITAL INTEGRATION",
+            description: "Seamless integration of digital technologies for enhanced communication and coordination across all production stages.",
+            order: 1,
+            isActive: true
+          },
+          {
+            _id: "content-digital-2",
+            title: "CENTRALIZED CONTROL",
+            description: "Single control interface for monitoring and managing all aspects of production from one dashboard.",
+            order: 2,
+            isActive: true
+          },
+          {
+            _id: "content-digital-3",
+            title: "CLOUD CONNECTIVITY",
+            description: "Secure cloud-based systems for real-time data access and sharing across facilities worldwide.",
+            order: 3,
+            isActive: true
+          }
+        ]
+      }
     ];
   }
 

@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 // COMMENTED FOR DEVELOPMENT - Tạm comment ProtectedRoute để không cần đăng nhập
 // import ProtectedRoute from "@/components/admin/ProtectedRoute";
-import EditableSection from "@/components/admin/EditableSection";
+// import EditableSection from "@/components/admin/EditableSection";
 import facilitiesAdminService from "@/services/facilitiesService-admin";
+import Toast from "@/components/admin/Toast";
+import AdminSectionCard from "@/components/admin/AdminSectionCard";
+import { FiTrash2, FiEdit, FiPlusCircle } from 'react-icons/fi';
 
 interface KeyMetric {
   id: string;
@@ -22,6 +25,7 @@ interface FacilityFeature {
   description: string;
   image: string;
   imageAlt: string;
+  images: { url: string; alt: string; order: number }[];
   order: number;
   layout: string;
 }
@@ -39,13 +43,135 @@ interface FacilitiesData {
 }
 
 export default function AdminFacilitiesPage() {
-  const [facilitiesData, setFacilitiesData] = useState<FacilitiesData | null>(
-    null
-  );
+  const [facilitiesData, setFacilitiesData] = useState<FacilitiesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("page-info");
+  // Bỏ activeTab, không dùng tab nữa
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'keyMetric'|'facilityFeature'|null>(null);
+  const [modalMode, setModalMode] = useState<'add'|'edit'>('add');
+  const [modalIndex, setModalIndex] = useState<number|null>(null);
+  const [modalData, setModalData] = useState<Partial<KeyMetric & FacilityFeature>>({});
+
+  // Toast state
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastType, setToastType] = useState<'success'|'error'>('success');
+  const [toastMsg, setToastMsg] = useState('');
+  const showToast = (msg: string, type: 'success'|'error' = 'success') => {
+    setToastMsg(msg);
+    setToastType(type);
+    setToastOpen(true);
+  };
+
+  // Mở modal cho Add/Edit
+  const openModal = (type: 'keyMetric'|'facilityFeature', mode: 'add'|'edit', index: number|null = null, data: Partial<KeyMetric & FacilityFeature> = {}) => {
+    if (type === 'keyMetric' && mode === 'add' && (facilitiesData?.keyMetrics?.length || 0) >= 3) {
+      showToast('Chỉ được tối đa 3 Key Metrics!','error');
+      return;
+    }
+    console.log('openModal', {type, mode, index, data});
+    setModalType(type);
+    setModalMode(mode);
+    setModalIndex(index);
+    if (mode === 'add') {
+      if (type === 'keyMetric') {
+        setModalData({icon:'fas fa-chart-bar',value:'0',unit:'',label:'New Metric',order:facilitiesData?.keyMetrics?.length||0});
+      } else {
+        setModalData({title:'New Facility Feature',description:'Feature description...',image:'/images/placeholder-facility.jpg',imageAlt:'New Facility Feature',order:facilitiesData?.facilityFeatures?.length||0,layout:'left'});
+      }
+    } else {
+      setModalData(data);
+    }
+    setModalOpen(true);
+  };
+  const closeModal = () => setModalOpen(false);
+
+  // Xử lý submit modal
+  const handleModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('handleModalSubmit', {modalType, modalMode, modalData});
+    setSaving(true);
+    try {
+      if (modalType === 'keyMetric') {
+        if (modalMode === 'add') {
+          const result = await facilitiesAdminService.addKeyMetric(modalData);
+          if (result.success) {
+            await loadData();
+            showToast('Thêm Key Metric thành công!', 'success');
+          } else showToast(result.message || 'Thêm thất bại','error');
+        } else if (modalMode === 'edit' && modalIndex !== null) {
+          const updated = [...(facilitiesData?.keyMetrics||[])];
+          updated[modalIndex] = { ...updated[modalIndex], ...modalData };
+          const result = await facilitiesAdminService.updateKeyMetrics(updated);
+          if (result.success) {
+            setFacilitiesData(prev => prev ? { ...prev, keyMetrics: updated } : null);
+            showToast('Cập nhật Key Metric thành công!','success');
+          } else showToast(result.message || 'Cập nhật thất bại','error');
+        }
+      } else if (modalType === 'facilityFeature') {
+        if (modalMode === 'add' || modalMode === 'edit') {
+          // 1. Upload các file mới nếu có
+          let uploadedUrls: string[] = [];
+          if (newImages.length > 0) {
+            const formData = new FormData();
+            newImages.forEach(file => formData.append('images', file));
+            // Gọi API upload nhiều ảnh, nhận về mảng url
+            const uploadRes = await facilitiesAdminService.uploadMultipleImages(formData);
+            if (uploadRes.success && Array.isArray(uploadRes.urls)) {
+              uploadedUrls = uploadRes.urls;
+            } else {
+              showToast(uploadRes.message || 'Upload ảnh thất bại', 'error');
+              setSaving(false);
+              return;
+            }
+          }
+          // 2. Gộp url ảnh cũ (modalData.images) và url mới upload
+          const oldUrls = (modalData.images || []).map((img: { url: string }) => img.url);
+          const allUrls = [...oldUrls, ...uploadedUrls];
+          // 3. Gửi mảng url này lên backend khi lưu
+          const featureData = { ...modalData, images: allUrls.map((url, i) => ({ url, alt: modalData.imageAlt || '', order: i })) };
+          let result;
+          if (modalMode === 'add') {
+            result = await facilitiesAdminService.addFacilityFeature(featureData);
+          } else {
+            if (modalIndex !== null) {
+              const updated = [...(facilitiesData?.facilityFeatures||[])];
+              updated[modalIndex] = { ...updated[modalIndex], ...featureData };
+              result = await facilitiesAdminService.updateFacilityFeatures(updated);
+            } else {
+              showToast('Không xác định được feature để cập nhật', 'error');
+              setSaving(false);
+              return;
+            }
+          }
+          if (result.success) {
+            await loadData();
+            showToast(modalMode === 'add' ? 'Thêm Facility Feature thành công!' : 'Cập nhật Facility Feature thành công!', 'success');
+            setNewImages([]); // reset sau khi lưu thành công
+          } else {
+            showToast(result.message || (modalMode === 'add' ? 'Thêm thất bại' : 'Cập nhật thất bại'), 'error');
+          }
+          closeModal();
+          setSaving(false);
+          return;
+        }
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
+
+  // Helper để lấy URL ảnh đúng
+  const getFeatureImageUrl = (img: string) => {
+    if (!img) return '/images/placeholder-facility.jpg';
+    if (img.startsWith('http')) return img;
+    // Luôn prepend domain backend cho ảnh BE
+    return `${API_BASE_URL}${img.startsWith('/uploads') ? img : '/uploads/images/facilities-page/' + img}`;
+  };
 
   useEffect(() => {
     loadData();
@@ -59,105 +185,13 @@ export default function AdminFacilitiesPage() {
       if (result.success) {
         setFacilitiesData(result.data);
       } else {
-        setMessage("❌ Lỗi khi tải dữ liệu: " + result.message);
+        showToast("❌ Lỗi khi tải dữ liệu: " + result.message, 'error');
       }
     } catch (error) {
       console.error("Error loading facilities data:", error);
-      setMessage("❌ Lỗi khi tải dữ liệu");
+      showToast("❌ Lỗi khi tải dữ liệu", 'error');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const showMessage = (msg: string, isSuccess = true) => {
-    setMessage(isSuccess ? `✅ ${msg}` : `❌ ${msg}`);
-    setTimeout(() => setMessage(""), 3000);
-  };
-
-  // Cập nhật page info
-  const handleUpdatePageInfo = async (field: string, value: string) => {
-    try {
-      setSaving(true);
-      const pageInfo = {
-        pageTitle: field === "pageTitle" ? value : facilitiesData?.pageTitle,
-        pageDescription:
-          field === "pageDescription" ? value : facilitiesData?.pageDescription,
-      };
-
-      const result = await facilitiesAdminService.updatePageInfo(pageInfo);
-
-      if (result.success) {
-        setFacilitiesData((prev) =>
-          prev ? { ...prev, [field]: value } : null
-        );
-        showMessage("Đã cập nhật thành công!");
-      } else {
-        showMessage(result.message || "Cập nhật thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error updating page info:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Cập nhật key metric
-  const handleUpdateKeyMetric = async (
-    index: number,
-    field: string,
-    value: string
-  ) => {
-    try {
-      setSaving(true);
-      const updatedMetrics = [...(facilitiesData?.keyMetrics || [])];
-      updatedMetrics[index] = { ...updatedMetrics[index], [field]: value };
-
-      const result = await facilitiesAdminService.updateKeyMetrics(
-        updatedMetrics
-      );
-
-      if (result.success) {
-        setFacilitiesData((prev) =>
-          prev ? { ...prev, keyMetrics: updatedMetrics } : null
-        );
-        showMessage("Đã cập nhật key metric!");
-      } else {
-        showMessage(result.message || "Cập nhật thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error updating key metric:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Thêm key metric mới
-  const handleAddKeyMetric = async () => {
-    try {
-      setSaving(true);
-      const newMetric = {
-        icon: "fas fa-chart-bar",
-        value: "0",
-        unit: "",
-        label: "New Metric",
-        order: facilitiesData?.keyMetrics?.length || 0,
-      };
-
-      const result = await facilitiesAdminService.addKeyMetric(newMetric);
-
-      if (result.success) {
-        await loadData(); // Reload để lấy ID mới từ server
-        showMessage("Đã thêm key metric mới!");
-      } else {
-        showMessage(result.message || "Thêm thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error adding key metric:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -178,108 +212,13 @@ export default function AdminFacilitiesPage() {
         setFacilitiesData((prev) =>
           prev ? { ...prev, keyMetrics: updatedMetrics } : null
         );
-        showMessage("Đã xóa key metric!");
+        showToast('Đã xóa Key Metric!','success');
       } else {
-        showMessage(result.message || "Xóa thất bại", false);
+        showToast(result.message || "Xóa thất bại", 'error');
       }
     } catch (error) {
       console.error("Error deleting key metric:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Cập nhật facility feature
-  const handleUpdateFacilityFeature = async (
-    index: number,
-    field: string,
-    value: string
-  ) => {
-    try {
-      setSaving(true);
-      const updatedFeatures = [...(facilitiesData?.facilityFeatures || [])];
-      updatedFeatures[index] = { ...updatedFeatures[index], [field]: value };
-
-      const result = await facilitiesAdminService.updateFacilityFeatures(
-        updatedFeatures
-      );
-
-      if (result.success) {
-        setFacilitiesData((prev) =>
-          prev ? { ...prev, facilityFeatures: updatedFeatures } : null
-        );
-        showMessage("Đã cập nhật facility feature!");
-      } else {
-        showMessage(result.message || "Cập nhật thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error updating facility feature:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Upload hình ảnh cho facility feature
-  const handleUploadFeatureImage = async (index: number, file: File) => {
-    try {
-      setSaving(true);
-      const feature = facilitiesData?.facilityFeatures?.[index];
-      if (!feature?.id) return;
-
-      const result = await facilitiesAdminService.uploadFeatureImage(
-        feature.id,
-        file
-      );
-
-      if (result.success) {
-        const updatedFeatures = [...(facilitiesData?.facilityFeatures || [])];
-        updatedFeatures[index] = {
-          ...updatedFeatures[index],
-          image: result.data.imageUrl,
-        };
-        setFacilitiesData((prev) =>
-          prev ? { ...prev, facilityFeatures: updatedFeatures } : null
-        );
-        showMessage("Đã tải lên hình ảnh!");
-      } else {
-        showMessage(result.message || "Tải lên thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error uploading feature image:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Thêm facility feature mới
-  const handleAddFacilityFeature = async () => {
-    try {
-      setSaving(true);
-      const newFeature = {
-        title: "New Facility Feature",
-        description: "Feature description...",
-        image: "/images/placeholder-facility.jpg",
-        imageAlt: "New Facility Feature",
-        order: facilitiesData?.facilityFeatures?.length || 0,
-        layout: "left",
-      };
-
-      const result = await facilitiesAdminService.addFacilityFeature(
-        newFeature
-      );
-
-      if (result.success) {
-        await loadData(); // Reload để lấy ID mới từ server
-        showMessage("Đã thêm facility feature mới!");
-      } else {
-        showMessage(result.message || "Thêm thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error adding facility feature:", error);
-      showMessage("Có lỗi xảy ra", false);
+      showToast('Có lỗi xảy ra','error');
     } finally {
       setSaving(false);
     }
@@ -304,349 +243,507 @@ export default function AdminFacilitiesPage() {
         setFacilitiesData((prev) =>
           prev ? { ...prev, facilityFeatures: updatedFeatures } : null
         );
-        showMessage("Đã xóa facility feature!");
+        showToast('Đã xóa Facility Feature!','success');
       } else {
-        showMessage(result.message || "Xóa thất bại", false);
+        showToast(result.message || "Xóa thất bại", 'error');
       }
     } catch (error) {
       console.error("Error deleting facility feature:", error);
-      showMessage("Có lỗi xảy ra", false);
+      showToast('Có lỗi xảy ra','error');
     } finally {
       setSaving(false);
     }
   };
 
-  // Cập nhật SEO data
-  const handleUpdateSeo = async (field: string, value: string | string[]) => {
-    try {
-      setSaving(true);
-      const currentSeo = facilitiesData?.seo || {
-        metaTitle: "",
-        metaDescription: "",
-        keywords: [],
-      };
-      const seoData = {
-        metaTitle: currentSeo.metaTitle,
-        metaDescription: currentSeo.metaDescription,
-        keywords: currentSeo.keywords,
-        [field]: value,
-      };
-
-      const result = await facilitiesAdminService.updateSeoData(seoData);
-
-      if (result.success) {
-        setFacilitiesData((prev) => (prev ? { ...prev, seo: seoData } : null));
-        showMessage("Đã cập nhật SEO!");
-      } else {
-        showMessage(result.message || "Cập nhật thất bại", false);
-      }
-    } catch (error) {
-      console.error("Error updating SEO:", error);
-      showMessage("Có lỗi xảy ra", false);
-    } finally {
-      setSaving(false);
-    }
-  };
+  // 1. Thêm state cho ảnh mới chọn (file)
+  const [newImages, setNewImages] = useState<File[]>([]);
 
   if (loading) {
     return (
-      // COMMENTED FOR DEVELOPMENT - Tạm comment ProtectedRoute để không cần đăng nhập
-      // <ProtectedRoute>
       <div className="admin-loading">
         <div className="loading-spinner"></div>
         <p>Đang tải dữ liệu facilities...</p>
       </div>
-      // </ProtectedRoute>
     );
   }
 
   return (
-    // COMMENTED FOR DEVELOPMENT - Tạm comment ProtectedRoute để không cần đăng nhập
-    // <ProtectedRoute>
     <div className="admin-page">
-      <div className="page-header">
-        <h1>🏭 Quản lý Trang Facilities</h1>
-        <p>Chỉnh sửa nội dung trang cơ sở vật chất của website</p>
-
-        {message && (
-          <div
-            className={`message ${
-              message.includes("✅") ? "success" : "error"
-            }`}
-          >
-            {message}
-          </div>
-        )}
+      <Toast open={toastOpen} type={toastType} message={toastMsg} onClose={()=>setToastOpen(false)} />
+      <div className="admin-page-header">
+        <h1 className="admin-page-title">🏭 Quản lý Trang Facilities</h1>
+        <p className="admin-page-description">Chỉnh sửa nội dung trang cơ sở vật chất của website</p>
       </div>
-
-      {/* Tab Navigation */}
-      <div className="admin-tabs">
-        <button
-          className={`tab-btn ${activeTab === "page-info" ? "active" : ""}`}
-          onClick={() => setActiveTab("page-info")}
-        >
-          📄 Page Info
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "key-metrics" ? "active" : ""}`}
-          onClick={() => setActiveTab("key-metrics")}
-        >
-          📊 Key Metrics
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "features" ? "active" : ""}`}
-          onClick={() => setActiveTab("features")}
-        >
-          🏭 Facility Features
-        </button>
-        <button
-          className={`tab-btn ${activeTab === "seo" ? "active" : ""}`}
-          onClick={() => setActiveTab("seo")}
-        >
-          🔍 SEO
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      <div className="tab-content">
-        {activeTab === "page-info" && (
-          <div className="page-info-section">
-            <h2>📄 Thông tin trang</h2>
-
-            <EditableSection
-              title="Page Title"
-              content={facilitiesData?.pageTitle || ""}
-              type="text"
-              onSave={(content) => handleUpdatePageInfo("pageTitle", content)}
-            />
-
-            <EditableSection
-              title="Page Description"
-              content={facilitiesData?.pageDescription || ""}
-              type="textarea"
-              onSave={(content) =>
-                handleUpdatePageInfo("pageDescription", content)
-              }
-            />
-          </div>
-        )}
-
-        {activeTab === "key-metrics" && (
-          <div className="key-metrics-section">
-            <div className="section-header">
-              <h2>📊 Key Metrics</h2>
-              <button
-                onClick={handleAddKeyMetric}
-                className="add-btn"
-                disabled={saving}
-              >
-                ➕ Thêm Key Metric
-              </button>
-            </div>
-
+      <AdminSectionCard title="Key Metrics">
+        {/* Remove add button if already 3 metrics */}
+        {/* <button onClick={() => openModal('keyMetric','add',null,{icon:'fas fa-chart-bar',value:'0',unit:'',label:'New Metric',order:facilitiesData?.keyMetrics?.length||0})} className="btn-add" disabled={saving}>
+          <FiPlusCircle /> Thêm Key Metric
+        </button> */}
+        <div className="metrics-grid">
             {facilitiesData?.keyMetrics?.map((metric, index) => (
-              <div key={metric.id || index} className="metric-item">
-                <div className="metric-item-header">
-                  <h3>Key Metric {index + 1}</h3>
-                  <button
-                    onClick={() => handleDeleteKeyMetric(index)}
-                    className="delete-btn"
-                    disabled={saving}
-                  >
-                    🗑️ Xóa
-                  </button>
-                </div>
-
-                <EditableSection
-                  title="Icon (CSS class)"
-                  content={metric.icon}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateKeyMetric(index, "icon", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Value"
-                  content={metric.value}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateKeyMetric(index, "value", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Unit"
-                  content={metric.unit}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateKeyMetric(index, "unit", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Label"
-                  content={metric.label}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateKeyMetric(index, "label", content)
-                  }
-                />
+            <div key={metric.id || index} className="metric-card">
+              <div className="metric-card-actions">
+                <button className="edit-btn" onClick={() => openModal('keyMetric','edit',index,metric)}><FiEdit /></button>
+                <button className="delete-btn" onClick={() => handleDeleteKeyMetric(index)} disabled={saving} style={{ color: '#ff4444' }}><FiTrash2 /></button>
+              </div>
+              <div className="metric-icon"><i className={metric.icon}></i></div>
+              <div className="metric-value">{metric.value} {metric.unit}</div>
+              <div className="metric-label">{metric.label}</div>
               </div>
             ))}
           </div>
-        )}
-
-        {activeTab === "features" && (
-          <div className="features-section">
-            <div className="section-header">
-              <h2>🏭 Facility Features</h2>
-              <button
-                onClick={handleAddFacilityFeature}
-                className="add-btn"
-                disabled={saving}
-              >
-                ➕ Thêm Feature
+      </AdminSectionCard>
+      <AdminSectionCard title="Facility Features">
+        <button onClick={() => openModal('facilityFeature','add',null,{title:'New Facility Feature',description:'Feature description...',image:'/images/placeholder-facility.jpg',imageAlt:'New Facility Feature',order:facilitiesData?.facilityFeatures?.length||0,layout:'left'})} className="btn-add" disabled={saving}>
+          <FiPlusCircle /> Thêm Feature
               </button>
-            </div>
-
+        <div className="features-grid">
             {facilitiesData?.facilityFeatures?.map((feature, index) => (
-              <div key={feature.id || index} className="feature-item">
-                <div className="feature-item-header">
-                  <h3>Feature {index + 1}</h3>
-                  <button
-                    onClick={() => handleDeleteFacilityFeature(index)}
-                    className="delete-btn"
-                    disabled={saving}
-                  >
-                    🗑️ Xóa
-                  </button>
-                </div>
-
-                <EditableSection
-                  title="Title"
-                  content={feature.title}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateFacilityFeature(index, "title", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Description"
-                  content={feature.description}
-                  type="textarea"
-                  onSave={(content) =>
-                    handleUpdateFacilityFeature(index, "description", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Image"
-                  content={feature.image}
-                  type="image"
-                  imagePreview={feature.image}
-                  onImageUpload={(file) =>
-                    handleUploadFeatureImage(index, file)
-                  }
-                  onSave={(content) =>
-                    handleUpdateFacilityFeature(index, "image", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Image Alt Text"
-                  content={feature.imageAlt}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateFacilityFeature(index, "imageAlt", content)
-                  }
-                />
-
-                <EditableSection
-                  title="Layout (left/right)"
-                  content={feature.layout}
-                  type="text"
-                  onSave={(content) =>
-                    handleUpdateFacilityFeature(index, "layout", content)
-                  }
-                />
+            <div key={feature.id || index} className="feature-card">
+              <div className="feature-card-actions">
+                <button className="edit-btn" onClick={() => openModal('facilityFeature','edit',index,feature)}><FiEdit /></button>
+                <button className="delete-btn" onClick={() => handleDeleteFacilityFeature(index)} disabled={saving} style={{ color: '#ff4444' }}><FiTrash2 /></button>
               </div>
-            ))}
-          </div>
-        )}
-
-        {activeTab === "seo" && (
-          <div className="seo-section">
-            <h2>🔍 SEO Settings</h2>
-
-            <EditableSection
-              title="Meta Title"
-              content={facilitiesData?.seo?.metaTitle || ""}
-              type="text"
-              onSave={(content) => handleUpdateSeo("metaTitle", content)}
-            />
-
-            <EditableSection
-              title="Meta Description"
-              content={facilitiesData?.seo?.metaDescription || ""}
-              type="textarea"
-              onSave={(content) => handleUpdateSeo("metaDescription", content)}
-            />
-
-            <EditableSection
-              title="Keywords (comma separated)"
-              content={facilitiesData?.seo?.keywords?.join(", ") || ""}
-              type="textarea"
-              onSave={(content) =>
-                handleUpdateSeo(
-                  "keywords",
-                  content.split(",").map((k) => k.trim())
-                )
-              }
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Preview Section */}
-      <div className="preview-section">
-        <h3>🔍 Preview</h3>
-        <div className="facilities-preview">
-          <h2>{facilitiesData?.pageTitle}</h2>
-          <p>{facilitiesData?.pageDescription}</p>
-
-          <div className="metrics-preview">
-            {facilitiesData?.keyMetrics?.map((metric, index) => (
-              <div key={index} className="metric-preview">
-                <div className="metric-value">
-                  {metric.value} {metric.unit}
-                </div>
-                <div className="metric-label">{metric.label}</div>
+              <div className="feature-image-preview">
+                <Image src={getFeatureImageUrl(feature.image)} alt={feature.imageAlt} width={220} height={140} className="preview-image" />
               </div>
-            ))}
-          </div>
-
-          <div className="features-preview">
-            {facilitiesData?.facilityFeatures?.map((feature, index) => (
-              <div key={index} className="feature-preview">
+              <div className="feature-content">
                 <h4>{feature.title}</h4>
                 <p>{feature.description}</p>
-                {feature.image && (
-                  <Image
-                    src={feature.image}
-                    alt={feature.imageAlt}
-                    width={200}
-                    height={150}
-                    className="preview-image"
-                  />
-                )}
+                <div className="feature-layout">Layout: {feature.layout}</div>
+              </div>
               </div>
             ))}
+        </div>
+      </AdminSectionCard>
+      {/* Modal popup cho Add/Edit */}
+      {modalOpen && (
+        <div className="modal-overlay active">
+          <div className="modal-container large">
+            <div className="modal-header">
+              <h3>{modalMode === 'edit' ? (modalType === 'keyMetric' ? 'Chỉnh sửa Key Metric' : 'Chỉnh sửa Facility Feature') : (modalType === 'keyMetric' ? 'Thêm Key Metric' : 'Thêm Facility Feature')}</h3>
+              <button className="btn-close" onClick={closeModal}>×</button>
+            </div>
+            <form onSubmit={handleModalSubmit}>
+              <div className="modal-body">
+                {modalType === 'keyMetric' ? (
+                  <>
+                    <div className="form-group">
+                      <label>
+                        Icon
+                        <span className="icon-tooltip" title="Chọn icon tại fontawesome.com/icons. Copy tên class, ví dụ: fas fa-globe">
+                          <a href="https://fontawesome.com/icons" target="_blank" rel="noopener noreferrer" style={{marginLeft: 6, color: '#7e57c2', textDecoration: 'none'}}>
+                            <i className="fas fa-info-circle"></i>
+                          </a>
+                        </span>
+                      </label>
+                      <div className="icon-input-group">
+                        <input 
+                          type="text" 
+                          value={modalData.icon || ''} 
+                          onChange={e => setModalData({ ...modalData, icon: e.target.value })} 
+                          className="form-input" 
+                          required 
+                          placeholder="fas fa-chart-bar"
+                        />
+                        <div className="icon-preview">
+                          <i className={modalData.icon || 'fas fa-question'}></i>
+                        </div>
+                      </div>
+                      <small className="form-help">Ví dụ: fas fa-chart-bar, fas fa-users, fas fa-globe</small>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group half">
+                        <label>Value</label>
+                        <input type="text" value={modalData.value || ''} onChange={e => setModalData({ ...modalData, value: e.target.value })} className="form-input" required />
+                      </div>
+                      <div className="form-group half">
+                        <label>Unit <span title="Đơn vị đo lường, ví dụ: m², pcs/year, ..." style={{cursor:'help',color:'#888',fontSize:'0.95em'}}>(?)</span></label>
+                        <input type="text" value={modalData.unit || ''} onChange={e => setModalData({ ...modalData, unit: e.target.value })} className="form-input" placeholder="m², pcs/year, ..." />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>Label</label>
+                      <input type="text" value={modalData.label || ''} onChange={e => setModalData({ ...modalData, label: e.target.value })} className="form-input" required />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Tiêu đề Feature</label>
+                      <input type="text" value={modalData.title || ''} onChange={e => setModalData({ ...modalData, title: e.target.value })} className="form-input" required />
+                    </div>
+                    <div className="form-group">
+                      <label>Mô tả</label>
+                      <textarea value={modalData.description || ''} onChange={e => setModalData({ ...modalData, description: e.target.value })} className="form-textarea" required />
+                    </div>
+                    <div className="form-group">
+                      <label>Ảnh</label>
+                      <div className="feature-images-grid">
+                        {/* Ảnh cũ (url từ server) */}
+                        {Array.isArray(modalData.images) && modalData.images.length > 0 && (
+                          modalData.images.map((imgObj: { url: string; alt: string; order: number }, idx: number) => (
+                            <div key={"old-"+idx} className="feature-image-thumb">
+                              <Image src={getFeatureImageUrl(imgObj.url)} alt={imgObj.alt || modalData.imageAlt || ''} width={100} height={70} />
+                              <button 
+                                type="button" 
+                                className="btn-delete-img" 
+                                style={{ color: '#ff4444', background: 'white', border: '1.5px solid #ff4444', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                                onClick={() => {
+                                  setModalData((prev: Partial<KeyMetric & FacilityFeature>) => {
+                                    if (Array.isArray(prev.images)) {
+                                      return { ...prev, images: prev.images.filter((_: unknown, i: number) => i !== idx) };
+                                    }
+                                    return prev;
+                                  });
+                                }}
+                              ><FiTrash2 /></button>
+                            </div>
+                          ))
+                        )}
+                        {/* Ảnh mới chọn (file local) */}
+                        {newImages.map((file, idx) => (
+                          <div key={"new-"+idx} className="feature-image-thumb">
+                            <img src={URL.createObjectURL(file)} alt={file.name} width={100} height={70} style={{objectFit:'cover',borderRadius:8}} />
+                            <button 
+                              type="button" 
+                              className="btn-delete-img" 
+                              style={{ color: '#ff4444', background: 'white', border: '1.5px solid #ff4444', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                              onClick={() => {
+                                setNewImages(prev => prev.filter((_, i) => i !== idx));
+                              }}
+                            ><FiTrash2 /></button>
+                          </div>
+                        ))}
+                      </div>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/png,image/jpeg,image/webp,image/jpg"
+                        onChange={e => {
+                          const files = e.target.files;
+                          if (files && files.length > 0) {
+                            setNewImages(prev => [...prev, ...Array.from(files)]);
+                          }
+                        }}
+                        style={{marginTop:8}}
+                      />
+                      <small className="form-help">Chọn nhiều ảnh, ảnh sẽ chỉ được lưu khi bấm Lưu</small>
+                    </div>
+                    <div className="form-group">
+                      <label>Layout</label>
+                      <select value={modalData.layout || 'left'} onChange={e => setModalData({ ...modalData, layout: e.target.value })} className="form-input">
+                        <option value="left">Trái</option>
+                        <option value="right">Phải</option>
+                      </select>
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" type="button" onClick={closeModal} disabled={saving}>Hủy</button>
+                <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu'}</button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
+      <style jsx>{`
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 24px;
+          margin-top: 18px;
+        }
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+          gap: 28px;
+          margin-top: 18px;
+        }
+        .metric-card, .feature-card {
+          background: #f9f9f9;
+          border-radius: 10px;
+          box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+          padding: 18px 18px 14px 18px;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .metric-card-actions, .feature-card-actions {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          display: flex;
+          gap: 8px;
+        }
+        .edit-btn, .delete-btn {
+          background: #fff;
+          border: 1px solid #eee;
+          border-radius: 5px;
+          padding: 4px 8px;
+          cursor: pointer;
+          font-size: 1.1rem;
+          transition: background 0.2s;
+        }
+        .edit-btn:hover { background: #e3f2fd; }
+        .delete-btn:hover { background: #ffebee; }
+        .metric-icon {
+          font-size: 2.2rem;
+          margin-bottom: 8px;
+        }
+        .metric-value {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-bottom: 4px;
+        }
+        .metric-label {
+          color: #666;
+          font-size: 1rem;
+        }
+        .feature-image-preview, .image-preview-container {
+          margin-bottom: 10px;
+          border-radius: 8px;
+          overflow: hidden;
+          background: #eee;
+          width: 220px;
+          height: 140px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .feature-content h4 {
+          font-size: 1.1rem;
+          font-weight: 600;
+          margin: 0 0 6px 0;
+        }
+        .feature-content p {
+          font-size: 0.98rem;
+          margin: 0 0 4px 0;
+        }
+        .feature-layout {
+          font-size: 0.95rem;
+          color: #888;
+        }
+        .btn-add {
+          background: #fff;
+          border: 1.5px solid #7e57c2;
+          color: #7e57c2;
+          border-radius: 6px;
+          padding: 7px 16px;
+          font-size: 1rem;
+          font-weight: 500;
+          margin-bottom: 18px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.2s, color 0.2s;
+        }
+        .btn-add:hover {
+          background: #ede7f6;
+          color: #5e35b1;
+        }
+        .image-upload-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .feature-images-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+        .feature-image-thumb {
+          position: relative;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transition: all 0.3s ease;
+        }
+        .feature-image-thumb:hover {
+          transform: scale(1.05);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .btn-delete-img {
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          background: #ff4444;
+          color: white;
+          border: none;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          font-size: 1rem;
+          font-weight: bold;
+          z-index: 10;
+          transition: all 0.2s ease;
+        }
+        .btn-delete-img:hover {
+          background: #cc0000;
+          transform: scale(1.1);
+        }
+        .dropzone {
+          border: 2px dashed #aaa;
+          padding: 12px;
+          margin-top: 8px;
+          border-radius: 8px;
+          text-align: center;
+          color: #888;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+        .dropzone:hover {
+          border-color: #7e57c2;
+        }
+        .modal-overlay {
+          z-index: 9999 !important;
+        }
+        .form-row {
+          display: flex;
+          gap: 16px;
+        }
+        .form-group.half {
+          flex: 1 1 0;
+        }
+        .icon-input-group {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .icon-preview {
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f5f5f5;
+          border: 1px solid #ddd;
+          border-radius: 6px;
+          font-size: 1.2rem;
+          color: #666;
+        }
+        .form-help {
+          color: #888;
+          font-size: 0.9rem;
+          margin-top: 4px;
+        }
+        .icon-tooltip {
+          display: inline-block;
+          margin-left: 4px;
+          cursor: pointer;
+          vertical-align: middle;
+        }
+        .icon-tooltip i {
+          font-size: 1.1em;
+          color: #7e57c2;
+          transition: color 0.2s;
+        }
+        .icon-tooltip:hover i {
+          color: #5e35b1;
+        }
+        .modern-dropzone-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 12px;
+          width: 100%;
+        }
+        .modern-dropzone {
+          width: 100%;
+          min-height: 180px;
+          border: 2px dashed #339af0;
+          border-radius: 16px;
+          background: #f8fbff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          margin-bottom: 12px;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+        .modern-dropzone:hover {
+          border-color: #1976d2;
+          background: #f0f8ff;
+        }
+        .modern-dropzone.drag-active {
+          border-color: #4caf50;
+          background: #f1f8e9;
+          transform: scale(1.02);
+        }
+        .modern-dropzone.drag-reject {
+          border-color: #f44336;
+          background: #ffebee;
+        }
+        .dropzone-content {
+          text-align: center;
+          width: 100%;
+          padding: 20px;
+        }
+        .cloud-icon {
+          font-size: 3rem;
+          color: #339af0;
+          margin-bottom: 12px;
+          transition: transform 0.3s ease;
+        }
+        .modern-dropzone:hover .cloud-icon {
+          transform: scale(1.1);
+        }
+        .dropzone-text {
+          font-size: 1.2rem;
+          color: #333;
+          margin-bottom: 8px;
+          font-weight: 500;
+        }
+        .browse-link {
+          color: #1976d2;
+          text-decoration: underline;
+          cursor: pointer;
+          font-weight: 600;
+        }
+        .dropzone-info {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.9rem;
+          color: #666;
+          margin-top: 12px;
+          width: 100%;
+          max-width: 450px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+        .upload-btn {
+          background: #1976d2;
+          color: #fff;
+          border-radius: 8px;
+          padding: 10px 32px;
+          font-size: 1rem;
+          font-weight: 500;
+          border: none;
+          margin-top: 8px;
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+        .upload-btn:hover:not(:disabled) {
+          background: #1565c0;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+        }
+        .upload-btn:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+      `}</style>
     </div>
-    // </ProtectedRoute>
   );
 }

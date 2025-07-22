@@ -10,12 +10,19 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
+    domains: ['localhost'],
     remotePatterns: [
       {
         protocol: "http",
         hostname: "localhost",
         port: "5001",
         pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        port: "5001",
+        pathname: "/images/**",
       },
       {
         protocol: "https",

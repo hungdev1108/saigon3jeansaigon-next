@@ -1,9 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Slider from "react-slick";
-import { machineryService } from "../../services";
 import { BACKEND_DOMAIN } from "../../api/config";
 
 interface Machine {
@@ -50,9 +49,10 @@ interface MachineImageSliderProps {
     order: number;
   }>;
   alt: string;
+  containerHeight: number;
 }
 
-function MachineImageSlider({ images, alt }: MachineImageSliderProps) {
+function MachineImageSlider({ images, alt, containerHeight }: MachineImageSliderProps) {
   // Slider settings for machine images
   const sliderSettings = {
     dots: true,
@@ -82,24 +82,38 @@ function MachineImageSlider({ images, alt }: MachineImageSliderProps) {
         src={`${BACKEND_DOMAIN}${images[0].url}`}
         alt={images[0].alt || alt}
         className="img-fluid"
-        width={500}
-        height={500}
+        width={1500}
+        height={900}
+        style={{ 
+          width: '100%', 
+          height: containerHeight > 0 ? `${containerHeight}px` : '100%', 
+          objectFit: 'cover',
+          objectPosition: 'center',
+          borderRadius: 16
+        }}
       />
     );
   }
 
   // Multiple images - use slider
   return (
-    <div className="machine-image-slider">
+    <div className="machine-image-slider" style={{ height: containerHeight > 0 ? `${containerHeight}px` : 'auto' }}>
       <Slider {...sliderSettings}>
         {images.map((image, index) => (
           <div key={index} className="slider-item">
             <Image
               src={`${BACKEND_DOMAIN}${image.url}`}
               alt={image.alt || `${alt} - ${index + 1}`}
-              className="img-fluid"
-              width={500}
-              height={500}
+              className="slider-img-full"
+              width={1200}
+              height={900}
+              style={{ 
+                width: '100%', 
+                height: containerHeight > 0 ? `${containerHeight}px` : '100%', 
+                objectFit: 'cover', 
+                objectPosition: 'center',
+                borderRadius: 16 
+              }}
             />
           </div>
         ))}
@@ -108,61 +122,40 @@ function MachineImageSlider({ images, alt }: MachineImageSliderProps) {
   );
 }
 
-export default function Machinery() {
-  const [machineryData, setMachineryData] = useState<MachineryData | null>(
-    null
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface MachineryProps {
+  machineryData: MachineryData | null;
+}
+
+export default function Machinery({ machineryData }: MachineryProps) {
   const [activeStage, setActiveStage] = useState(1);
   const [activeMachine, setActiveMachine] = useState<string>("");
+  const [stagesHeight, setStagesHeight] = useState(0);
+  const stagesContainerRef = useRef<HTMLDivElement>(null);
+  const machinesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchMachineryData = async () => {
-      try {
-        setLoading(true);
-        const data = await machineryService.getCompleteMachineryData();
-        const typedData = data as MachineryData;
-        setMachineryData(typedData);
-        setError(null);
+    if (machineryData && machineryData.stages && machineryData.stages.length > 0 && machineryData.stages[0].machines.length > 0) {
+          setActiveMachine(
+        machineryData.stages[0].machines[0].name.toLowerCase().replace(/\s+/g, "")
+          );
+        }
+  }, [machineryData]);
 
-        // Set default active machine for first stage
-        if (
-          typedData.stages &&
-          typedData.stages.length > 0 &&
-          typedData.stages[0].machines.length > 0
-        ) {
-          setActiveMachine(
-            typedData.stages[0].machines[0].name
-              .toLowerCase()
-              .replace(/\s+/g, "")
-          );
-        }
-      } catch (err) {
-        console.error("Error fetching machinery data:", err);
-        setError("Failed to load machinery data");
-        // Sử dụng dữ liệu mặc định khi có lỗi
-        const defaultData = machineryService.getDefaultMachineryData();
-        const typedDefaultData = defaultData as MachineryData;
-        setMachineryData(typedDefaultData);
-        if (
-          typedDefaultData.stages &&
-          typedDefaultData.stages.length > 0 &&
-          typedDefaultData.stages[0].machines.length > 0
-        ) {
-          setActiveMachine(
-            typedDefaultData.stages[0].machines[0].name
-              .toLowerCase()
-              .replace(/\s+/g, "")
-          );
-        }
-      } finally {
-        setLoading(false);
+  useEffect(() => {
+    const updateHeight = () => {
+      if (stagesContainerRef.current) {
+        const height = stagesContainerRef.current.clientHeight - 80;
+        setStagesHeight(height);
       }
     };
-
-    fetchMachineryData();
-  }, []);
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    const timer = setTimeout(updateHeight, 100);
+    return () => {
+      window.removeEventListener('resize', updateHeight);
+      clearTimeout(timer);
+    };
+  }, [machineryData]);
 
   // Helper function to process images
   const processMachineImages = (machine: Machine) => {
@@ -216,28 +209,13 @@ export default function Machinery() {
     }
   };
 
-  if (loading) {
-    return (
-      <section className="machinery-section py-5">
-        <div className="container">
-          <div className="text-center">
-            <div className="spinner-border" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3">Loading machinery data...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   if (!machineryData) {
     return (
       <section className="machinery-section py-5">
         <div className="container">
           <div className="text-center">
             <h2 className="text-danger">Error loading machinery data</h2>
-            <p>{error}</p>
+            <p>Không thể tải dữ liệu machinery.</p>
           </div>
         </div>
       </section>
@@ -261,13 +239,11 @@ export default function Machinery() {
           <div className="row">
             {/* Stages Column */}
             <div className="col-md-5">
-              <div className="stages-container">
-                {machineryData.stages.map((stage) => (
+              <div className="stages-container" ref={stagesContainerRef}>
+                {machineryData.stages.map((stage, idx) => (
                   <div
-                    key={stage.id}
-                    className={`stage-item ${
-                      activeStage === stage.stageNumber ? "active" : ""
-                    }`}
+                    key={stage.id || idx}
+                    className={`stage-item ${activeStage === stage.stageNumber ? "active" : ""}`}
                     data-stage={stage.stageNumber}
                     onClick={() => handleStageClick(stage.stageNumber)}
                     style={{ cursor: "pointer" }}
@@ -281,16 +257,16 @@ export default function Machinery() {
 
             {/* Machines Column */}
             <div className="col-md-7">
-              <div className="machines-container">
+              <div className="machines-container" ref={machinesContainerRef}>
                 {/* Current Stage Machines */}
                 <div className="machines-wrapper active">
                   {/* Machine Tabs */}
                   {currentStage && currentStage.machines.length > 0 && (
                     <>
                       <ul className="nav nav-tabs machine-tabs" role="tablist">
-                        {currentStage.machines.map((machine) => (
+                        {currentStage.machines.map((machine, idx) => (
                           <li
-                            key={machine.id}
+                            key={machine.id || idx}
                             className="nav-item"
                             role="presentation"
                           >
@@ -326,6 +302,7 @@ export default function Machinery() {
                                 <MachineImageSlider
                                   images={processMachineImages(currentMachine)}
                                   alt={currentMachine.imageAlt}
+                                  containerHeight={stagesHeight}
                                 />
                                 {/* <div
                                   className="machine-overlay"
@@ -348,6 +325,86 @@ export default function Machinery() {
             </div>
           </div>
         </div>
+        <style jsx>{`
+          .machine-image-container,
+          .machine-image-slider,
+          .machine-image-slider .slick-slider,
+          .machine-image-slider .slick-list,
+          .machine-image-slider .slick-track {
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 16px;
+            overflow: hidden;
+            background: transparent;
+            box-sizing: border-box;
+          }
+          .machine-image-slider .slick-track {
+            display: block !important;
+          }
+          .machine-image-slider .slick-slide,
+          .machine-image-slider .slider-item,
+          .machine-image-slider [class*='slick-slide'] {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            float: none !important;
+            display: block !important;
+            box-sizing: border-box;
+          }
+          .machine-image-slider .slider-item img,
+          .slider-img-full {
+            width: 100% !important;
+            height: auto !important;
+            aspect-ratio: 16/9;
+            object-fit: cover !important;
+            object-position: center !important;
+            border-radius: 16px;
+            display: block;
+            box-sizing: border-box;
+          }
+          .stages-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            margin-bottom: 0;
+          }
+          .stage-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 3px solid #e0e0e0;
+            transition: all 0.3s ease;
+          }
+          .stage-item:last-child {
+            margin-bottom: 0;
+          }
+          .stage-item.active {
+            border-left: 3px solid #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+          }
+          .machine-tabs {
+            margin-bottom: 15px;
+          }
+          .machines-container {
+            width: 100%;
+            height: 100%;
+          }
+          .machines-wrapper {
+            width: 100%;
+            height: 100%;
+          }
+          .machine-tab-content {
+            width: 100%;
+          }
+          .machine-item {
+            width: 100%;
+          }
+        `}</style>
       </section>
     </>
   );

@@ -41,6 +41,9 @@ export default function Footer() {
               <li>
                 <Link href="/factory">Factory</Link>
               </li>
+              <li>
+                <Link href="/recruitment">Careers</Link>
+              </li>
             </ul>
           </div>
           <div className="col-md-3 col-12 footer-mobile-section">

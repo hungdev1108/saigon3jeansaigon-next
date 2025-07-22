@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
 
 class FacilitiesAdminService {
   /**
@@ -18,7 +18,7 @@ class FacilitiesAdminService {
    */
   async getCompleteFacilitiesData() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/facilities`, {
+      const response = await fetch(`${API_BASE_URL}/api/facilities`, {
         method: "GET",
         headers: this.getAuthHeaders(),
       });
@@ -42,7 +42,7 @@ class FacilitiesAdminService {
   async updatePageInfo(pageInfo) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/page-info`,
+        `${API_BASE_URL}/api/facilities/settings`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
@@ -64,11 +64,11 @@ class FacilitiesAdminService {
   async updateKeyMetrics(metrics) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/key-metrics`,
+        `${API_BASE_URL}/api/facilities/metrics`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
-          body: JSON.stringify({ keyMetrics: metrics }),
+          body: JSON.stringify({ metrics }),
         }
       );
 
@@ -86,7 +86,7 @@ class FacilitiesAdminService {
   async addKeyMetric(metric) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/key-metrics`,
+        `${API_BASE_URL}/api/facilities/metrics`,
         {
           method: "POST",
           headers: this.getAuthHeaders(),
@@ -108,7 +108,7 @@ class FacilitiesAdminService {
   async deleteKeyMetric(metricId) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/key-metrics/${metricId}`,
+        `${API_BASE_URL}/api/facilities/metrics/${metricId}`,
         {
           method: "DELETE",
           headers: this.getAuthHeaders(),
@@ -129,11 +129,11 @@ class FacilitiesAdminService {
   async updateFacilityFeatures(features) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/features`,
+        `${API_BASE_URL}/api/facilities/features`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
-          body: JSON.stringify({ facilityFeatures: features }),
+          body: JSON.stringify({ features: features }),
         }
       );
 
@@ -151,7 +151,7 @@ class FacilitiesAdminService {
   async addFacilityFeature(feature) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/features`,
+        `${API_BASE_URL}/api/facilities/features`,
         {
           method: "POST",
           headers: this.getAuthHeaders(),
@@ -173,7 +173,7 @@ class FacilitiesAdminService {
   async deleteFacilityFeature(featureId) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/features/${featureId}`,
+        `${API_BASE_URL}/api/facilities/features/${featureId}`,
         {
           method: "DELETE",
           headers: this.getAuthHeaders(),
@@ -204,9 +204,9 @@ class FacilitiesAdminService {
       // }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/admin/facilities/features/${featureId}/image`,
+        `${API_BASE_URL}/api/facilities/features/${featureId}`,
         {
-          method: "POST",
+          method: "PUT",
           headers,
           body: formData,
         }
@@ -221,11 +221,75 @@ class FacilitiesAdminService {
   }
 
   /**
+   * Thêm nhiều ảnh cho facility feature
+   */
+  async addFeatureImages(featureId, files) {
+    try {
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append('images', file);
+      }
+      const response = await fetch(
+        `${API_BASE_URL}/api/facilities/features/${featureId}/images`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error uploading feature images:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Xóa ảnh khỏi facility feature
+   */
+  async deleteFeatureImage(featureId, imageIndex) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/facilities/features/${featureId}/images/${imageIndex}`,
+        {
+          method: 'DELETE',
+        }
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error deleting feature image:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Sắp xếp lại thứ tự ảnh
+   */
+  async reorderFeatureImages(featureId, newOrder) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/facilities/features/${featureId}/images/reorder`,
+        {
+          method: 'POST',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ newOrder }),
+        }
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error reordering feature images:', error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
    * Cập nhật SEO data
    */
   async updateSeoData(seoData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/facilities/seo`, {
+      const response = await fetch(`${API_BASE_URL}/api/facilities/settings`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(seoData),
@@ -235,6 +299,26 @@ class FacilitiesAdminService {
       return data;
     } catch (error) {
       console.error("Error updating SEO data:", error);
+      return { success: false, message: error.message };
+    }
+  }
+
+  /**
+   * Upload nhiều ảnh cho facility feature (trả về mảng url)
+   */
+  async uploadMultipleImages(formData) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/facilities/features/images/upload-multiple`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error uploading multiple images:', error);
       return { success: false, message: error.message };
     }
   }

@@ -1,0 +1,216 @@
+                                    .product-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+.product-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s, border 0.2s;
+  border: 2px solid transparent;
+  height: 400px;
+  min-height: unset;
+  position: relative;
+}
+.product-card.selected {
+  border: 2px solid #007bff;
+  box-shadow: 0 4px 16px rgba(0,123,255,0.08);
+}
+.product-card-gallery {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.gallery-thumb {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  background: #f5f5f5;
+}
+.gallery-thumb img, .gallery-thumb :global(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.gallery-action {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(255,255,255,0.8);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 2;
+  transition: background 0.2s;
+}
+.gallery-action:hover {
+  background: #ffebee;
+  color: #c00;
+}
+.gallery-upload {
+  position: static;
+  background: #f0f0f0;
+  color: #007bff;
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border: 1.5px dashed #b3d7ff;
+  margin-left: 2px;
+}
+.gallery-upload:hover {
+  background: #e3f2fd;
+  color: #0056b3;
+}
+.product-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.product-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.product-card-status {
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.status-active { color: #43c463; font-weight: 600; }
+.status-inactive { color: #aaa; }
+.status-featured { color: #f7b500; font-size: 16px; }
+@media (max-width: 700px) {
+  .product-card-list { grid-template-columns: 1fr; }
+}
+.recruitment-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.recruitment-modal-content {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+  padding: 32px 28px 24px 28px;
+  min-width: 340px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.recruitment-modal-header {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.recruitment-modal-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #888;
+  margin-left: 12px;
+}
+.recruitment-modal-close:hover {
+  color: #c00;
+}
+.recruitment-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+.recruitment-modal-content input,
+.recruitment-modal-content textarea,
+.recruitment-modal-content select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1.2px solid #d0d7de;
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+.recruitment-modal-content label {
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+}
+.recruitment-modal-content button {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  background: #007bff;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.recruitment-modal-content button:hover {
+  background: #0056b3;
+}
+.recruitment-modal-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.recruitment-modal-row input {
+  flex: 1;
+  margin-bottom: 0;
+}
+.recruitment-modal-remove-btn {
+  background: #f8d7da;
+  color: #c00;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  margin-left: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.18s;
+}
+.recruitment-modal-remove-btn:hover {
+  background: #f1b0b7;
+}
+@media (max-width: 600px) {
+  .recruitment-modal-content {
+    padding: 16px 6vw 16px 6vw;
+    min-width: unset;
+  }
+} 
