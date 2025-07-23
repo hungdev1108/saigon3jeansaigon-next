@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Slider, { CustomArrowProps } from "react-slick";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import useSWR from "swr";

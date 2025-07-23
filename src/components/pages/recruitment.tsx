@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import recruitmentService from "@/services/recruitmentService";
 import { FormatTime } from "@/shared/format_time";
 import { toast } from "react-toastify";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import useSWR from "swr";
 import { BACKEND_DOMAIN } from '@/api/config';
 

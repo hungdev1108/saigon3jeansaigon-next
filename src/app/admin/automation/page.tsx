@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { FiEdit, FiTrash2, FiPlusCircle, FiX } from 'react-icons/fi';
 import automationService from '@/services/automationService';
 import { toast } from 'react-toastify';

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { FiSave, FiImage, FiType, FiFileText, FiTrash2, FiPlusCircle } from 'react-icons/fi';
 import { toast, ToastOptions } from "react-toastify";
 import overviewAdminService from "@/services/overviewService-admin";

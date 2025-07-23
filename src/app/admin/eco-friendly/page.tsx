@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import ecoFriendlyAdminService from '@/services/ecoFriendlyService-admin';
 import { BACKEND_DOMAIN } from '@/api/config';
 import AdminSectionCard from '@/components/admin/AdminSectionCard';

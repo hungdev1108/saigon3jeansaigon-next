@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 // COMMENTED FOR DEVELOPMENT - Tạm comment ProtectedRoute để không cần đăng nhập
 // import ProtectedRoute from "@/components/admin/ProtectedRoute";
 // import EditableSection from "@/components/admin/EditableSection";

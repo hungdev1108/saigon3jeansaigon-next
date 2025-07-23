@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import machineryAdminService from "@/services/machineryService-admin";
 import Toast from "@/components/admin/Toast";
 import AdminSectionCard from "@/components/admin/AdminSectionCard";

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/legacy/image";
+import Image from "next/image";
 import { useEffect } from "react";
 import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";

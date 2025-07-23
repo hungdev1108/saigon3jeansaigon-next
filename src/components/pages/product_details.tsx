@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import Link from "next/link";
 import { BACKEND_DOMAIN } from '@/api/config';
 import Lightbox from 'yet-another-react-lightbox';

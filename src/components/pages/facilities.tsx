@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/legacy/image";
+import Image from "next/image";
 import Slider from "react-slick";
 import { BACKEND_DOMAIN } from '@/api/config';
 import { useIntersectionObserver } from "../../app/hooks/useCounterAnimation";

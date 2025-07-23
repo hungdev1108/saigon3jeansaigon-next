@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 // import { useRouter } from "next/navigation";
-import Image from "next/legacy/image";
+import Image from "next/image";
 import productsAdminService from "@/services/productsService-admin";
 import { FiEdit, FiPlusCircle, FiTrash2, FiSave } from 'react-icons/fi';
 import AdminSectionCard from '@/components/admin/AdminSectionCard';
