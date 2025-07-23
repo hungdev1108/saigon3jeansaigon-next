@@ -37,20 +37,14 @@ class HomeService {
       }
 
       const { data } = response;
-      // console.log("API response:", data);
-
-      // Gộp tin nổi bật và tin thường vào một danh sách để hiển thị
-      const combinedNews = [
-        ...(data.featuredNews || []),
-        ...(data.regularNews || []),
-      ];
-
+      // Không gộp nữa, trả về riêng biệt
       return {
         hero: this.processHeroData(data.hero),
         sections: this.processSectionsData(data.sections),
         customers: this.processCustomersData(data.customers),
         certifications: this.processCertificationsData(data.certifications),
-        featuredNews: this.processNewsData(combinedNews),
+        featuredNews: this.processNewsData(data.featuredNews),
+        regularNews: this.processNewsData(data.regularNews),
       };
     } catch (error) {
       console.error("❌ HomeService - Error getting home data:", error.message);

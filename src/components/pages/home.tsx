@@ -6,6 +6,7 @@ import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
 import { BACKEND_DOMAIN } from "../../api/config";
 import ClientOnly from "../ClientOnly";
+import useSWR from "swr";
 
 // Type definitions
 interface HeroData {
@@ -63,6 +64,7 @@ interface HomeData {
   };
   certifications: CertificationData[];
   featuredNews: NewsData[];
+  regularNews: NewsData[];
 }
 
 interface HomeProps {
@@ -71,6 +73,31 @@ interface HomeProps {
 
 export default function Home({ homeData }: HomeProps) {
   useClientScript();
+
+  // SWR fetcher
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch home data");
+    return data.data;
+  };
+
+  // SWR hook: refetch mỗi 60s, dùng SSR data làm initialData
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/home/data`,
+    fetcher,
+    {
+      fallbackData: homeData ? {
+        hero: homeData.hero,
+        sections: homeData.sections,
+        customers: homeData.customers,
+        certifications: homeData.certifications,
+        featuredNews: homeData.featuredNews,
+        regularNews: homeData.regularNews,
+      } : undefined,
+      revalidateOnFocus: true,
+    }
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -82,15 +109,22 @@ export default function Home({ homeData }: HomeProps) {
   }, []);
 
   // Nếu không có dữ liệu
-  if (!homeData) {
+  if (error) {
     return (
       <div className="alert alert-danger m-3" role="alert">
         Không thể tải dữ liệu trang chủ
       </div>
     );
   }
+  if (!swrData) {
+    return (
+      <div className="alert alert-info m-3" role="alert">
+        Đang tải dữ liệu trang chủ...
+      </div>
+    );
+  }
 
-  const { hero, sections, customers, certifications, featuredNews } = homeData;
+  const { hero, sections, customers, certifications, featuredNews, regularNews } = swrData;
 
   // Function to get customer slider settings
   const getCustomerSliderSettings = () => ({
@@ -518,7 +552,7 @@ export default function Home({ homeData }: HomeProps) {
                         !cert.name.includes("LEED") &&
                         !cert.name.includes("ISO")
                     )
-                    .map((cert, index) => (
+                    .map((cert: CertificationData, index: number) => (
                       <div key={index} className="cert-row">
                         <div
                           className={`cert-row-content ${cert.name
@@ -582,41 +616,39 @@ export default function Home({ homeData }: HomeProps) {
               </div>
             )}
 
-            {/* News List - Hiển thị các tin còn lại */}
+            {/* News List - Hiển thị các tin thường */}
             <div className="col-md-7 mb-4">
               <div className="news-list">
-                {featuredNews &&
-                  featuredNews.slice(1).map((news: NewsData, index: number) => (
-                    <div key={news.id || index} className="news-list-item mb-3">
-                      <div className="news-item-content">
-                        <div className="news-thumbnail">
-                          <Image
-                            src={
-                              news.image
-                                ? `${BACKEND_DOMAIN}${news.image}`
-                                : "/images/news/post_1.jpg"
-                            }
-                            alt={news.title}
-                            className="img-fluid"
-                            width={1920}
-                            height={1080}
-                          />
-                        </div>
-                        <div className="news-info">
-                          <h6 className="news-title">{news.title}</h6>
-                          <p className="news-excerpt">{news.excerpt}</p>
-                          <span className="news-date">
-                            {new Date(news.publishDate).toLocaleDateString(
-                              "vi-VN"
-                            )}
-                          </span>
-                        </div>
+                {regularNews && regularNews.length > 0 && regularNews.map((news: NewsData, index: number) => (
+                  <div key={news.id || index} className="news-list-item mb-3">
+                    <div className="news-item-content">
+                      <div className="news-thumbnail">
+                        <Image
+                          src={
+                            news.image
+                              ? `${BACKEND_DOMAIN}${news.image}`
+                              : "/images/news/post_1.jpg"
+                          }
+                          alt={news.title}
+                          className="img-fluid"
+                          width={1920}
+                          height={1080}
+                        />
+                      </div>
+                      <div className="news-info">
+                        <h6 className="news-title">{news.title}</h6>
+                        <p className="news-excerpt">{news.excerpt}</p>
+                        <span className="news-date">
+                          {new Date(news.publishDate).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </span>
                       </div>
                     </div>
-                  ))}
-
+                  </div>
+                ))}
                 {/* Fallback news nếu không có dữ liệu từ API */}
-                {(!featuredNews || featuredNews.length === 0) && (
+                {(!regularNews || regularNews.length === 0) && (
                   <>
                     <div className="news-list-item mb-3">
                       <div className="news-item-content">

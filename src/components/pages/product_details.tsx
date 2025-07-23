@@ -11,6 +11,8 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import 'yet-another-react-lightbox/plugins/thumbnails.css';
 import Counter from 'yet-another-react-lightbox/plugins/counter';
 import 'yet-another-react-lightbox/plugins/counter.css';
+import useSWR from "swr";
+import productsService from "@/services/productsService";
 
 // TypeScript interfaces
 interface ProductFeature {
@@ -87,13 +89,32 @@ interface ProductDetails {
 interface ProductDetailsProps {
   product: ProductDetails | null;
   error: string | null;
+  id: string;
 }
 
-export default function ProductDetails({ product, error }: ProductDetailsProps) {
+export default function ProductDetails({ product, error, id }: ProductDetailsProps) {
   // Tạo state riêng cho từng application lightbox
   const [activeLightbox, setActiveLightbox] = useState<string | null>(null);
   const [lightboxImages, setLightboxImages] = useState<Array<{src: string, alt: string, key: string}>>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch product detail");
+    return productsService.processProductDetails(data.data);
+  };
+
+  const { data: swrData, error: swrError } = useSWR(
+    id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id)
+      ? `${BACKEND_DOMAIN}/api/products/${id}`
+      : `${BACKEND_DOMAIN}/api/products/slug/${id}`,
+    fetcher,
+    {
+      fallbackData: product,
+      revalidateOnFocus: true,
+    }
+  );
 
   // Helper function to prepare images for react-photo-gallery
   const prepareGalleryImages = (images: ApplicationImage[] | undefined, applicationId: string) => {
@@ -160,7 +181,7 @@ export default function ProductDetails({ product, error }: ProductDetailsProps) 
   }, [activeLightbox, lightboxImages]);
 
   // Loading state (không còn fetch client, chỉ check nếu product null và không có error)
-  if (!product && !error) {
+  if (!swrData && !error && !swrError) {
     return (
       <section className="product-details-section py-5">
         <div className="container">
@@ -176,13 +197,13 @@ export default function ProductDetails({ product, error }: ProductDetailsProps) 
   }
 
   // Error state
-  if (error && !product) {
+  if ((error || swrError) && !swrData) {
     return (
       <section className="product-details-section py-5">
         <div className="container">
           <div className="alert alert-danger text-center" role="alert">
             <h4 className="alert-heading">Lỗi!</h4>
-            <p>{error}</p>
+            <p>{error || swrError?.message}</p>
             <button
               className="btn btn-primary"
               onClick={() => window.location.reload()}
@@ -196,7 +217,7 @@ export default function ProductDetails({ product, error }: ProductDetailsProps) 
   }
 
   // Không có dữ liệu
-  if (!product) {
+  if (!swrData) {
     return (
       <section className="product-details-section py-5">
         <div className="container">
@@ -212,14 +233,16 @@ export default function ProductDetails({ product, error }: ProductDetailsProps) 
     );
   }
 
+  product = swrData;
+
   return (
     <>
       <section className="product-details-section py-5">
         <div className="container">
           {/* Product Title */}
           <div className="product-header text-center mb-5">
-            <h1 className="product-title mt-5">{product.name}</h1>
-            <p className="product-description">{product.description}</p>
+            <h1 className="product-title mt-5">{product!.name}</h1>
+            <p className="product-description">{product!.description}</p>
           </div>
 
           {/* Product Main Image */}
@@ -235,7 +258,7 @@ export default function ProductDetails({ product, error }: ProductDetailsProps) 
           </div> */}
 
           {/* Product Features */}
-          {product.features && product.features.length > 0 && (
+          {product!.features && product!.features.length > 0 && (
             <div className="product-features mb-5">
               {/* <h3 className="section-title text-center mb-4">Key Features</h3> */}
               {/* <div className="row justify-content-center">
@@ -254,11 +277,11 @@ export default function ProductDetails({ product, error }: ProductDetailsProps) 
           )}
 
           {/* Applications Section */}
-          {product.applications && product.applications.length > 0 && (
+          {product!.applications && product!.applications.length > 0 && (
             <div className="applications-section mb-5">
               {/* <h3 className="section-title text-center mb-4">Applications</h3> */}
               <div className="accordion" id="applicationsAccordion">
-                {product.applications.map((application, idx) => {
+                {product!.applications.map((application, idx) => {
                   const galleryImages = application.content.images 
                     ? prepareGalleryImages(application.content.images, application.id)
                     : [];

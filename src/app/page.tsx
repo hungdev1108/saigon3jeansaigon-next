@@ -1,12 +1,58 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Home from "@/components/pages/home";
+// Type definitions (copy từ Home component)
+interface HeroData {
+  title: string;
+  subtitle?: string;
+  backgroundImage: string;
+  videoUrl: string;
+  isActive: boolean;
+}
+
+interface SectionData {
+  title: string;
+  content: string;
+  mediaType: string;
+  mediaUrl: string;
+  buttonText: string;
+  buttonLink: string;
+  backgroundColor: string;
+  order: number;
+}
+
+interface CustomerData {
+  name: string;
+  logo: string;
+  website: string;
+  order: number;
+}
+
+interface CertificationData {
+  name: string;
+  description: string;
+  image: string;
+  category: string;
+  order: number;
+  issuedDate?: string | null;
+}
+
+interface NewsData {
+  id: string;
+  title: string;
+  excerpt: string;
+  image: string;
+  publishDate: string;
+  slug: string;
+  tags: string[];
+  author: string;
+}
 
 export const dynamic = "force-static";
 
 async function fetchHomeData() {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
-  const res = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { next: { revalidate: 60 } });
+  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN ;
+  const res = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { cache: 'no-store' });
   const apiData = await res.json();
   if (!apiData.success) throw new Error("Failed to fetch home data");
   const data = apiData.data;
@@ -19,8 +65,8 @@ async function fetchHomeData() {
       backgroundImage: data.hero?.backgroundImage || "/images/home_banner-section2.jpg",
       videoUrl: data.hero?.videoUrl || "",
       isActive: data.hero?.isActive !== false,
-    },
-    sections: (data.sections || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((section: any) => ({
+    } as HeroData,
+    sections: (data.sections || []).sort((a: SectionData, b: SectionData) => (a.order || 0) - (b.order || 0)).map((section: SectionData) => ({
       title: section.title || "",
       content: section.content || "",
       mediaType: section.mediaType || "image",
@@ -29,13 +75,13 @@ async function fetchHomeData() {
       buttonLink: section.buttonLink || "#",
       backgroundColor: section.backgroundColor || "#007bff",
       order: section.order || 0,
-    })),
+    })) as SectionData[],
     customers: {
-      denimWoven: (data.customers?.denimWoven || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)),
-      knit: (data.customers?.knit || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)),
+      denimWoven: (data.customers?.denimWoven || []).sort((a: CustomerData, b: CustomerData) => (a.order || 0) - (b.order || 0)),
+      knit: (data.customers?.knit || []).sort((a: CustomerData, b: CustomerData) => (a.order || 0) - (b.order || 0)),
     },
-    certifications: (data.certifications || []).sort((a: any, b: any) => (a.order || 0) - (b.order || 0)),
-    featuredNews: combinedNews,
+    certifications: (data.certifications || []).sort((a: CertificationData, b: CertificationData) => (a.order || 0) - (b.order || 0)),
+    featuredNews: combinedNews as NewsData[],
   };
 }
 

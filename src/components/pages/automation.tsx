@@ -5,6 +5,7 @@ import Slider, { CustomArrowProps } from "react-slick";
 import Image from "next/image";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import useSWR from "swr";
 
 interface ContentItem {
   _id: string;
@@ -30,9 +31,43 @@ interface AutomationProps {
 }
 
 export default function Automation({ automationItems }: AutomationProps) {
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch automation data");
+    // Ưu tiên lấy automationItems, fallback sang items nếu không có
+    const items = Array.isArray(data.data?.automationItems)
+      ? data.data.automationItems
+      : data.data?.items || [];
+    return items;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/automation/data`,
+    fetcher,
+    {
+      fallbackData: automationItems,
+      revalidateOnFocus: true,
+    }
+  );
+
+  // Hooks luôn phải khai báo trước khi return
   const [activeItemIndex, setActiveItemIndex] = useState(0);
   const imageSliderRef = useRef<Slider>(null);
   const contentSliderRef = useRef<Slider>(null);
+
+  // Reset content slider về bước 1 khi đổi automation item
+  useEffect(() => {
+    if (contentSliderRef.current) {
+      contentSliderRef.current.slickGoTo(0);
+    }
+  }, [activeItemIndex]);
+
+  // Kiểm tra error/data sau khi đã gọi hết hook
+  if (error) return null;
+  if (!swrData || swrData.length === 0) return null;
+
+  automationItems = swrData;
 
   // Lấy contentItems của automationItem đang active
   const getActiveItemContentItems = (): ContentItem[] => {
@@ -73,13 +108,6 @@ export default function Automation({ automationItems }: AutomationProps) {
     beforeChange: (oldIndex: number, newIndex: number) => setActiveItemIndex(isExactly3 ? newIndex % 3 : newIndex),
   };
 
-  // Reset content slider về bước 1 khi đổi automation item
-  useEffect(() => {
-    if (contentSliderRef.current) {
-      contentSliderRef.current.slickGoTo(0);
-    }
-  }, [activeItemIndex]);
-
   // Custom arrow components cho slider content
   const CustomPrevArrow = (props: CustomArrowProps) => {
     // Loại bỏ các prop không hợp lệ
@@ -102,9 +130,6 @@ export default function Automation({ automationItems }: AutomationProps) {
       </button>
     );
   };
-
-  // Nếu không có dữ liệu từ API, không render gì cả
-  if (!automationItems || automationItems.length === 0) return null;
 
   // Lấy danh sách contentItems của automation item hiện tại
   const activeContentItems = getActiveItemContentItems();

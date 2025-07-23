@@ -92,25 +92,34 @@ export default function AdminMachineryPage() {
     setSaving(true);
     try {
       if (modalMode === 'add') {
-        const result = await machineryAdminService.addStage(modalData);
-    if (result.success) {
-          await loadData();
+        const stageNumber = (data?.stages?.length || 0) + 1;
+        const result = await machineryAdminService.addStage({
+          stageNumber,
+          title: modalData.title,
+          description: modalData.description,
+          order: modalData.order,
+          isActive: modalData.isActive !== false,
+        });
+        if (result.success) {
+          await loadData(); // Đảm bảo load lại danh sách stage mới nhất
           showToast('Added Stage successfully!', 'success');
+          setModalOpen(false); // Đóng modal sau khi loadData xong
+          return;
         } else showToast(result.message || 'Add failed', 'error');
       } else if (modalMode === 'edit' && modalStageIndex !== null) {
         const stage = data?.stages?.[modalStageIndex];
         if (!stage) {
           showToast('Stage not found', 'error');
-    setSaving(false);
+          setSaving(false);
           return;
         }
         const result = await machineryAdminService.updateStage(stage._id, modalData);
-    if (result.success) {
-      await loadData();
+        if (result.success) {
+          await loadData();
           showToast('Updated Stage successfully!', 'success');
         } else showToast(result.message || 'Update failed', 'error');
+        setModalOpen(false);
       }
-      setModalOpen(false);
     } finally {
       setSaving(false);
     }
@@ -170,7 +179,7 @@ export default function AdminMachineryPage() {
           description: modalData.description,
           order: modalData.order,
           isActive: modalData.isActive !== false,
-        });
+        }, newImages);
         if (result.success) {
           const createdStage = (result.data as Stage[]).find((s: Stage) => s._id === stage._id);
           const newMachine = createdStage?.machines?.[createdStage.machines.length - 1];
@@ -204,8 +213,8 @@ export default function AdminMachineryPage() {
           }
         }
 
-        // 3. Upload ảnh mới
-        if (newImages.length > 0) {
+        // 3. Upload ảnh mới (chỉ khi edit)
+        if (modalMode === 'edit' && newImages.length > 0) {
           const uploadRes = await machineryAdminService.uploadMultipleImages(stage._id, machineId, newImages);
           if (!uploadRes.success) {
             showToast(uploadRes.message || 'Upload ảnh thất bại', 'error');
@@ -390,7 +399,7 @@ export default function AdminMachineryPage() {
                     <div className="form-group">
                       <label>Hình ảnh</label>
                       <div className="feature-images-grid">
-                        {Array.isArray(modalData.images) && modalData.images.length > 0 && (
+                        {modalMode === 'edit' && Array.isArray(modalData.images) && modalData.images.length > 0 && (
                           modalData.images.map((imgObj: MachineImage, idx: number) => {
                             let imgUrl = imgObj.url;
                             if (imgUrl && imgUrl.startsWith('/uploads')) imgUrl = `${API_BASE_URL}${imgUrl}`;
@@ -409,7 +418,7 @@ export default function AdminMachineryPage() {
                         </div>
                     ))}
                 </div>
-                      <input type="file" multiple accept="image/png,image/jpeg,image/webp,image/jpg" onChange={e => { const files = e.target.files; if (files && files.length > 0) { setNewImages(prev => [...prev, ...Array.from(files)]); }}} style={{marginTop:8}} />
+                      <input type="file" multiple accept="image/png,image/jpeg,image/webp,image/jpg" onChange={e => { const files = e.target.files; if (files && files.length > 0) { setNewImages(Array.from(files)); }}} style={{marginTop:8}} />
                       <small className="form-help">Chọn nhiều hình ảnh. Hình ảnh sẽ chỉ được lưu khi bạn bấm Lưu.</small>
                     </div>
                   </>

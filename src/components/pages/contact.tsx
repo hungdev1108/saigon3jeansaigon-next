@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { BACKEND_DOMAIN } from "@/api/config";
+import useSWR from "swr";
 
 interface ContactInfo {
   id: string;
@@ -38,6 +39,30 @@ interface ContactProps {
 }
 
 export default function Contact({ contactInfo }: ContactProps) {
+  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch contact data");
+    return data.contactInfo;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/contact/data`,
+    fetcher,
+    {
+      fallbackData: contactInfo,
+      revalidateOnFocus: true,
+    }
+  );
+
+  if (error) {
+    console.error('Contact data fetch error:', error);
+  }
+
+  // Use SWR data if available, otherwise fall back to props
+  const currentContactInfo = swrData || contactInfo;
+
   const [form, setForm] = useState<ApplicationForm>({
     name: "",
     email: "",
@@ -107,7 +132,7 @@ export default function Contact({ contactInfo }: ContactProps) {
     }
   };
 
-  if (!contactInfo) {
+  if (!currentContactInfo) {
     return (
       <div id="contactPage" className="py-5">
         <div className="container">
@@ -133,7 +158,7 @@ export default function Contact({ contactInfo }: ContactProps) {
               
                 
                 {/* Banner image - Moved below contact info */}
-                {contactInfo?.bannerImage && (
+                {currentContactInfo?.bannerImage && (
                   <div className="contact-banner-wrapper">
                     {/* BACKEND_DOMAIN được sử dụng để hiển thị URL API */}
                     <div className="api-url" style={{display: 'none'}}>{`${BACKEND_DOMAIN}/api/contact/data`}</div>
@@ -155,13 +180,13 @@ export default function Contact({ contactInfo }: ContactProps) {
                     <div className="contact-icon small">
                       <i className="fas fa-map-marker-alt"></i>
                     </div>
-                    <div className="contact-text">{contactInfo?.address}</div>
+                    <div className="contact-text">{currentContactInfo?.address}</div>
                   </div>
                   <div className="contact-item">
                     <div className="contact-icon small">
                       <i className="fas fa-envelope"></i>
                     </div>
-                    <div className="contact-text">{contactInfo?.email}</div>
+                    <div className="contact-text">{currentContactInfo?.email}</div>
                   </div>
                 </div>
               </div>

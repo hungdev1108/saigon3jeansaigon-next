@@ -4,12 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import ClientOnly from "./ClientOnly";
-import { usePathname } from "next/navigation";
+// import { usePathname } from "next/navigation";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<{[key: string]: boolean}>({});
-  const pathname = usePathname();
+  // const pathname = usePathname();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -134,13 +134,6 @@ export default function Header() {
                   </ul>
                 </li>
 
-                {/* CAREERS */}
-                <li className="nav-item">
-                  <Link className={`nav-link${pathname === "/recruitment" ? " active" : ""}`} href="/recruitment">
-                    CAREERS
-                  </Link>
-                </li>
-
                 {/* CONTACT */}
                 <li className="nav-item">
                   <Link className="nav-link" href="/contact">
@@ -261,14 +254,6 @@ export default function Header() {
                 </Link>
               </li>
             </ul>
-          </li>
-
-          {/* CAREERS */}
-          <li className="mobile-nav-item">
-            <Link className="mobile-nav-link" href="/recruitment" onClick={closeMenu}>
-              <i className="fas fa-user-tie"></i>
-              CAREERS
-            </Link>
           </li>
 
           {/* CONTACT */}

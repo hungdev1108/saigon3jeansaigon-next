@@ -13,9 +13,9 @@ async function fetchProductDetail(id: string) {
     let res;
     // Nếu id là ObjectId (24 ký tự hex) thì fetch theo id, ngược lại fetch theo slug
     if (id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id)) {
-      res = await fetch(`${BACKEND_DOMAIN}/api/products/${id}`, { next: { revalidate: 60 } });
+      res = await fetch(`${BACKEND_DOMAIN}/api/products/${id}`, { cache: 'no-store' });
     } else {
-      res = await fetch(`${BACKEND_DOMAIN}/api/products/slug/${id}`, { next: { revalidate: 60 } });
+      res = await fetch(`${BACKEND_DOMAIN}/api/products/slug/${id}`, { cache: 'no-store' });
     }
     const apiData = await res.json();
     if (!apiData.success) throw new Error("Failed to fetch product detail");
@@ -39,7 +39,7 @@ export default async function ProductDetailsPage({ params }: ProductDetailsPageP
       <Header />
 
       {/* Product Details */}
-      <ProductDetails product={productData} error={error} />
+      <ProductDetails product={productData} error={error} id={params.id} />
 
       {/* Footer */}
       <Footer />

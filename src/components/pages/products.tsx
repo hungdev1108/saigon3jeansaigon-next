@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { BACKEND_DOMAIN } from "../../api/config";
+import useSWR from "swr";
 
 interface GalleryImage {
   id: string;
@@ -48,9 +49,24 @@ function generateCarouselTarget(productSlug: string) {
 }
 
 export default function Products({ productsData }: ProductsProps) {
-  // Khởi tạo Bootstrap carousel sau khi component mount
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch products data");
+    return data.data;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/products/data`,
+    fetcher,
+    {
+      fallbackData: productsData,
+      revalidateOnFocus: true,
+    }
+  );
+
   useEffect(() => {
-    if (productsData && typeof window !== 'undefined') {
+    if (swrData && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
         const carousels = document.querySelectorAll('.carousel') as NodeListOf<Element>;
         carousels.forEach((carousel: Element) => {
@@ -64,9 +80,9 @@ export default function Products({ productsData }: ProductsProps) {
       }, 10);
       return () => clearTimeout(timer);
     }
-  }, [productsData]);
+  }, [swrData]);
 
-  if (!productsData) {
+  if (error) {
     return (
       <section className="product-section py-5">
         <div className="container">
@@ -78,6 +94,19 @@ export default function Products({ productsData }: ProductsProps) {
       </section>
     );
   }
+  if (!swrData) {
+    return (
+      <section className="product-section py-5">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-info">Đang tải dữ liệu sản phẩm...</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  productsData = swrData;
 
   return (
     <>
@@ -85,7 +114,7 @@ export default function Products({ productsData }: ProductsProps) {
         <div className="container">
           <h2 className="section-title mt-5">PRODUCT</h2>
           <div className="row g-4 product-row">
-            {productsData.products.map((product) => {
+            {productsData!.products.map((product) => {
               const carouselId = generateCarouselId(product.slug);
               const carouselTarget = generateCarouselTarget(product.slug);
 

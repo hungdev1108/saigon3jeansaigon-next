@@ -222,7 +222,7 @@ class FacilitiesService {
       {
         id: "default-3",
         icon: "fas fa-boxes",
-        value: "1.200.000",
+        value: "120.000",
         unit: "",
         label: "pcs/year",
         order: 3,

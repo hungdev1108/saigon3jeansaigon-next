@@ -4,6 +4,7 @@ import Image from "next/image";
 import React, { useEffect } from "react";
 import { BACKEND_DOMAIN } from "../../api/config";
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import useSWR from "swr";
 
 // Interfaces for TypeScript
 interface Hero {
@@ -51,6 +52,23 @@ interface EcoFriendlyProps {
 }
 
 export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
+  // SWR fetcher
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch eco-friendly data");
+    return data.data;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/eco-friendly/data`,
+    fetcher,
+    {
+      fallbackData: ecoFriendlyData,
+      revalidateOnFocus: true,
+    }
+  );
+
   useEffect(() => {
     const dots = document.querySelectorAll(
       "#eco-friendly .left-select-item .dot"
@@ -103,9 +121,9 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
         item.removeEventListener("click", () => handleItemClick(index));
       });
     };
-  }, [ecoFriendlyData]);
+  }, [swrData]);
 
-  if (!ecoFriendlyData) {
+  if (error) {
     return (
       <main id="eco-friendly">
         <section className="hero d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
@@ -117,6 +135,20 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
       </main>
     );
   }
+  if (!swrData) {
+    return (
+      <main id="eco-friendly">
+        <section className="hero d-flex align-items-center justify-content-center" style={{ minHeight: "400px" }}>
+          <div className="text-center">
+            <h2 className="text-info">Đang tải dữ liệu eco-friendly...</h2>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // Đảm bảo không null
+  ecoFriendlyData = swrData;
 
   return (
     <>
@@ -126,15 +158,15 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           <div className="circle-layout">
             <div className="features-left">
               <div className="left-select-item">
-                {ecoFriendlyData.features.slice(0, 5).map((_, index) => (
+                {ecoFriendlyData!.features.slice(0, 5).map((_, index) => (
                   <div key={index} className={`dot dot-${index + 1}`}></div>
                 ))}
               </div>
               <div className="left-item">
                 <Image
-                  // src={`${BACKEND_DOMAIN}${ecoFriendlyData.mainImage}`}
+                  // src={`${BACKEND_DOMAIN}${ecoFriendlyData!.mainImage}`}
                   src="/images/eco-friendly/quadiacau1.png"
-                  alt={ecoFriendlyData.mainImageAlt}
+                  alt={ecoFriendlyData!.mainImageAlt}
                   width={500}
                   height={500}
                   objectFit="cover"
@@ -142,7 +174,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
               </div>
             </div>
             <div className="features-right">
-              {ecoFriendlyData.features.map((feature, idx) => (
+              {ecoFriendlyData!.features.map((feature, idx) => (
                 <div key={feature.id || idx} className="right-item">
                   <p>{feature.title}</p>
                   <div className="line"></div>
@@ -158,7 +190,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
         </section>
 
         {/* Dynamic Sections từ API */}
-        {ecoFriendlyData.sections.map((section, idx) => {
+        {ecoFriendlyData!.sections.map((section, idx) => {
           if (section.title.toLowerCase().includes('solar')) {
             // Section đầu tiên - Solar System với stats
             return (

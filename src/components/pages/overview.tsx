@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Slider from "react-slick";
 import { BACKEND_DOMAIN } from "../../api/config";
+import useSWR from "swr";
 
 // Interfaces for TypeScript
 interface Banner {
@@ -74,9 +75,50 @@ interface OverviewProps {
 }
 
 export default function Overview({ overviewData }: OverviewProps) {
+  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch overview data");
+    return data.data;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/overview/data`,
+    fetcher,
+    {
+      fallbackData: overviewData,
+      revalidateOnFocus: true,
+    }
+  );
+
+  // Hooks luôn phải khai báo trước khi return
   const [currentSlide, setCurrentSlide] = useState(0);
   const animateElementsRef = useRef<(HTMLElement | null)[]>([]);
   const sliderRef = useRef<Slider>(null);
+
+  if (error) {
+    return (
+      <section className="hero-section" style={{ minHeight: "400px" }}>
+        <div className="text-center">
+          <h2 className="text-danger">Error loading overview data</h2>
+        </div>
+      </section>
+    );
+  }
+  if (!swrData) {
+    return (
+      <section className="hero-section" style={{ minHeight: "400px" }}>
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  overviewData = swrData;
 
   // Slick settings
   const slickSettings = {
@@ -457,7 +499,7 @@ export default function Overview({ overviewData }: OverviewProps) {
             <div className="row">
               {overviewData.coreValues.map((value, index) => (
                 <div
-                  key={value.id}
+                  key={value.id || `core-value-${index}`}
                   className={`${index < 3 ? "col-md-4" : "col-md-6"} mb-4`}
                   ref={(el) => {
                     if (el) animateElementsRef.current[5 + index] = el;

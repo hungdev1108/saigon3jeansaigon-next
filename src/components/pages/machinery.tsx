@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Slider from "react-slick";
 import { BACKEND_DOMAIN } from "../../api/config";
+import useSWR from "swr";
 
 interface Machine {
   id: string;
@@ -127,6 +128,23 @@ interface MachineryProps {
 }
 
 export default function Machinery({ machineryData }: MachineryProps) {
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch machinery data");
+    return data.data;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/machinery/data`,
+    fetcher,
+    {
+      fallbackData: machineryData,
+      revalidateOnFocus: true,
+    }
+  );
+
+  // Hooks luôn phải khai báo trước khi return
   const [activeStage, setActiveStage] = useState(1);
   const [activeMachine, setActiveMachine] = useState<string>("");
   const [stagesHeight, setStagesHeight] = useState(0);
@@ -134,12 +152,12 @@ export default function Machinery({ machineryData }: MachineryProps) {
   const machinesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (machineryData && machineryData.stages && machineryData.stages.length > 0 && machineryData.stages[0].machines.length > 0) {
-          setActiveMachine(
-        machineryData.stages[0].machines[0].name.toLowerCase().replace(/\s+/g, "")
-          );
-        }
-  }, [machineryData]);
+    if (swrData && swrData.stages && swrData.stages.length > 0 && swrData.stages[0].machines.length > 0) {
+      setActiveMachine(
+        swrData.stages[0].machines[0].name.toLowerCase().replace(/\s+/g, "")
+      );
+    }
+  }, [swrData]);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -155,7 +173,34 @@ export default function Machinery({ machineryData }: MachineryProps) {
       window.removeEventListener('resize', updateHeight);
       clearTimeout(timer);
     };
-  }, [machineryData]);
+  }, [swrData]);
+
+  // Kiểm tra error/data sau khi đã gọi hết hook
+  if (error) {
+    return (
+      <section className="machinery-section py-5">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-danger">Error loading machinery data</h2>
+            <p>Không thể tải dữ liệu machinery.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  if (!swrData) {
+    return (
+      <section className="machinery-section py-5">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-info">Đang tải dữ liệu machinery...</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  machineryData = swrData;
 
   // Helper function to process images
   const processMachineImages = (machine: Machine) => {
@@ -209,20 +254,7 @@ export default function Machinery({ machineryData }: MachineryProps) {
     }
   };
 
-  if (!machineryData) {
-    return (
-      <section className="machinery-section py-5">
-        <div className="container">
-          <div className="text-center">
-            <h2 className="text-danger">Error loading machinery data</h2>
-            <p>Không thể tải dữ liệu machinery.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  const currentStage = machineryData.stages.find(
+  const currentStage = machineryData!.stages.find(
     (stage) => stage.stageNumber === activeStage
   );
   const currentMachine = currentStage?.machines.find(

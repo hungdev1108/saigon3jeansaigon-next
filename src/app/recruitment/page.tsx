@@ -1,35 +1,28 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Recruitment from "@/components/pages/recruitment";
-import recruitmentService from "@/services/recruitmentService";
 
 export const dynamic = "force-static";
 
 export default async function RecruitmentPage() {
+  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
   let jobs = [];
   let contactHr = null;
   let contactInfo = null;
+  
   try {
-    const data = await recruitmentService.getCompleteRecruitmentData();
-    const recruitmentData = data.data;
-    jobs = recruitmentData.jobs || [];
-    contactInfo = recruitmentData.companyInfo;
-    contactHr = recruitmentData.contactHR;
-  } catch {
-    // fallback từng phần nếu API lỗi
-    try {
-      const jobsRes = await recruitmentService.getAllJobs();
-      jobs = Array.isArray(jobsRes.data) ? jobsRes.data : [];
-    } catch {}
-    try {
-      const hrRes = await recruitmentService.getContactHR();
-      contactHr = hrRes.data;
-    } catch {}
-    try {
-      const infoRes = await recruitmentService.getCompanyInfo();
-      contactInfo = infoRes.data;
-    } catch {}
+    const res = await fetch(`${BACKEND_DOMAIN}/api/careers/data`, { cache: 'no-store' });
+    const apiData = await res.json();
+    if (apiData.success) {
+      const recruitmentData = apiData.data;
+      jobs = recruitmentData.jobs || [];
+      contactInfo = recruitmentData.companyInfo;
+      contactHr = recruitmentData.contactHR;
+    }
+  } catch (error) {
+    console.error('Failed to fetch recruitment data:', error);
   }
+  
   return (
     <>
       {/* Header */}

@@ -5,6 +5,7 @@ import Slider from "react-slick";
 import { BACKEND_DOMAIN } from "../../api/config";
 import { useIntersectionObserver } from "../../app/hooks/useCounterAnimation";
 import AnimatedMetric from "../AnimatedMetric";
+import useSWR from "swr";
 
 interface KeyMetric {
   id: string;
@@ -145,11 +146,53 @@ interface FacilitiesProps {
 }
 
 export default function Facilities({ facilitiesData }: FacilitiesProps) {
+  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch facilities data");
+    return data.data;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/facilities/data`,
+    fetcher,
+    {
+      fallbackData: facilitiesData,
+      revalidateOnFocus: true,
+    }
+  );
+
   // Intersection Observer để trigger animation khi metrics section vào viewport
   const [metricsRef, shouldStartAnimation] = useIntersectionObserver({
     threshold: 0.3,
     rootMargin: "-50px",
   });
+
+  if (error) {
+    return (
+      <section className="facilities-overview py-5">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-danger">Error loading facilities data</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  if (!swrData) {
+    return (
+      <section className="facilities-overview py-5">
+        <div className="container">
+          <div className="text-center">
+            <h2 className="text-info">Đang tải dữ liệu facilities...</h2>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  facilitiesData = swrData;
 
   // Type guard to check if feature is new format
   const isNewFeatureFormat = (
@@ -197,18 +240,6 @@ export default function Facilities({ facilitiesData }: FacilitiesProps) {
     console.log("[DEBUG] No images found for feature");
     return [];
   };
-
-  if (!facilitiesData) {
-    return (
-      <section className="facilities-overview py-5">
-        <div className="container">
-          <div className="text-center">
-            <h2 className="text-danger">Error loading facilities data</h2>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <>

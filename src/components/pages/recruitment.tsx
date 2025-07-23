@@ -5,7 +5,7 @@ import recruitmentService from "@/services/recruitmentService";
 import { FormatTime } from "@/shared/format_time";
 import { toast } from "react-toastify";
 import Image from "next/image";
-import { BACKEND_DOMAIN } from "../../api/config";
+import useSWR from "swr";
 
   interface Job {
     _id: string;
@@ -60,7 +60,25 @@ interface RecruitmentProps {
 }
 
 export default function Recruitment({ jobs, contactHr, contactInfo }: RecruitmentProps) {
-  // Component logic with proper types
+  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, { cache: 'no-store' });
+    const data = await res.json();
+    if (!data.success) throw new Error("Failed to fetch recruitment data");
+    return data.data;
+  };
+
+  const { data: swrData, error } = useSWR(
+    `${BACKEND_DOMAIN}/api/careers/data`,
+    fetcher,
+    {
+      fallbackData: { jobs, contactHr, contactInfo },
+      revalidateOnFocus: true,
+      revalidateOnMount: true,
+    }
+  );
+
+  // Component logic with proper types - Hooks phải được gọi trước bất kỳ return nào
   const jobsPerPage = 5;
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedJob, setSelectedJob] = useState<Job | null>({
@@ -86,12 +104,81 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const totalPages = Math.ceil((jobs?.length || 0) / jobsPerPage);
+  // useEffect phải được gọi trước bất kỳ return nào
+  useEffect(() => {
+    const recruitmentContent = document.querySelector(".recruitment-content");
+    const body = document.body;
+
+    if (showModal) {
+      if (recruitmentContent) {
+        recruitmentContent.classList.add("modal-open");
+      }
+      body.classList.add("modal-open");
+
+      const scrollY = window.scrollY;
+      body.style.position = "fixed";
+      body.style.top = `-${scrollY}px`;
+      body.style.width = "100%";
+    } else {
+      if (recruitmentContent) {
+        recruitmentContent.classList.remove("modal-open");
+      }
+      body.classList.remove("modal-open");
+
+      const scrollY = body.style.top;
+      body.style.position = "";
+      body.style.top = "";
+      body.style.width = "";
+
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
+    }
+
+    return () => {
+      if (recruitmentContent) {
+        recruitmentContent.classList.remove("modal-open");
+      }
+      body.classList.remove("modal-open");
+      body.style.position = "";
+      body.style.top = "";
+      body.style.width = "";
+    };
+  }, [showModal]);
+
+  // Error handling giống Home page
+  if (error) {
+    return (
+      <div className="alert alert-danger m-3" role="alert">
+        Không thể tải dữ liệu tuyển dụng
+      </div>
+    );
+  }
+
+  // Use SWR data if available, otherwise fall back to props
+  const currentJobs = swrData?.jobs || jobs || [];
+  const currentContactHr = swrData?.contactHr || contactHr;
+  const currentContactInfo = swrData?.contactInfo || contactInfo;
+
+  // Add loading state
+  if (!swrData && !jobs.length) {
+    return (
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const totalPages = Math.ceil((currentJobs?.length || 0) / jobsPerPage);
 
   // Pagination logic
   const startIndex = (currentPage - 1) * jobsPerPage;
   const endIndex = startIndex + jobsPerPage;
-  const pageJobs = Array.isArray(jobs) ? jobs.slice(startIndex, endIndex) : [];
+  const pageJobs = Array.isArray(currentJobs) ? currentJobs.slice(startIndex, endIndex) : [];
   console.log('pageJobs:', pageJobs);
 
   // Handlers with proper typing
@@ -236,47 +323,6 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
     }
   };
 
-  useEffect(() => {
-    const recruitmentContent = document.querySelector(".recruitment-content");
-    const body = document.body;
-
-    if (showModal) {
-      if (recruitmentContent) {
-        recruitmentContent.classList.add("modal-open");
-      }
-      body.classList.add("modal-open");
-
-      const scrollY = window.scrollY;
-      body.style.position = "fixed";
-      body.style.top = `-${scrollY}px`;
-      body.style.width = "100%";
-    } else {
-      if (recruitmentContent) {
-        recruitmentContent.classList.remove("modal-open");
-      }
-      body.classList.remove("modal-open");
-
-      const scrollY = body.style.top;
-      body.style.position = "";
-      body.style.top = "";
-      body.style.width = "";
-
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
-    }
-
-    return () => {
-      if (recruitmentContent) {
-        recruitmentContent.classList.remove("modal-open");
-      }
-      body.classList.remove("modal-open");
-      body.style.position = "";
-      body.style.top = "";
-      body.style.width = "";
-    };
-  }, [showModal]);
-
   return (
     <>
       <section className="recruitment-content py-5">
@@ -292,7 +338,7 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                       <i className="fas fa-briefcase me-2"></i>OPEN POSITIONS
                     </h3>
                     <small className="opacity-75">
-                      {jobs?.length || 0} jobs found
+                      {currentJobs?.length || 0} jobs found
                     </small>
                   </div>
                   <div className="card-body p-0">
@@ -374,8 +420,8 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                       </nav>
                       <div className="pagination-info text-center">
                         <small className="text-muted">
-                          {startIndex + 1} - {Math.min(endIndex, jobs?.length || 0)}{" "}
-                          of {jobs?.length || 0} jobs
+                          {startIndex + 1} - {Math.min(endIndex, currentJobs?.length || 0)}{" "}
+                          of {currentJobs?.length || 0} jobs
                         </small>
                       </div>
                     </div>
@@ -391,14 +437,14 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                   <div className="card h-100">
                     <div className="card-body text-center">
                       <Image
-                        src={`${BACKEND_DOMAIN}${contactInfo?.logo || "/uploads/images/sg3jeans_logo.png"}`}
+                        src={`${BACKEND_DOMAIN}${currentContactInfo?.logo || "/uploads/images/sg3jeans_logo.png"}`}
                         alt="Saigon 3 Jean Logo"
                         className="company-logo mb-4"
                         width={100}
                         height={100}
                       />
                       <div className="company-description">
-                        {contactInfo?.description.map((desc, index) => (
+                        {currentContactInfo?.description.map((desc: string, index: number) => (
                           <p key={index} className="text-muted">
                             {desc}
                           </p>
@@ -414,7 +460,7 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                           </div>
                           <div className="col-4">
                             <div className="stat-item">
-                              <h5 className="stat-number">1.200.000</h5>
+                              <h5 className="stat-number">120.000</h5>
                               <small className="text-muted">pcs/year</small>
                             </div>
                           </div>
@@ -760,8 +806,8 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-lg-8 col-md-10 col-12 text-center">
-              <h3 className="mb-4">{contactHr?.title}</h3>
-              <p className="text-muted mb-4">{contactHr?.description}</p>
+              <h3 className="mb-4">{currentContactHr?.title}</h3>
+              <p className="text-muted mb-4">{currentContactHr?.description}</p>
               <div className="row justify-content-center">
                 <div className="col-md-6 col-sm-6 mb-3">
                   <div className="contact-info">
@@ -769,7 +815,7 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                       className="fas fa-envelope"
                       style={{ color: "#205b8e" }}
                     ></i>
-                    <span>{contactHr?.email}</span>
+                    <span>{currentContactHr?.email}</span>
                   </div>
                 </div>
                 <div className="col-md-6 col-sm-6 mb-3">
@@ -778,14 +824,14 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                       className="fas fa-phone"
                       style={{ color: "#205b8e" }}
                     ></i>
-                    <span>{contactHr?.phone}</span>
+                    <span>{currentContactHr?.phone}</span>
                   </div>
                 </div>
               </div>
               <div className="mt-4">
                 <a href="#" className="btn btn-primary btn-lg">
                   <i className="fas fa-paper-plane me-2"></i>
-                  {contactHr?.submitResumeText}
+                  {currentContactHr?.submitResumeText}
                 </a>
               </div>
             </div>

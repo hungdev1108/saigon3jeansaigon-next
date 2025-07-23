@@ -136,12 +136,20 @@ class MachineryAdminService {
   /**
    * Thêm một máy mới vào danh mục
    */
-  async addMachine(stageId, machineData) {
+  async addMachine(stageId, machineData, files) {
     try {
+      const formData = new FormData();
+      formData.append('name', machineData.name);
+      formData.append('description', machineData.description);
+      formData.append('order', machineData.order);
+      formData.append('isActive', machineData.isActive);
+      if (Array.isArray(files)) {
+        files.forEach(file => formData.append('images', file));
+      }
       const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines`, {
         method: "POST",
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify(machineData),
+        headers: this.getUploadHeaders(),
+        body: formData,
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Failed to add machine");

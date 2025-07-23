@@ -262,6 +262,8 @@ class AutomationService {
    */
   async addItem(itemData, file) {
     try {
+      console.log('addItem - itemData:', itemData);
+      console.log('addItem - file:', file);
       if (file) {
         const formData = new FormData();
         formData.append('image', file);
