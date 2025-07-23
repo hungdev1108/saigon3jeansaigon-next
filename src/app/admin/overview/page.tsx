@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { FiSave, FiImage, FiType, FiFileText, FiTrash2, FiPlusCircle } from 'react-icons/fi';
 import { toast, ToastOptions } from "react-toastify";
 import overviewAdminService from "@/services/overviewService-admin";
-const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 // Toast config
 const toastOptions: ToastOptions = {

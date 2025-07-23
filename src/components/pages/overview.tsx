@@ -1,10 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { useEffect, useRef, useState } from "react";
 import Slider from "react-slick";
-import { BACKEND_DOMAIN } from "../../api/config";
-import useSWR from "swr";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 // Interfaces for TypeScript
 interface Banner {
@@ -75,50 +74,9 @@ interface OverviewProps {
 }
 
 export default function Overview({ overviewData }: OverviewProps) {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch overview data");
-    return data.data;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/overview/data`,
-    fetcher,
-    {
-      fallbackData: overviewData,
-      revalidateOnFocus: true,
-    }
-  );
-
-  // Hooks luôn phải khai báo trước khi return
   const [currentSlide, setCurrentSlide] = useState(0);
   const animateElementsRef = useRef<(HTMLElement | null)[]>([]);
   const sliderRef = useRef<Slider>(null);
-
-  if (error) {
-    return (
-      <section className="hero-section" style={{ minHeight: "400px" }}>
-        <div className="text-center">
-          <h2 className="text-danger">Error loading overview data</h2>
-        </div>
-      </section>
-    );
-  }
-  if (!swrData) {
-    return (
-      <section className="hero-section" style={{ minHeight: "400px" }}>
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  overviewData = swrData;
 
   // Slick settings
   const slickSettings = {
@@ -282,9 +240,6 @@ export default function Overview({ overviewData }: OverviewProps) {
   // Thêm biến timestamp cho banner
   const bannerTimestamp = overviewData?.banner?.updatedAt || Date.now();
 
-  // Thêm biến để dễ chỉnh khoảng cách box message với bên trái
-  const messageBoxMarginLeft = 250; // Đẩy box sát trái hơn nữa
-
   return (
     <>
       <section className="page-content py-5">
@@ -353,7 +308,7 @@ export default function Overview({ overviewData }: OverviewProps) {
             </div>
           </div>
         </div>
-
+        
         {/* Tiêu đề MILESTONES tách riêng */}
         <div className="container">
           <h2 className="section-title mt-5">
@@ -403,13 +358,17 @@ export default function Overview({ overviewData }: OverviewProps) {
           </div>
         </div>
 
-        {/* MESSAGE Section */}
+                {/* MESSAGE Section */}
         <div
           className="message-section"
+          ref={(el) => {
+            if (el) animateElementsRef.current[2] = el;
+          }}
           style={{
             width: '100%',
             minHeight: '640px',
-            paddingTop: 80, // giả sử header cao 80px, chỉnh lại nếu header cao khác
+            paddingTop: 70,
+            paddingBottom: 70,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-start',
@@ -420,45 +379,161 @@ export default function Overview({ overviewData }: OverviewProps) {
         >
           {/* Box MESSAGE */}
           <div
-            className="message-content modern-scroll"
+            className="message-content"
             style={{
-              background: 'rgba(255,255,255,0.3)',
-              borderRadius: 24,
-              boxShadow: '0 4px 24px rgba(0,0,0,0.10)',
-              padding: 40,
-              maxWidth: 550,
-              margin: `0 0 0 ${messageBoxMarginLeft}px`,
-              flex: '0 0 760px',
-              zIndex: 2,
-              fontSize: 18,
-              lineHeight: 1.7,
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(44,62,80,0.15) transparent',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: 16,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              padding: '15px',
+              maxWidth: '900px',
+              marginLeft: '50px',
+              fontSize: '0.68rem',
+              lineHeight: 1.2,
+              backdropFilter: 'blur(2px)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              color: '#333',
+              textShadow: '0 1px 1px rgba(255,255,255,0.7)',
+              width: 'calc(100% - 100px)',
+              marginRight: '50px',
             }}
           >
-            <div className="message-text-wrapper">
-              <h2 className="section-title ">MESSAGE</h2>
-              <div className="message-text">
-                <p>Dear Valued Shareholders, Partners, Customers, and All Employees of Saigon3 Jean,</p>
-                <p>Over the years, Saigon3 Jean has continually strived to affirm its position in the fashion wash industry, especially in the denim sector—where creativity, quality, and sustainability are our core values. We take pride in being a trusted partner of many international and regional fashion brands.</p>
-                <p>The year 2024 was filled with challenges—marked by global economic fluctuations, rapidly shifting consumer trends, and growing demands for social and environmental responsibility. In response, Saigon3 Jean took a proactive approach by: Restructuring into a leaner organization, Applying technology in production and management, and Reinforcing our commitment to green manufacturing and sustainable development.</p>
-                <p>We believe that long-term growth cannot rely solely on production capacity or cost competitiveness. True sustainability must be rooted in corporate culture, people, and the ability to adapt. With that vision, Saigon3 Jean is transforming from a traditional OEM manufacturer into a &ldquo;comprehensive strategic partner in the denim fashion industry&rdquo;, offering end-to-end solutions&mdash;from design and product development to sustainable manufacturing.</p>
-                <p>I would like to express my deepest gratitude to all our employees&mdash;those who have dedicated their expertise, passion, and belief in the company&rsquo;s future. I also sincerely thank our customers, partners, and shareholders for your continued support and trust in our journey.</p>
-                <p>Looking ahead, Saigon3 Jean remains steadfast in its vision:</p>
-                <blockquote style={{ fontWeight: 600, fontSize: 20, color: '#1e4e7d', margin: '16px 0' }}>
-                  To become Southeast Asia&rsquo;s leading denim enterprise in quality, creativity, and sustainability.
-                </blockquote>
-                <p>We will continue to invest heavily in human resources, automation, digital transformation, and ESG initiatives, building a business that is not only efficient, but also responsible to the community and the environment.</p>
-              </div>
-              <div className="ceo-signature" style={{ marginTop: 32 }}>
-                <div className="ceo-name" style={{ fontWeight: 600, color: '#1e4e7d', fontSize: 20 }}>CEO</div>
-                <div className="ceo-position" style={{ fontStyle: 'italic', color: '#444' }}>Chief Executive Officer</div>
+            <h2 className="section-title text-center" style={{
+              fontSize: '1.2rem', 
+              marginBottom: '1rem',
+              paddingBottom: '0.5rem',
+              position: 'relative',
+              color: '#1e4e7d',
+              fontWeight: 600,
+              borderBottom: 'none',
+            }}>
+              MESSAGE
+              <span style={{
+                position: 'absolute',
+                bottom: 0,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '60px',
+                height: '2px',
+                background: '#1e4e7d',
+                display: 'block',
+              }}></span>
+            </h2>
+            <div className="message-text">
+              <p style={{marginBottom: '0.3rem'}}>Dear Valued Shareholders, Partners, Customers, and All Employees of Saigon3 Jean,</p>
+              <p style={{marginBottom: '0.3rem'}}>Over the years, Saigon3 Jean has continually strived to affirm its position in the fashion wash industry, especially in the denim sector—where creativity, quality, and sustainability are our core values. We take pride in being a trusted partner of many international and regional fashion brands.</p>
+              <p style={{marginBottom: '0.3rem'}}>The year 2024 was filled with challenges—marked by global economic fluctuations, rapidly shifting consumer trends, and growing demands for social and environmental responsibility. In response, Saigon3 Jean took a proactive approach by: Restructuring into a leaner organization, Applying technology in production and management, and Reinforcing our commitment to green manufacturing and sustainable development.</p>
+              <p style={{marginBottom: '0.3rem'}}>We believe that long-term growth cannot rely solely on production capacity or cost competitiveness. True sustainability must be rooted in corporate culture, people, and the ability to adapt. With that vision, Saigon3 Jean is transforming from a traditional OEM manufacturer into a &ldquo;comprehensive strategic partner in the denim fashion industry&rdquo;, offering end-to-end solutions&mdash;from design and product development to sustainable manufacturing.</p>
+              <p style={{marginBottom: '0.3rem'}}>I would like to express my deepest gratitude to all our employees&mdash;those who have dedicated their expertise, passion, and belief in the company&rsquo;s future. I also sincerely thank our customers, partners, and shareholders for your continued support and trust in our journey.</p>
+              <p style={{marginBottom: '0.3rem'}}>Looking ahead, Saigon3 Jean remains steadfast in its vision:</p>
+              <blockquote style={{ 
+                fontWeight: 600, 
+                fontSize: '0.7rem', 
+                color: '#1e4e7d', 
+                margin: '4px 0', 
+                padding: '4px 6px', 
+                borderLeft: '3px solid #1e4e7d', 
+                background: 'rgba(30, 78, 125, 0.05)'
+              }}>
+                To become Southeast Asia&rsquo;s leading denim enterprise in quality, creativity, and sustainability.
+              </blockquote>
+              <p style={{marginBottom: '0.3rem'}}>We will continue to invest heavily in human resources, automation, digital transformation, and ESG initiatives, building a business that is not only efficient, but also responsible to the community and the environment.</p>
+              <div className="ceo-signature text-end mt-1">
+                <div className="ceo-name" style={{ fontWeight: 600, color: '#1e4e7d', fontSize: '0.8rem' }}>CEO</div>
+                <div className="ceo-position" style={{ fontStyle: 'italic', color: '#444', fontSize: '0.65rem' }}>Chief Executive Officer</div>
               </div>
             </div>
           </div>
         </div>
+        
+        <style jsx>{`
+          /* Fix for title underline */
+          .section-title {
+            text-decoration: none !important;
+            border-bottom: none !important;
+          }
+          
+          .section-title::after,
+          .section-title::before {
+            display: none !important;
+          }
+          
+          /* Responsive styles */
+          @media (max-width: 1200px) {
+            .message-section {
+              justify-content: center !important;
+            }
+            .message-content {
+              margin-left: 0 !important;
+              max-width: 80% !important;
+            }
+          }
+          @media (max-width: 768px) {
+            .message-content {
+              max-width: 90% !important;
+              margin-right: 0 !important;
+              padding: 12px !important;
+            }
+          }
+          @media (max-width: 576px) {
+            .message-section {
+              padding-top: 20px !important;
+              padding-bottom: 20px !important;
+              align-items: flex-start !important;
+              background-position: right -50px center !important;
+              background-size: auto 100% !important;
+              background-image: url('/images/overview-page/CEO-Banner.jpg') !important;
+              min-height: 500px !important;
+              justify-content: flex-start !important;
+            }
+            .message-content {
+              max-width: 50% !important;
+              max-height: 440px !important;
+              overflow-y: auto !important;
+              font-size: 0.7rem !important;
+              margin-top: 10px !important;
+              margin-left: 10px !important;
+              background: rgba(255,255,255,0.9) !important;
+              color: #222 !important;
+              text-shadow: none !important;
+              width: auto !important;
+              padding: 10px !important;
+            }
+            .message-text {
+              max-height: 370px !important;
+              overflow-y: auto !important;
+              padding-right: 5px !important;
+            }
+            .section-title {
+              font-size: 1rem !important;
+              margin-bottom: 5px !important;
+              padding-bottom: 5px !important;
+              border-bottom: none !important;
+            }
+            .section-title span {
+              width: 40px !important;
+            }
+            .blockquote {
+              font-size: 0.7rem !important;
+              background: rgba(30, 78, 125, 0.1) !important;
+              padding: 3px 5px !important;
+            }
+            /* Custom scrollbar for mobile */
+            .message-text::-webkit-scrollbar {
+              width: 4px !important;
+            }
+            .message-text::-webkit-scrollbar-track {
+              background: rgba(255,255,255,0.2) !important;
+              border-radius: 10px !important;
+            }
+            .message-text::-webkit-scrollbar-thumb {
+              background: rgba(30,78,125,0.3) !important;
+              border-radius: 10px !important;
+            }
+            .message-text::-webkit-scrollbar-thumb:hover {
+              background: rgba(30,78,125,0.5) !important;
+            }
+          }
+        `}</style>
 
         {/* VISION & MISSION Section */}
         <div

@@ -4,8 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import recruitmentService from "@/services/recruitmentService";
 import { FormatTime } from "@/shared/format_time";
 import { toast } from "react-toastify";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import useSWR from "swr";
+import { BACKEND_DOMAIN } from '@/api/config';
 
   interface Job {
     _id: string;
@@ -60,24 +61,7 @@ interface RecruitmentProps {
 }
 
 export default function Recruitment({ jobs, contactHr, contactInfo }: RecruitmentProps) {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
-  const fetcher = async (url: string) => {
-    const res = await fetch(url, { cache: 'no-store' });
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch recruitment data");
-    return data.data;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/careers/data`,
-    fetcher,
-    {
-      fallbackData: { jobs, contactHr, contactInfo },
-      revalidateOnFocus: true,
-      revalidateOnMount: true,
-    }
-  );
-
+  // Không dùng SWR, chỉ nhận data từ props
   // Component logic with proper types - Hooks phải được gọi trước bất kỳ return nào
   const jobsPerPage = 5;
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -147,21 +131,25 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
   }, [showModal]);
 
   // Error handling giống Home page
-  if (error) {
+  if (!jobs.length) {
     return (
-      <div className="alert alert-danger m-3" role="alert">
-        Không thể tải dữ liệu tuyển dụng
+      <div className="container py-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
       </div>
     );
   }
 
   // Use SWR data if available, otherwise fall back to props
-  const currentJobs = swrData?.jobs || jobs || [];
-  const currentContactHr = swrData?.contactHr || contactHr;
-  const currentContactInfo = swrData?.contactInfo || contactInfo;
+  const currentJobs = jobs || [];
+  const currentContactHr = contactHr;
+  const currentContactInfo = contactInfo;
 
   // Add loading state
-  if (!swrData && !jobs.length) {
+  if (!jobs.length) {
     return (
       <div className="container py-5">
         <div className="text-center">
@@ -433,7 +421,7 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
             <div className="col-lg-7 col-md-6">
               {!showJobDetails ? (
                 // Company Info
-                <div className="company-info-card">
+                (<div className="company-info-card">
                   <div className="card h-100">
                     <div className="card-body text-center">
                       <Image
@@ -474,90 +462,88 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                       </div>
                     </div>
                   </div>
-                </div>
+                </div>)
               ) : (
                 // Job Details
-                selectedJob && (
-                  <div className="job-details-card">
-                    <div className="card h-100">
-                      <div className="card-header">
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div className="flex-grow-1">
-                            <h4 className="job-title mb-2">
-                              {selectedJob.title}
-                            </h4>
-                            <div className="job-meta">
-                              <span className="badge me-2">
-                                {selectedJob.type}
-                              </span>
-                              <small className="text-muted">
-                                Posted{" "}
-                                {FormatTime.getRelativeTime(
-                                  selectedJob.createdAt,
-                                  "en-US"
-                                )}
-                              </small>
-                            </div>
-                          </div>
-                          <div className="job-actions">
-                            <button
-                              className="btn btn-outline-secondary btn-sm me-2"
-                              onClick={handleBackToList}
-                            >
-                              <i className="fas fa-arrow-left"></i> Back
-                            </button>
-                            <button
-                              className="btn btn-primary"
-                              onClick={handleApplyClick}
-                            >
-                              <i className="fas fa-paper-plane me-1"></i> Apply
-                              Now
-                            </button>
+                (selectedJob && (<div className="job-details-card">
+                  <div className="card h-100">
+                    <div className="card-header">
+                      <div className="d-flex justify-content-between align-items-start">
+                        <div className="flex-grow-1">
+                          <h4 className="job-title mb-2">
+                            {selectedJob.title}
+                          </h4>
+                          <div className="job-meta">
+                            <span className="badge me-2">
+                              {selectedJob.type}
+                            </span>
+                            <small className="text-muted">
+                              Posted{" "}
+                              {FormatTime.getRelativeTime(
+                                selectedJob.createdAt,
+                                "en-US"
+                              )}
+                            </small>
                           </div>
                         </div>
-                      </div>
-                      <div className="card-body">
-                        <div className="job-location mb-4">
-                          <h6>
-                            <i className="fas fa-map-marker-alt me-2"></i>Work
-                            Location
-                          </h6>
-                          <p className="mb-0">{selectedJob.location}</p>
-                        </div>
-                        <div className="job-description">
-                          <h6>
-                            <i className="fas fa-file-alt me-2"></i>
-                            Job Description
-                          </h6>
-                          <div>
-                            <p>{selectedJob.description}</p>
-                          </div>
-                        </div>
-                        <div className="job-requirements mt-4">
-                          <h6>
-                            <i className="fas fa-list-check me-2"></i>
-                            Requirements
-                          </h6>
-                          <ul>
-                            {selectedJob.requirements.map((req, idx) => (
-                              <li key={idx}>{req}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="job-benefits mt-4">
-                          <h6>
-                            <i className="fas fa-gift me-2"></i>Benefits
-                          </h6>
-                          <ul>
-                            {selectedJob.benefits.map((b, idx) => (
-                              <li key={idx}>{b}</li>
-                            ))}
-                          </ul>
+                        <div className="job-actions">
+                          <button
+                            className="btn btn-outline-secondary btn-sm me-2"
+                            onClick={handleBackToList}
+                          >
+                            <i className="fas fa-arrow-left"></i> Back
+                          </button>
+                          <button
+                            className="btn btn-primary"
+                            onClick={handleApplyClick}
+                          >
+                            <i className="fas fa-paper-plane me-1"></i> Apply
+                            Now
+                          </button>
                         </div>
                       </div>
                     </div>
+                    <div className="card-body">
+                      <div className="job-location mb-4">
+                        <h6>
+                          <i className="fas fa-map-marker-alt me-2"></i>Work
+                          Location
+                        </h6>
+                        <p className="mb-0">{selectedJob.location}</p>
+                      </div>
+                      <div className="job-description">
+                        <h6>
+                          <i className="fas fa-file-alt me-2"></i>
+                          Job Description
+                        </h6>
+                        <div>
+                          <p>{selectedJob.description}</p>
+                        </div>
+                      </div>
+                      <div className="job-requirements mt-4">
+                        <h6>
+                          <i className="fas fa-list-check me-2"></i>
+                          Requirements
+                        </h6>
+                        <ul>
+                          {selectedJob.requirements.map((req, idx) => (
+                            <li key={idx}>{req}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="job-benefits mt-4">
+                        <h6>
+                          <i className="fas fa-gift me-2"></i>Benefits
+                        </h6>
+                        <ul>
+                          {selectedJob.benefits.map((b, idx) => (
+                            <li key={idx}>{b}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                )
+                </div>))
               )}
             </div>
           </div>
@@ -801,7 +787,6 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
           </div>
         </>
       )}
-
       <section className="contact-hr py-5 bg-light">
         <div className="container">
           <div className="row justify-content-center">

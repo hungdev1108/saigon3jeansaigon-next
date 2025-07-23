@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { useState, useEffect, useRef } from "react";
 import Slider from "react-slick";
-import { BACKEND_DOMAIN } from "../../api/config";
+import { BACKEND_DOMAIN } from '@/api/config';
 import useSWR from "swr";
 
 interface Machine {
@@ -128,21 +128,8 @@ interface MachineryProps {
 }
 
 export default function Machinery({ machineryData }: MachineryProps) {
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch machinery data");
-    return data.data;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/machinery/data`,
-    fetcher,
-    {
-      fallbackData: machineryData,
-      revalidateOnFocus: true,
-    }
-  );
+  // Không dùng SWR, chỉ nhận machineryData từ props
+  const data = machineryData;
 
   // Hooks luôn phải khai báo trước khi return
   const [activeStage, setActiveStage] = useState(1);
@@ -152,12 +139,12 @@ export default function Machinery({ machineryData }: MachineryProps) {
   const machinesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (swrData && swrData.stages && swrData.stages.length > 0 && swrData.stages[0].machines.length > 0) {
+    if (data && data.stages && data.stages.length > 0 && data.stages[0].machines.length > 0) {
       setActiveMachine(
-        swrData.stages[0].machines[0].name.toLowerCase().replace(/\s+/g, "")
+        data.stages[0].machines[0].name.toLowerCase().replace(/\s+/g, "")
       );
     }
-  }, [swrData]);
+  }, [data]);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -173,22 +160,10 @@ export default function Machinery({ machineryData }: MachineryProps) {
       window.removeEventListener('resize', updateHeight);
       clearTimeout(timer);
     };
-  }, [swrData]);
+  }, [data]);
 
   // Kiểm tra error/data sau khi đã gọi hết hook
-  if (error) {
-    return (
-      <section className="machinery-section py-5">
-        <div className="container">
-          <div className="text-center">
-            <h2 className="text-danger">Error loading machinery data</h2>
-            <p>Không thể tải dữ liệu machinery.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-  if (!swrData) {
+  if (!data) {
     return (
       <section className="machinery-section py-5">
         <div className="container">
@@ -199,8 +174,6 @@ export default function Machinery({ machineryData }: MachineryProps) {
       </section>
     );
   }
-
-  machineryData = swrData;
 
   // Helper function to process images
   const processMachineImages = (machine: Machine) => {
@@ -223,8 +196,8 @@ export default function Machinery({ machineryData }: MachineryProps) {
     setActiveStage(stageNumber);
 
     // Set first machine of selected stage as active
-    if (machineryData) {
-      const selectedStage = machineryData.stages.find(
+    if (data) {
+      const selectedStage = data.stages.find(
         (stage) => stage.stageNumber === stageNumber
       );
       if (selectedStage && selectedStage.machines.length > 0) {
@@ -254,7 +227,7 @@ export default function Machinery({ machineryData }: MachineryProps) {
     }
   };
 
-  const currentStage = machineryData!.stages.find(
+  const currentStage = data!.stages.find(
     (stage) => stage.stageNumber === activeStage
   );
   const currentMachine = currentStage?.machines.find(
@@ -272,7 +245,7 @@ export default function Machinery({ machineryData }: MachineryProps) {
             {/* Stages Column */}
             <div className="col-md-5">
               <div className="stages-container" ref={stagesContainerRef}>
-                {machineryData.stages.map((stage, idx) => (
+                {data.stages.map((stage, idx) => (
                   <div
                     key={stage.id || idx}
                     className={`stage-item ${activeStage === stage.stageNumber ? "active" : ""}`}

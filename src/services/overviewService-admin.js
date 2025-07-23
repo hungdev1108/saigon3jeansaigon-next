@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 class OverviewAdminService {
   /**
@@ -19,7 +19,7 @@ class OverviewAdminService {
   async getCompleteOverviewData() {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/data`,
+        `${BACKEND_DOMAIN}/api/overview/data`,
         {
           method: "GET",
           headers: this.getAuthHeaders(),
@@ -45,7 +45,7 @@ class OverviewAdminService {
   async updateBanner(formData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/banner`,
+        `${BACKEND_DOMAIN}/api/overview/banner`,
         {
           method: "PUT",
           body: formData,
@@ -75,7 +75,7 @@ class OverviewAdminService {
       // }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/banner`,
+        `${BACKEND_DOMAIN}/api/overview/banner`,
         {
           method: "PUT",
           headers,
@@ -97,7 +97,7 @@ class OverviewAdminService {
   async updateMilestones(milestonesData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/milestones`,
+        `${BACKEND_DOMAIN}/api/overview/milestones`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
@@ -119,7 +119,7 @@ class OverviewAdminService {
   async addMilestone(milestoneData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/milestones`,
+        `${BACKEND_DOMAIN}/api/overview/milestones`,
         {
           method: "POST",
           headers: this.getAuthHeaders(),
@@ -141,7 +141,7 @@ class OverviewAdminService {
   async deleteMilestone(milestoneId) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/milestones/${milestoneId}`,
+        `${BACKEND_DOMAIN}/api/overview/milestones/${milestoneId}`,
         {
           method: "DELETE",
           headers: this.getAuthHeaders(),
@@ -172,7 +172,7 @@ class OverviewAdminService {
       // }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/milestones/${milestoneId}/image`,
+        `${BACKEND_DOMAIN}/api/overview/milestones/${milestoneId}/image`,
         {
           method: "POST",
           headers,
@@ -201,7 +201,7 @@ class OverviewAdminService {
       // }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/milestones`,
+        `${BACKEND_DOMAIN}/api/overview/milestones`,
         {
           method: "PUT",
           headers,
@@ -223,7 +223,7 @@ class OverviewAdminService {
   async updateMessage(messageData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/message`,
+        `${BACKEND_DOMAIN}/api/overview/message`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
@@ -255,7 +255,7 @@ class OverviewAdminService {
       // }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/message`,
+        `${BACKEND_DOMAIN}/api/overview/message`,
         {
           method: "PUT",
           headers,
@@ -277,7 +277,7 @@ class OverviewAdminService {
   async updateVisionMission(visionMissionData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/vision-mission`,
+        `${BACKEND_DOMAIN}/api/overview/vision-mission`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
@@ -299,7 +299,7 @@ class OverviewAdminService {
   async updateCoreValues(coreValuesData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/core-values`,
+        `${BACKEND_DOMAIN}/api/overview/core-values`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),
@@ -321,7 +321,7 @@ class OverviewAdminService {
   async addCoreValue(coreValueData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/core-values`,
+        `${BACKEND_DOMAIN}/api/overview/core-values`,
         {
           method: "POST",
           headers: this.getAuthHeaders(),
@@ -343,7 +343,7 @@ class OverviewAdminService {
   async deleteCoreValue(coreValueId) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/core-values/${coreValueId}`,
+        `${BACKEND_DOMAIN}/api/overview/core-values/${coreValueId}`,
         {
           method: "DELETE",
           headers: this.getAuthHeaders(),
@@ -364,7 +364,7 @@ class OverviewAdminService {
   async updateSeoData(seoData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/overview/seo`,
+        `${BACKEND_DOMAIN}/api/overview/seo`,
         {
           method: "PUT",
           headers: this.getAuthHeaders(),

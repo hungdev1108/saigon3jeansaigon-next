@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { useEffect } from "react";
 import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
@@ -74,30 +74,8 @@ interface HomeProps {
 export default function Home({ homeData }: HomeProps) {
   useClientScript();
 
-  // SWR fetcher
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch home data");
-    return data.data;
-  };
-
-  // SWR hook: refetch mỗi 60s, dùng SSR data làm initialData
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/home/data`,
-    fetcher,
-    {
-      fallbackData: homeData ? {
-        hero: homeData.hero,
-        sections: homeData.sections,
-        customers: homeData.customers,
-        certifications: homeData.certifications,
-        featuredNews: homeData.featuredNews,
-        regularNews: homeData.regularNews,
-      } : undefined,
-      revalidateOnFocus: true,
-    }
-  );
+  // Không dùng SWR, chỉ nhận homeData từ props
+  const data = homeData;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -109,14 +87,7 @@ export default function Home({ homeData }: HomeProps) {
   }, []);
 
   // Nếu không có dữ liệu
-  if (error) {
-    return (
-      <div className="alert alert-danger m-3" role="alert">
-        Không thể tải dữ liệu trang chủ
-      </div>
-    );
-  }
-  if (!swrData) {
+  if (!data) {
     return (
       <div className="alert alert-info m-3" role="alert">
         Đang tải dữ liệu trang chủ...
@@ -124,7 +95,7 @@ export default function Home({ homeData }: HomeProps) {
     );
   }
 
-  const { hero, sections, customers, certifications, featuredNews, regularNews } = swrData;
+  const { hero, sections, customers, certifications, featuredNews, regularNews } = data;
 
   // Function to get customer slider settings
   const getCustomerSliderSettings = () => ({
@@ -254,7 +225,7 @@ export default function Home({ homeData }: HomeProps) {
                             src={
                               section.mediaUrl
                                 ? `${BACKEND_DOMAIN}${section.mediaUrl}`
-                                : "/videos/SAIGON_3_JEAN.mp4"
+                                : "/videos/STORY_SG3J.mp4"
                             }
                             type="video/mp4"
                           />
@@ -320,7 +291,7 @@ export default function Home({ homeData }: HomeProps) {
               <i className="fas fa-times"></i>
             </button>
             <video id="videoPlayer" controls>
-              <source src="/videos/SAIGON_3_JEAN.mp4" type="video/mp4" />
+              <source src="/videos/STORY_SG3J.mp4" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>

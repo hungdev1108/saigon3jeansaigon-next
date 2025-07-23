@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import authService from "@/services/authService";
 
 export default function AdminLoginPage() {
@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
   // Kiểm tra nếu đã đăng nhập thì chuyển hướng
   useEffect(() => {
     if (authService.isAuthenticated()) {
-      router.push("/admin");
+      router.push("/admin/home");
     }
   }, [router]);
 
@@ -47,7 +47,7 @@ export default function AdminLoginPage() {
 
       if (result.success) {
         // Đăng nhập thành công, chuyển hướng
-        router.push("/admin");
+        router.push("/admin/home");
       } else {
         setError(result.message || "Đăng nhập thất bại");
       }

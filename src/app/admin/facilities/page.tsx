@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 // COMMENTED FOR DEVELOPMENT - Tạm comment ProtectedRoute để không cần đăng nhập
 // import ProtectedRoute from "@/components/admin/ProtectedRoute";
 // import EditableSection from "@/components/admin/EditableSection";
@@ -9,6 +9,7 @@ import facilitiesAdminService from "@/services/facilitiesService-admin";
 import Toast from "@/components/admin/Toast";
 import AdminSectionCard from "@/components/admin/AdminSectionCard";
 import { FiTrash2, FiEdit, FiPlusCircle } from 'react-icons/fi';
+import { BACKEND_DOMAIN } from '@/api/config';
 
 interface KeyMetric {
   id: string;
@@ -20,7 +21,8 @@ interface KeyMetric {
 }
 
 interface FacilityFeature {
-  id: string;
+  id?: string; // id có thể không có
+  _id: string; // _id là trường bắt buộc từ MongoDB
   title: string;
   description: string;
   image: string;
@@ -63,6 +65,12 @@ export default function AdminFacilitiesPage() {
     setToastMsg(msg);
     setToastType(type);
     setToastOpen(true);
+    // Auto-close toast after 5 seconds (but only for success messages)
+    if (type === 'success') {
+      setTimeout(() => {
+        setToastOpen(false);
+      }, 5000);
+    }
   };
 
   // Mở modal cho Add/Edit
@@ -95,6 +103,7 @@ export default function AdminFacilitiesPage() {
     setSaving(true);
     try {
       if (modalType === 'keyMetric') {
+        // Xử lý key metric (giữ nguyên code)
         if (modalMode === 'add') {
           const result = await facilitiesAdminService.addKeyMetric(modalData);
           if (result.success) {
@@ -111,14 +120,19 @@ export default function AdminFacilitiesPage() {
           } else showToast(result.message || 'Cập nhật thất bại','error');
         }
       } else if (modalType === 'facilityFeature') {
-        if (modalMode === 'add' || modalMode === 'edit') {
-          // 1. Upload các file mới nếu có
+        // Xử lý facility feature
+        try {
           let uploadedUrls: string[] = [];
+          // 1. Upload ảnh nếu có
           if (newImages.length > 0) {
+            console.log('Uploading images:', newImages);
             const formData = new FormData();
             newImages.forEach(file => formData.append('images', file));
-            // Gọi API upload nhiều ảnh, nhận về mảng url
+            
+            // Gọi API upload nhiều ảnh
             const uploadRes = await facilitiesAdminService.uploadMultipleImages(formData);
+            console.log('Upload response:', uploadRes);
+            
             if (uploadRes.success && Array.isArray(uploadRes.urls)) {
               uploadedUrls = uploadRes.urls;
             } else {
@@ -127,50 +141,92 @@ export default function AdminFacilitiesPage() {
               return;
             }
           }
-          // 2. Gộp url ảnh cũ (modalData.images) và url mới upload
-          const oldUrls = (modalData.images || []).map((img: { url: string }) => img.url);
-          const allUrls = [...oldUrls, ...uploadedUrls];
-          // 3. Gửi mảng url này lên backend khi lưu
-          const featureData = { ...modalData, images: allUrls.map((url, i) => ({ url, alt: modalData.imageAlt || '', order: i })) };
+
+          // 2. Chuẩn bị dữ liệu cho facility feature
+          const featureData = {
+            ...modalData,
+            // Đảm bảo có image chính (sử dụng URL đầu tiên trong uploadedUrls nếu có)
+            image: uploadedUrls.length > 0 ? uploadedUrls[0] : modalData.image,
+            // Tạo mảng ảnh từ các URL đã upload
+            images: uploadedUrls.map((url, idx) => ({
+              url,
+              alt: `${modalData.title || 'Feature'} image ${idx + 1}`,
+              order: idx
+            }))
+          };
+          
+          console.log('Saving feature data:', featureData);
+          
+          // 3. Lưu dữ liệu
           let result;
           if (modalMode === 'add') {
             result = await facilitiesAdminService.addFacilityFeature(featureData);
-          } else {
-            if (modalIndex !== null) {
-              const updated = [...(facilitiesData?.facilityFeatures||[])];
-              updated[modalIndex] = { ...updated[modalIndex], ...featureData };
-              result = await facilitiesAdminService.updateFacilityFeatures(updated);
+            console.log('Add feature response:', result);
+            
+            if (result.success) {
+              await loadData(); // Tải lại dữ liệu
+              showToast('Thêm Facility Feature thành công!', 'success');
+              closeModal();
+              setNewImages([]); // Reset ảnh đã chọn
             } else {
-              showToast('Không xác định được feature để cập nhật', 'error');
-              setSaving(false);
-              return;
+              showToast(result.message || 'Thêm thất bại', 'error');
+            }
+          } else if (modalMode === 'edit' && modalIndex !== null) {
+            // Cập nhật feature hiện tại
+            const updated = [...(facilitiesData?.facilityFeatures||[])];
+            
+            // Kết hợp images hiện tại với images mới
+            const currentImages = updated[modalIndex].images || [];
+            const newFeatureImages = [
+              ...currentImages,
+              ...uploadedUrls.map((url, idx) => ({
+                url,
+                alt: `${modalData.title || 'Feature'} image ${currentImages.length + idx + 1}`,
+                order: currentImages.length + idx
+              }))
+            ];
+            
+            // Cập nhật dữ liệu
+            updated[modalIndex] = { 
+              ...updated[modalIndex], 
+              ...modalData,
+              images: newFeatureImages,
+              // Chỉ cập nhật image chính nếu có upload ảnh mới
+              ...(uploadedUrls.length > 0 ? { image: uploadedUrls[0] } : {})
+            };
+            
+            result = await facilitiesAdminService.updateFacilityFeatures(updated);
+            
+            if (result.success) {
+              setFacilitiesData(prev => prev ? { ...prev, facilityFeatures: updated } : null);
+              showToast('Cập nhật Facility Feature thành công!', 'success');
+              closeModal();
+              setNewImages([]); // Reset ảnh đã chọn
+            } else {
+              showToast(result.message || 'Cập nhật thất bại', 'error');
             }
           }
-          if (result.success) {
-            await loadData();
-            showToast(modalMode === 'add' ? 'Thêm Facility Feature thành công!' : 'Cập nhật Facility Feature thành công!', 'success');
-            setNewImages([]); // reset sau khi lưu thành công
-          } else {
-            showToast(result.message || (modalMode === 'add' ? 'Thêm thất bại' : 'Cập nhật thất bại'), 'error');
-          }
-          closeModal();
-          setSaving(false);
-          return;
+        } catch (error) {
+          console.error('Error handling facility feature:', error);
+          showToast('Có lỗi xảy ra khi xử lý ảnh', 'error');
         }
       }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      showToast('Có lỗi xảy ra', 'error');
     } finally {
       setSaving(false);
     }
   };
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
-
   // Helper để lấy URL ảnh đúng
   const getFeatureImageUrl = (img: string) => {
     if (!img) return '/images/placeholder-facility.jpg';
     if (img.startsWith('http')) return img;
-    // Luôn prepend domain backend cho ảnh BE
-    return `${API_BASE_URL}${img.startsWith('/uploads') ? img : '/uploads/images/facilities-page/' + img}`;
+    
+    // Đảm bảo URL luôn có tiền tố BACKEND_DOMAIN
+    const path = img.startsWith('/') ? img : `/${img}`;
+    return `${BACKEND_DOMAIN}${path}`;
   };
 
   useEffect(() => {
@@ -183,6 +239,21 @@ export default function AdminFacilitiesPage() {
       const result = await facilitiesAdminService.getCompleteFacilitiesData();
 
       if (result.success) {
+        console.log("Loaded data from server:", result.data);
+        // Đặc biệt kiểm tra ID của các facility features
+        if (result.data.facilityFeatures && result.data.facilityFeatures.length > 0) {
+          console.log("Facility Features IDs:", result.data.facilityFeatures.map((f: FacilityFeature) => ({ 
+            id: f.id,
+            _id: f._id,
+            title: f.title 
+          })));
+          
+          // Đảm bảo mỗi feature đều có _id
+          const missingIds = result.data.facilityFeatures.filter((f: Partial<FacilityFeature>) => !f._id);
+          if (missingIds.length > 0) {
+            console.error("WARNING: Some features are missing _id:", missingIds);
+          }
+        }
         setFacilitiesData(result.data);
       } else {
         showToast("❌ Lỗi khi tải dữ liệu: " + result.message, 'error');
@@ -231,25 +302,35 @@ export default function AdminFacilitiesPage() {
     try {
       setSaving(true);
       const feature = facilitiesData?.facilityFeatures?.[index];
-      if (!feature?.id) return;
+      console.log("Feature to delete:", feature);
+      
+      // Sử dụng _id thay vì id
+      const featureId = feature?._id || feature?.id;
+      
+      if (!featureId) {
+        console.error("Feature ID is missing", { feature });
+        showToast("Không tìm thấy ID của feature", 'error');
+        setSaving(false);
+        return;
+      }
 
+      console.log("Deleting facility feature with ID:", featureId);
       const result = await facilitiesAdminService.deleteFacilityFeature(
-        feature.id
+        featureId
       );
+      console.log("Delete response:", result);
 
       if (result.success) {
-        const updatedFeatures =
-          facilitiesData?.facilityFeatures?.filter((_, i) => i !== index) || [];
-        setFacilitiesData((prev) =>
-          prev ? { ...prev, facilityFeatures: updatedFeatures } : null
-        );
-        showToast('Đã xóa Facility Feature!','success');
+        showToast('Đã xóa Facility Feature!', 'success');
+        
+        // Làm mới dữ liệu từ server thay vì cập nhật trạng thái
+        await loadData();
       } else {
         showToast(result.message || "Xóa thất bại", 'error');
       }
     } catch (error) {
       console.error("Error deleting facility feature:", error);
-      showToast('Có lỗi xảy ra','error');
+      showToast('Có lỗi xảy ra khi xóa', 'error');
     } finally {
       setSaving(false);
     }
@@ -384,11 +465,16 @@ export default function AdminFacilitiesPage() {
                         {Array.isArray(modalData.images) && modalData.images.length > 0 && (
                           modalData.images.map((imgObj: { url: string; alt: string; order: number }, idx: number) => (
                             <div key={"old-"+idx} className="feature-image-thumb">
-                              <Image src={getFeatureImageUrl(imgObj.url)} alt={imgObj.alt || modalData.imageAlt || ''} width={100} height={70} />
+                              <Image 
+                                src={getFeatureImageUrl(imgObj.url)} 
+                                alt={imgObj.alt || modalData.imageAlt || ''} 
+                                width={100} 
+                                height={70} 
+                                style={{objectFit: 'cover', borderRadius: '8px'}}
+                              />
                               <button 
                                 type="button" 
                                 className="btn-delete-img" 
-                                style={{ color: '#ff4444', background: 'white', border: '1.5px solid #ff4444', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                                 onClick={() => {
                                   setModalData((prev: Partial<KeyMetric & FacilityFeature>) => {
                                     if (Array.isArray(prev.images)) {
@@ -404,11 +490,16 @@ export default function AdminFacilitiesPage() {
                         {/* Ảnh mới chọn (file local) */}
                         {newImages.map((file, idx) => (
                           <div key={"new-"+idx} className="feature-image-thumb">
-                            <img src={URL.createObjectURL(file)} alt={file.name} width={100} height={70} style={{objectFit:'cover',borderRadius:8}} />
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={file.name} 
+                              width={100} 
+                              height={70} 
+                              style={{objectFit:'cover', borderRadius: '8px'}}
+                            />
                             <button 
                               type="button" 
                               className="btn-delete-img" 
-                              style={{ color: '#ff4444', background: 'white', border: '1.5px solid #ff4444', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                               onClick={() => {
                                 setNewImages(prev => prev.filter((_, i) => i !== idx));
                               }}

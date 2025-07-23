@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
-import { BACKEND_DOMAIN } from "../../api/config";
+import { BACKEND_DOMAIN } from '@/api/config';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails';
@@ -98,24 +98,7 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
   const [lightboxImages, setLightboxImages] = useState<Array<{src: string, alt: string, key: string}>>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch product detail");
-    return productsService.processProductDetails(data.data);
-  };
-
-  const { data: swrData, error: swrError } = useSWR(
-    id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id)
-      ? `${BACKEND_DOMAIN}/api/products/${id}`
-      : `${BACKEND_DOMAIN}/api/products/slug/${id}`,
-    fetcher,
-    {
-      fallbackData: product,
-      revalidateOnFocus: true,
-    }
-  );
-
+  // Không dùng SWR, chỉ nhận product từ props
   // Helper function to prepare images for react-photo-gallery
   const prepareGalleryImages = (images: ApplicationImage[] | undefined, applicationId: string) => {
     if (!images || !Array.isArray(images) || images.length === 0) {
@@ -181,7 +164,7 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
   }, [activeLightbox, lightboxImages]);
 
   // Loading state (không còn fetch client, chỉ check nếu product null và không có error)
-  if (!swrData && !error && !swrError) {
+  if (!product && !error) {
     return (
       <section className="product-details-section py-5">
         <div className="container">
@@ -197,13 +180,13 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
   }
 
   // Error state
-  if ((error || swrError) && !swrData) {
+  if ((error || !product) && !error) {
     return (
       <section className="product-details-section py-5">
         <div className="container">
           <div className="alert alert-danger text-center" role="alert">
             <h4 className="alert-heading">Lỗi!</h4>
-            <p>{error || swrError?.message}</p>
+            <p>{error || "Không thể tải dữ liệu sản phẩm."}</p>
             <button
               className="btn btn-primary"
               onClick={() => window.location.reload()}
@@ -217,7 +200,7 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
   }
 
   // Không có dữ liệu
-  if (!swrData) {
+  if (!product) {
     return (
       <section className="product-details-section py-5">
         <div className="container">
@@ -232,8 +215,6 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
       </section>
     );
   }
-
-  product = swrData;
 
   return (
     <>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { BACKEND_DOMAIN } from "@/api/config";
-import useSWR from "swr";
+import contactService from "@/services/contactService";
 
 interface ContactInfo {
   id: string;
@@ -39,30 +39,7 @@ interface ContactProps {
 }
 
 export default function Contact({ contactInfo }: ContactProps) {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
-  const fetcher = async (url: string) => {
-    const res = await fetch(url, { cache: 'no-store' });
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch contact data");
-    return data.contactInfo;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/contact/data`,
-    fetcher,
-    {
-      fallbackData: contactInfo,
-      revalidateOnFocus: true,
-    }
-  );
-
-  if (error) {
-    console.error('Contact data fetch error:', error);
-  }
-
-  // Use SWR data if available, otherwise fall back to props
-  const currentContactInfo = swrData || contactInfo;
-
+  // Khởi tạo state bên ngoài điều kiện
   const [form, setForm] = useState<ApplicationForm>({
     name: "",
     email: "",
@@ -72,6 +49,23 @@ export default function Contact({ contactInfo }: ContactProps) {
     message: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  
+  // Không dùng SWR, chỉ nhận contactInfo từ props
+  const data = contactInfo;
+
+  if (!data) {
+    return (
+      <div id="contactPage" className="py-5">
+        <div className="container">
+          <h2 className="section-title mt-5">CONTACT US</h2>
+          <div className="text-center py-5">
+            <h3 className="text-danger">Error loading contact information</h3>
+            <p>Không thể tải dữ liệu liên hệ.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,21 +103,36 @@ export default function Contact({ contactInfo }: ContactProps) {
 
     setSubmitting(true);
     try {
-      // Placeholder for the removed contactService
-      toast.success(
-        "Thank you! We have received your request and will respond as soon as possible."
+      // Gọi API để gửi form contact
+      const response = await contactService.createSubmission(
+        form.name,
+        form.company,
+        form.email,
+        form.phone,
+        form.subject,
+        form.message
       );
-
-      // Reset form
-      setForm({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        subject: "",
-        message: "",
-      });
-    } catch {
+      
+      // Kiểm tra response một cách an toàn
+      if (response && typeof response === 'object' && 'success' in response && response.success) {
+        toast.success(
+          "Thank you! We have received your request and will respond as soon as possible."
+        );
+        
+        // Reset form
+        setForm({
+          name: "",
+          email: "",
+          phone: "",
+          company: "",
+          subject: "",
+          message: "",
+        });
+      } else {
+        throw new Error("Failed to submit form");
+      }
+    } catch (error) {
+      console.error("Error submitting contact form:", error);
       toast.error(
         "Please check the information again. If the problem persists, please contact us via email or phone."
       );
@@ -131,20 +140,6 @@ export default function Contact({ contactInfo }: ContactProps) {
       setSubmitting(false);
     }
   };
-
-  if (!currentContactInfo) {
-    return (
-      <div id="contactPage" className="py-5">
-        <div className="container">
-          <h2 className="section-title mt-5">CONTACT US</h2>
-          <div className="text-center py-5">
-            <h3 className="text-danger">Error loading contact information</h3>
-            <p>Không thể tải dữ liệu liên hệ.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -158,7 +153,7 @@ export default function Contact({ contactInfo }: ContactProps) {
               
                 
                 {/* Banner image - Moved below contact info */}
-                {currentContactInfo?.bannerImage && (
+                {data?.bannerImage && (
                   <div className="contact-banner-wrapper">
                     {/* BACKEND_DOMAIN được sử dụng để hiển thị URL API */}
                     <div className="api-url" style={{display: 'none'}}>{`${BACKEND_DOMAIN}/api/contact/data`}</div>
@@ -180,13 +175,13 @@ export default function Contact({ contactInfo }: ContactProps) {
                     <div className="contact-icon small">
                       <i className="fas fa-map-marker-alt"></i>
                     </div>
-                    <div className="contact-text">{currentContactInfo?.address}</div>
+                    <div className="contact-text">{data?.address}</div>
                   </div>
                   <div className="contact-item">
                     <div className="contact-icon small">
                       <i className="fas fa-envelope"></i>
                     </div>
-                    <div className="contact-text">{currentContactInfo?.email}</div>
+                    <div className="contact-text">{data?.email}</div>
                   </div>
                 </div>
               </div>

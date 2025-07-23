@@ -1,9 +1,9 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_DOMAIN ;
+import { BACKEND_DOMAIN } from '../api/config';
 const authService = {
   // Đăng nhập admin
   async login(credentials) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -62,7 +62,7 @@ const authService = {
       const token = this.getToken();
       if (!token) return false;
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/auth/verify`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,

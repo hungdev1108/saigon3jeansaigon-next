@@ -1,11 +1,11 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Machinery from "@/components/pages/machinery";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 export const dynamic = "force-static";
 
 async function fetchMachineryData() {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN;
   const res = await fetch(`${BACKEND_DOMAIN}/api/machinery/data`, { cache: 'no-store' });
   const apiData = await res.json();
   if (!apiData.success) throw new Error("Failed to fetch machinery data");

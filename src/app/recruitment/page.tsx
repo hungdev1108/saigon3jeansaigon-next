@@ -1,11 +1,11 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Recruitment from "@/components/pages/recruitment";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 export const dynamic = "force-static";
 
 export default async function RecruitmentPage() {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
   let jobs = [];
   let contactHr = null;
   let contactInfo = null;

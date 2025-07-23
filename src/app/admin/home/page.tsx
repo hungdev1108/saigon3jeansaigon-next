@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import homeService from "@/services/homeService";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX } from 'react-icons/fi';

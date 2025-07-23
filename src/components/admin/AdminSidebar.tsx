@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link'
-import Image from 'next/image'
+import Image from "next/legacy/image"
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 

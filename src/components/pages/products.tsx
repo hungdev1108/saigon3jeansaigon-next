@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import { useEffect } from "react";
-import { BACKEND_DOMAIN } from "../../api/config";
+import { BACKEND_DOMAIN } from '@/api/config';
 import useSWR from "swr";
 
 interface GalleryImage {
@@ -49,24 +49,11 @@ function generateCarouselTarget(productSlug: string) {
 }
 
 export default function Products({ productsData }: ProductsProps) {
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch products data");
-    return data.data;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/products/data`,
-    fetcher,
-    {
-      fallbackData: productsData,
-      revalidateOnFocus: true,
-    }
-  );
+  // Không dùng SWR, chỉ nhận productsData từ props
+  const data = productsData;
 
   useEffect(() => {
-    if (swrData && typeof window !== 'undefined') {
+    if (data && typeof window !== 'undefined') {
       const timer = setTimeout(() => {
         const carousels = document.querySelectorAll('.carousel') as NodeListOf<Element>;
         carousels.forEach((carousel: Element) => {
@@ -80,21 +67,9 @@ export default function Products({ productsData }: ProductsProps) {
       }, 10);
       return () => clearTimeout(timer);
     }
-  }, [swrData]);
+  }, [data]);
 
-  if (error) {
-    return (
-      <section className="product-section py-5">
-        <div className="container">
-          <div className="text-center">
-            <h2 className="text-danger">Error loading products</h2>
-            <p>Không thể tải dữ liệu sản phẩm.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-  if (!swrData) {
+  if (!data) {
     return (
       <section className="product-section py-5">
         <div className="container">
@@ -106,15 +81,13 @@ export default function Products({ productsData }: ProductsProps) {
     );
   }
 
-  productsData = swrData;
-
   return (
     <>
       <section className="product-section py-5">
         <div className="container">
           <h2 className="section-title mt-5">PRODUCT</h2>
           <div className="row g-4 product-row">
-            {productsData!.products.map((product) => {
+            {data!.products.map((product) => {
               const carouselId = generateCarouselId(product.slug);
               const carouselTarget = generateCarouselTarget(product.slug);
 

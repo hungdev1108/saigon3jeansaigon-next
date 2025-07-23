@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Slider from "react-slick";
-import { BACKEND_DOMAIN } from "../../api/config";
+import { BACKEND_DOMAIN } from '@/api/config';
 import { useIntersectionObserver } from "../../app/hooks/useCounterAnimation";
 import AnimatedMetric from "../AnimatedMetric";
 import useSWR from "swr";
@@ -146,22 +146,8 @@ interface FacilitiesProps {
 }
 
 export default function Facilities({ facilitiesData }: FacilitiesProps) {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch facilities data");
-    return data.data;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/facilities/data`,
-    fetcher,
-    {
-      fallbackData: facilitiesData,
-      revalidateOnFocus: true,
-    }
-  );
+  // Không dùng SWR, chỉ nhận facilitiesData từ props
+  const data = facilitiesData;
 
   // Intersection Observer để trigger animation khi metrics section vào viewport
   const [metricsRef, shouldStartAnimation] = useIntersectionObserver({
@@ -169,18 +155,7 @@ export default function Facilities({ facilitiesData }: FacilitiesProps) {
     rootMargin: "-50px",
   });
 
-  if (error) {
-    return (
-      <section className="facilities-overview py-5">
-        <div className="container">
-          <div className="text-center">
-            <h2 className="text-danger">Error loading facilities data</h2>
-          </div>
-        </div>
-      </section>
-    );
-  }
-  if (!swrData) {
+  if (!data) {
     return (
       <section className="facilities-overview py-5">
         <div className="container">
@@ -191,8 +166,6 @@ export default function Facilities({ facilitiesData }: FacilitiesProps) {
       </section>
     );
   }
-
-  facilitiesData = swrData;
 
   // Type guard to check if feature is new format
   const isNewFeatureFormat = (
@@ -246,12 +219,12 @@ export default function Facilities({ facilitiesData }: FacilitiesProps) {
       {/* Facilities Overview */}
       <section className="facilities-overview py-5">
         <div className="container">
-          <h2 className="section-title mt-5">{facilitiesData.pageTitle}</h2>
+          <h2 className="section-title mt-5">{data.pageTitle}</h2>
 
           {/* Key Metrics */}
           <div className="key-metrics text-center mb-5" ref={metricsRef}>
             <div className="row justify-content-center">
-              {facilitiesData.keyMetrics.map((metric) => (
+              {data.keyMetrics.map((metric) => (
                 <div key={metric.id} className="col-md-4">
                   <AnimatedMetric
                     value={metric.value}
@@ -268,7 +241,7 @@ export default function Facilities({ facilitiesData }: FacilitiesProps) {
 
           {/* Facility Features */}
           <div className="facility-features">
-            {facilitiesData.facilityFeatures.map((feature) => {
+            {data.facilityFeatures.map((feature) => {
               const images = processFeatureImages(feature);
               if (images.length === 0) return null;
               const featureKey = isNewFeatureFormat(feature)

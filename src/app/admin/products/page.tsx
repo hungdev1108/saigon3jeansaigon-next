@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 // import { useRouter } from "next/navigation";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import productsAdminService from "@/services/productsService-admin";
 import { FiEdit, FiPlusCircle, FiTrash2, FiSave } from 'react-icons/fi';
 import AdminSectionCard from '@/components/admin/AdminSectionCard';
@@ -255,8 +255,8 @@ export default function AdminProductsPage() {
   const getImageUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return `${BACKEND_DOMAIN}${url}`;
-    return `${BACKEND_DOMAIN}/${url}`;
+    if (url.startsWith('/')) return BACKEND_DOMAIN + url;
+    return url;
   };
 
   if (loading) return <div className="admin-loading"><div className="loading-spinner"></div><p>Đang tải danh sách sản phẩm...</p></div>;
@@ -301,7 +301,7 @@ export default function AdminProductsPage() {
                       ) : (
                         gallery.map(img => {
                           let imgUrl = img.url;
-                          if (imgUrl.startsWith('/')) imgUrl = `${BACKEND_DOMAIN}${imgUrl}`;
+                          if (imgUrl.startsWith('/')) imgUrl = BACKEND_DOMAIN + imgUrl;
                           return (
                             <div key={img._id} className="feature-image-thumb">
                               <Image src={imgUrl} alt={img.alt || product.name} width={100} height={70} />
@@ -368,7 +368,7 @@ export default function AdminProductsPage() {
                               <div className="application-images">
                                 {app.content?.images?.map((img, i) => {
                                   let imgUrl = img.url;
-                                  if (imgUrl.startsWith('/')) imgUrl = `${BACKEND_DOMAIN}${imgUrl}`;
+                                  if (imgUrl.startsWith('/')) imgUrl = BACKEND_DOMAIN + imgUrl;
                                   return (
                                     <img key={i} src={imgUrl} alt={img.alt} />
                                   );
@@ -1035,7 +1035,7 @@ function ApplicationEditForm({ application, onSave, onCancel }: ApplicationEditF
   const getImageUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001') + url;
+    if (url.startsWith('/')) return BACKEND_DOMAIN + url;
     return url;
   };
 

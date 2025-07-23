@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['localhost'],
+    // Xóa domains bị deprecated
     remotePatterns: [
       {
         protocol: "http",
@@ -45,6 +45,12 @@ const nextConfig: NextConfig = {
         hostname: "222.255.214.144",
         port: "3007",
         pathname: "/uploads/**",
+      },
+      // Thêm localhost không cần port
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/**",
       },
     ],
   },

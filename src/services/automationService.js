@@ -264,19 +264,34 @@ class AutomationService {
     try {
       console.log('addItem - itemData:', itemData);
       console.log('addItem - file:', file);
+      
+      // Kiểm tra dữ liệu cần thiết
+      if (!itemData.title || !file) {
+        throw new Error('Tiêu đề và ảnh là bắt buộc');
+      }
+      
       if (file) {
         const formData = new FormData();
         formData.append('image', file);
-        // Thêm các trường dữ liệu khác
-        Object.entries(itemData).forEach(([key, value]) => {
-          if (key !== 'image' && key !== 'contentItems' && key !== 'id' && key !== '_id') {
-            formData.append(key, typeof value === 'string' ? value : JSON.stringify(value));
-          }
-        });
-        // Đảm bảo contentItems luôn là array khi gửi lên
-        if (Array.isArray(itemData.contentItems)) {
+        
+        // Thêm các trường dữ liệu đơn lẻ
+        formData.append('title', itemData.title);
+        formData.append('description', itemData.description || itemData.title);
+        
+        // Đảm bảo contentItems luôn là array và được stringify đúng cách
+        if (Array.isArray(itemData.contentItems) && itemData.contentItems.length > 0) {
           formData.append('contentItems', JSON.stringify(itemData.contentItems));
+          console.log('contentItems as JSON:', JSON.stringify(itemData.contentItems));
+        } else {
+          // Tạo contentItem mặc định từ title và description
+          const defaultContentItem = [{ 
+            title: itemData.title, 
+            description: itemData.description || itemData.title 
+          }];
+          formData.append('contentItems', JSON.stringify(defaultContentItem));
+          console.log('default contentItems:', JSON.stringify(defaultContentItem));
         }
+        
         // Gọi API với formData
         const response = await fetch(`${automationApi.baseUrl}/api/automation/items`, {
           method: 'POST',
@@ -285,24 +300,16 @@ class AutomationService {
           },
           body: formData
         });
+        
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Server error response:', errorData);
           throw new Error(`Failed to add item: ${response.statusText}`);
         }
+        
         return await response.json();
       } else {
-        // Nếu không có file, gửi dữ liệu dưới dạng JSON
-        const response = await fetch(`${automationApi.baseUrl}/api/automation/items`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(itemData)
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to add item: ${response.statusText}`);
-        }
-        return await response.json();
+        throw new Error('Ảnh đại diện là bắt buộc');
       }
     } catch (error) {
       console.error("AutomationService - Error adding item:", error);

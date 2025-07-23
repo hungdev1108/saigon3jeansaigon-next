@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 class MachineryAdminService {
   /**
@@ -24,7 +24,7 @@ class MachineryAdminService {
    */
   async getCompleteMachineryData() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages`, {
         method: "GET",
         headers: this.getAuthHeaders(),
       });
@@ -42,7 +42,7 @@ class MachineryAdminService {
    */
   async updatePageInfo(pageInfo) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/admin/page-settings`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/admin/page-settings`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(pageInfo),
@@ -82,7 +82,7 @@ class MachineryAdminService {
    */
   async addCategory(categoryData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages`, {
         method: "POST",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(categoryData),
@@ -101,7 +101,7 @@ class MachineryAdminService {
    */
   async updateCategory(categoryId, categoryData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${categoryId}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${categoryId}`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(categoryData),
@@ -120,7 +120,7 @@ class MachineryAdminService {
    */
   async deleteCategory(categoryId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${categoryId}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${categoryId}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
       });
@@ -146,7 +146,7 @@ class MachineryAdminService {
       if (Array.isArray(files)) {
         files.forEach(file => formData.append('images', file));
       }
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines`, {
         method: "POST",
         headers: this.getUploadHeaders(),
         body: formData,
@@ -165,7 +165,7 @@ class MachineryAdminService {
    */
   async updateMachine(stageId, machineId, machineData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines/${machineId}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines/${machineId}`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(machineData),
@@ -184,7 +184,7 @@ class MachineryAdminService {
    */
   async deleteMachine(stageId, machineId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines/${machineId}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines/${machineId}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
       });
@@ -205,7 +205,7 @@ class MachineryAdminService {
       const formData = new FormData();
       formData.append("images", file); // Backend expects 'images' field
 
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines/${machineId}/images`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines/${machineId}/images`, {
         method: "POST",
         headers: this.getUploadHeaders(),
         body: formData,
@@ -225,7 +225,7 @@ class MachineryAdminService {
    */
   async deleteMachineImage(stageId, machineId, imageId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines/${machineId}/images/${imageId}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines/${machineId}/images/${imageId}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
       });
@@ -245,7 +245,7 @@ class MachineryAdminService {
     try {
       const formData = new FormData();
       files.forEach(file => formData.append('images', file));
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines/${machineId}/images`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines/${machineId}/images`, {
         method: "POST",
         headers: this.getUploadHeaders(),
         body: formData,
@@ -264,7 +264,7 @@ class MachineryAdminService {
    */
   async updateSeoData(seoData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/admin/seo`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/admin/seo`, {
         method: "PUT",
         headers: this.getAuthHeaders(),
         body: JSON.stringify(seoData),
@@ -283,7 +283,7 @@ class MachineryAdminService {
    */
   async deleteMachineImageById(stageId, machineId, imageId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/machinery/stages/${stageId}/machines/${machineId}/images/by-id/${imageId}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/machinery/stages/${stageId}/machines/${machineId}/images/by-id/${imageId}`, {
         method: "DELETE",
         headers: this.getAuthHeaders(),
       });

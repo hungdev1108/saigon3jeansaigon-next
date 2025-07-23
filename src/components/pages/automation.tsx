@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Slider, { CustomArrowProps } from "react-slick";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import useSWR from "swr";
@@ -31,25 +31,8 @@ interface AutomationProps {
 }
 
 export default function Automation({ automationItems }: AutomationProps) {
-  const fetcher = async (url: string) => {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!data.success) throw new Error("Failed to fetch automation data");
-    // Ưu tiên lấy automationItems, fallback sang items nếu không có
-    const items = Array.isArray(data.data?.automationItems)
-      ? data.data.automationItems
-      : data.data?.items || [];
-    return items;
-  };
-
-  const { data: swrData, error } = useSWR(
-    `${BACKEND_DOMAIN}/api/automation/data`,
-    fetcher,
-    {
-      fallbackData: automationItems,
-      revalidateOnFocus: true,
-    }
-  );
+  // Không dùng SWR, chỉ nhận automationItems từ props
+  const data = automationItems;
 
   // Hooks luôn phải khai báo trước khi return
   const [activeItemIndex, setActiveItemIndex] = useState(0);
@@ -64,16 +47,13 @@ export default function Automation({ automationItems }: AutomationProps) {
   }, [activeItemIndex]);
 
   // Kiểm tra error/data sau khi đã gọi hết hook
-  if (error) return null;
-  if (!swrData || swrData.length === 0) return null;
-
-  automationItems = swrData;
+  if (!data || data.length === 0) return null;
 
   // Lấy contentItems của automationItem đang active
   const getActiveItemContentItems = (): ContentItem[] => {
-    if (!automationItems || !automationItems[activeItemIndex]) return [];
+    if (!data || !data[activeItemIndex]) return [];
     
-    const activeItem = automationItems[activeItemIndex];
+    const activeItem = data[activeItemIndex];
     return activeItem.contentItems || [{
       _id: `default-content-${activeItem.id}`,
       title: activeItem.title,
@@ -82,15 +62,15 @@ export default function Automation({ automationItems }: AutomationProps) {
     }];
   };
 
-  const isExactly3 = automationItems.length === 3;
+  const isExactly3 = data.length === 3;
   // Mảng render cho slider: nếu đúng 3 ảnh thì clone thành 6 ảnh
-  const renderItems = isExactly3 ? [...automationItems, ...automationItems] : automationItems;
+  const renderItems = isExactly3 ? [...data, ...data] : data;
   const imageSettings = {
     centerMode: true,
     slidesToShow: 3,
     arrows: true,
     focusOnSelect: true,
-    infinite: automationItems.length >= 3,
+    infinite: data.length >= 3,
     initialSlide: isExactly3 ? 1 : 0,
     afterChange: (index: number) => setActiveItemIndex(isExactly3 ? index % 3 : index),
     responsive: [

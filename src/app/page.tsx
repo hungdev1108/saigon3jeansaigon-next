@@ -1,6 +1,7 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Home from "@/components/pages/home";
+import { BACKEND_DOMAIN } from '@/api/config';
 // Type definitions (copy từ Home component)
 interface HeroData {
   title: string;
@@ -51,13 +52,14 @@ interface NewsData {
 export const dynamic = "force-static";
 
 async function fetchHomeData() {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN ;
   const res = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { cache: 'no-store' });
   const apiData = await res.json();
   if (!apiData.success) throw new Error("Failed to fetch home data");
   const data = apiData.data;
-  // Xử lý dữ liệu tương tự homeService
-  const combinedNews = [ ...(data.featuredNews || []), ...(data.regularNews || []) ];
+  
+  // Bỏ dòng gộp tin tức
+  // const combinedNews = [ ...(data.featuredNews || []), ...(data.regularNews || []) ];
+  
   return {
     hero: {
       title: data.hero?.title || "WELCOME TO SAIGON 3 JEAN",
@@ -81,7 +83,9 @@ async function fetchHomeData() {
       knit: (data.customers?.knit || []).sort((a: CustomerData, b: CustomerData) => (a.order || 0) - (b.order || 0)),
     },
     certifications: (data.certifications || []).sort((a: CertificationData, b: CertificationData) => (a.order || 0) - (b.order || 0)),
-    featuredNews: combinedNews as NewsData[],
+    // Giữ nguyên cấu trúc tin tức từ API
+    featuredNews: (data.featuredNews || []) as NewsData[],
+    regularNews: (data.regularNews || []) as NewsData[],
   };
 }
 

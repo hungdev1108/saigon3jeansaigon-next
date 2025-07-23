@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, ChangeEvent } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import { FiEdit, FiTrash2, FiPlusCircle, FiX } from 'react-icons/fi';
 import automationService from '@/services/automationService';
 import { toast } from 'react-toastify';
@@ -107,22 +107,37 @@ export default function AdminAutomationPage() {
   };
 
   const handleSave = async () => {
-    if (!editingItem?.title && steps.length === 0) return;
+    // Kiểm tra tiêu đề
+    if (!editingItem?.title || editingItem.title.trim() === '') {
+      toast.error('Vui lòng nhập tiêu đề quy trình!');
+      return;
+    }
+
     // Nếu tạo mới mà không có ảnh, báo lỗi
     if (!editingItem?._id && !imageFile) {
       toast.error('Vui lòng chọn ảnh đại diện!');
       return;
     }
+
     setSaving(true);
     try {
       const itemData = {
         title: editingItem?.title || '',
-        description: steps[0]?.description || '',
-        contentItems: steps.map(s => ({ title: s.title, description: s.description })),
+        description: steps[0]?.description || editingItem?.title || '',  // Dùng tiêu đề làm mô tả nếu không có
+        contentItems: steps.map(s => ({ 
+          title: s.title || editingItem?.title || '',  // Đảm bảo luôn có title
+          description: s.description || '' 
+        })),
       };
+
+      console.log('Saving item data:', itemData);
+      
       const rawResult = editingItem?._id
         ? await automationService.updateItem(editingItem._id, itemData, imageFile || null)
         : await automationService.addItem(itemData, imageFile || null);
+      
+      console.log('API response:', rawResult);
+      
       const result: ApiResponse = rawResult as ApiResponse;
       if (result.success) {
         toast.success('Lưu thành công!');
@@ -131,7 +146,8 @@ export default function AdminAutomationPage() {
       } else {
         toast.error(result.message || 'Lưu thất bại!');
       }
-    } catch {
+    } catch (error) {
+      console.error('Error saving automation item:', error);
       toast.error('Có lỗi xảy ra khi lưu!');
     } finally {
       setSaving(false);

@@ -11,7 +11,7 @@ const getBackendURL = () => {
   
   // Fallback dựa trên environment
   if (process.env.NODE_ENV === 'production') {
-    return 'https://saigon3jeansaigon.com';
+    return 'https://saigon3jean.com';
   } else {
     return 'http://localhost:5001';
   }

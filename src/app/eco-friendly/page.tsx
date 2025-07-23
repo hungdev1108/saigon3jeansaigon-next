@@ -1,11 +1,11 @@
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import EcoFriendly from "@/components/pages/eco-friendly";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 export const dynamic = "force-static";
 
 async function fetchEcoFriendlyData() {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN ;
   const res = await fetch(`${BACKEND_DOMAIN}/api/eco-friendly/data`, { cache: 'no-store' });
   const apiData = await res.json();
   if (!apiData.success) throw new Error("Failed to fetch eco-friendly data");

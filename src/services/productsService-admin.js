@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
+import { BACKEND_DOMAIN } from '../api/config';
 
 class ProductsAdminService {
   getAuthHeaders() {
@@ -19,7 +19,7 @@ class ProductsAdminService {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+      const response = await fetch(`${BACKEND_DOMAIN}${endpoint}`, options);
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || `${method} request to ${endpoint} failed`);
       return data;
@@ -34,7 +34,7 @@ class ProductsAdminService {
   async getAllProducts(includeInactive = true) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products?includeInactive=${includeInactive}`,
+        `${BACKEND_DOMAIN}/api/products?includeInactive=${includeInactive}`,
         {
           method: "GET",
           headers: this.getAuthHeaders(),
@@ -51,7 +51,7 @@ class ProductsAdminService {
   async getProductById(productId) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products/${productId}`,
+        `${BACKEND_DOMAIN}/api/products/${productId}`,
         {
           method: "GET",
           headers: this.getAuthHeaders(),
@@ -68,7 +68,7 @@ class ProductsAdminService {
   async createProduct(formData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products/admin`,
+        `${BACKEND_DOMAIN}/api/products/admin`,
         {
           method: "POST",
           body: formData,
@@ -85,7 +85,7 @@ class ProductsAdminService {
   async updateProduct(productId, formData) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products/${productId}`,
+        `${BACKEND_DOMAIN}/api/products/${productId}`,
         {
           method: "PUT",
           body: formData,
@@ -110,7 +110,7 @@ class ProductsAdminService {
   async toggleFeaturedStatus(productId) {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products/admin/${productId}/toggle-featured`,
+        `${BACKEND_DOMAIN}/api/products/admin/${productId}/toggle-featured`,
         {
           method: "PATCH",
           headers: this.getAuthHeaders(),
@@ -204,7 +204,7 @@ class ProductsAdminService {
   
   async uploadMultipleImages(formData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/upload/multiple`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/upload/multiple`, {
         method: 'POST',
         body: formData,
       });

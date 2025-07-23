@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import machineryAdminService from "@/services/machineryService-admin";
 import Toast from "@/components/admin/Toast";
 import AdminSectionCard from "@/components/admin/AdminSectionCard";
 import { FiTrash2, FiEdit, FiPlusCircle } from 'react-icons/fi';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 interface MachineImage {
   _id?: string;
@@ -328,7 +327,7 @@ export default function AdminMachineryPage() {
                         {Array.isArray(machine.images) && machine.images.length > 0 && (
                           machine.images.map((imgObj: MachineImage, idx: number) => {
                             let imgUrl = imgObj.url;
-                            if (imgUrl && imgUrl.startsWith('/uploads')) imgUrl = `${API_BASE_URL}${imgUrl}`;
+                            if (imgUrl && imgUrl.startsWith('/uploads')) imgUrl = `${BACKEND_DOMAIN}${imgUrl}`;
                             return (
                               <div key={imgObj._id || idx} className="feature-image-thumb">
                                 <Image src={imgUrl} alt={imgObj.alt || ''} width={100} height={70} />
@@ -402,7 +401,7 @@ export default function AdminMachineryPage() {
                         {modalMode === 'edit' && Array.isArray(modalData.images) && modalData.images.length > 0 && (
                           modalData.images.map((imgObj: MachineImage, idx: number) => {
                             let imgUrl = imgObj.url;
-                            if (imgUrl && imgUrl.startsWith('/uploads')) imgUrl = `${API_BASE_URL}${imgUrl}`;
+                            if (imgUrl && imgUrl.startsWith('/uploads')) imgUrl = `${BACKEND_DOMAIN}${imgUrl}`;
                             return (
                               <div key={imgObj._id || idx} className="feature-image-thumb">
                                 <Image src={imgUrl} alt={imgObj.alt || ''} width={100} height={70} />

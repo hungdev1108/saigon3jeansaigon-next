@@ -2,11 +2,11 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import ProductDetails from "@/components/pages/product_details";
 import productsService from "@/services/productsService";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 export const dynamic = "force-static";
 
 async function fetchProductDetail(id: string) {
-  const BACKEND_DOMAIN = process.env.NEXT_PUBLIC_BACKEND_DOMAIN || "http://localhost:5001";
   let productData = null;
   let error = null;
   try {

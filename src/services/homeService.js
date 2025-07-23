@@ -1,7 +1,5 @@
-import { getHomeData } from "../api/homeApi";
 import authService from "./authService";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+import { BACKEND_DOMAIN } from '@/api/config';
 
 const getAuthHeaders = (isFormData = false) => {
   const token = authService.getToken();
@@ -30,13 +28,20 @@ class HomeService {
    */
   async getCompleteHomeData() {
     try {
-      const response = await getHomeData();
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/data`, {
+        cache: 'no-store',
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch home data: ${response.statusText}`);
+      }
 
-      if (!response.success) {
+      const result = await response.json();
+
+      if (!result.success) {
         throw new Error("Failed to fetch home data");
       }
 
-      const { data } = response;
+      const { data } = result;
       // Không gộp nữa, trả về riêng biệt
       return {
         hero: this.processHeroData(data.hero),
@@ -343,7 +348,7 @@ class HomeService {
       formData.append('heroVideo', files['videoUrl']);
     }
 
-    const response = await fetch(`${API_BASE_URL}/home/hero`, {
+    const response = await fetch(`${BACKEND_DOMAIN}/api/home/hero`, {
       method: 'PUT',
       headers: getAuthHeaders(true),
       body: formData,
@@ -382,7 +387,7 @@ class HomeService {
     });
 
     try {
-      const response = await fetch(`${API_BASE_URL}/home/sections`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/sections`, {
         method: 'PUT',
         headers: getAuthHeaders(true),
         body: formData,
@@ -440,7 +445,7 @@ class HomeService {
     });
 
     try {
-      const response = await fetch(`${API_BASE_URL}/home/customers`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/customers`, {
         method: 'PUT',
         headers: getAuthHeaders(true),
         body: formData,
@@ -467,7 +472,7 @@ class HomeService {
    */
   async deleteCustomer(category, id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/home/customers/${category}/${id}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/customers/${category}/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -500,7 +505,7 @@ class HomeService {
     Object.keys(newsData).forEach(key => formData.append(key, newsData[key]));
     if (newsImage) formData.append('newsImage', newsImage);
     
-    const response = await fetch(`${API_BASE_URL}/home/news/${newsId}`, {
+    const response = await fetch(`${BACKEND_DOMAIN}/api/home/news/${newsId}`, {
       method: 'PUT',
       headers: getAuthHeaders(true),
       body: formData
@@ -510,7 +515,7 @@ class HomeService {
 
   async deleteNews(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/home/news/${id}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/news/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
@@ -529,7 +534,7 @@ class HomeService {
     try {
       // Temporarily use the admin endpoint to get ALL news
       // This allows managing featured status even for unpublished news
-      const response = await fetch(`${API_BASE_URL}/home/admin/news`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/admin/news`, {
         headers: getAuthHeaders(),
       });
       
@@ -555,8 +560,8 @@ class HomeService {
       console.warn("Unexpected API response structure:", result);
       return [];
     } catch (error) {
-       console.error("❌ HomeService - Error getting homepage news:", error.message);
-       return [];
+      console.error("❌ HomeService - Error getting homepage news:", error);
+      return [];
     }
   }
 
@@ -570,7 +575,7 @@ class HomeService {
       const formData = new FormData();
       formData.append('heroVideo', videoFile);
 
-      const response = await fetch(`${API_BASE_URL}/home/hero/video`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/hero/video`, {
         method: 'POST',
         headers: getAuthHeaders(true),
         body: formData,
@@ -594,7 +599,7 @@ class HomeService {
    */
   async getNewsById(id) {
     try {
-      const response = await fetch(`${API_BASE_URL}/home/news/${id}`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/news/${id}`, {
         headers: getAuthHeaders(),
       });
       
@@ -616,7 +621,7 @@ class HomeService {
    */
   async createNews(formData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/home/news`, {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/news`, {
         method: 'POST',
         headers: getAuthHeaders(true),
         body: formData,
@@ -632,6 +637,33 @@ class HomeService {
     } catch (error) {
       console.error("❌ HomeService - Error creating news:", error);
       throw error;
+    }
+  }
+
+  async getNews(options = {}) {
+    const { featured, limit, page, admin } = options;
+    const queryParams = new URLSearchParams();
+    if (featured) queryParams.append('featured', 'true');
+    if (limit) queryParams.append('limit', limit.toString());
+    if (page) queryParams.append('page', page.toString());
+    if (admin) queryParams.append('admin', 'true');
+    
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    
+    try {
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/news${queryString}`, {
+        cache: 'no-store',
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      return result.success ? result.data.news || result.data : [];
+    } catch (error) {
+      console.error("❌ HomeService - Error getting news:", error.message);
+      return [];
     }
   }
 }
