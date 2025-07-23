@@ -175,6 +175,7 @@ class ProductsAdminService {
   }
   
   deleteApplication(productId, appId) {
+    console.log(`Deleting application with productId=${productId}, appId=${appId}`);
     return this._apiCall(`/api/products/${productId}/applications/${appId}`, 'DELETE');
   }
   

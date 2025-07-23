@@ -5,7 +5,6 @@ import Slider from "react-slick";
 import { BACKEND_DOMAIN } from '@/api/config';
 import { useIntersectionObserver } from "../../app/hooks/useCounterAnimation";
 import AnimatedMetric from "../AnimatedMetric";
-import useSWR from "swr";
 
 interface KeyMetric {
   id: string;
@@ -224,8 +223,8 @@ export default function Facilities({ facilitiesData }: FacilitiesProps) {
           {/* Key Metrics */}
           <div className="key-metrics text-center mb-5" ref={metricsRef}>
             <div className="row justify-content-center">
-              {data.keyMetrics.map((metric) => (
-                <div key={metric.id} className="col-md-4">
+              {data.keyMetrics.map((metric, index) => (
+                <div key={metric.id || `metric-${index}`} className="col-md-4">
                   <AnimatedMetric
                     value={metric.value}
                     unit={metric.unit}

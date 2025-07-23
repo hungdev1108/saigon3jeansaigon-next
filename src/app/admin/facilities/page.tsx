@@ -99,120 +99,135 @@ export default function AdminFacilitiesPage() {
   // Xử lý submit modal
   const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('handleModalSubmit', {modalType, modalMode, modalData});
-    setSaving(true);
+    
     try {
+      setSaving(true);
+      
       if (modalType === 'keyMetric') {
-        // Xử lý key metric (giữ nguyên code)
+        // Handle key metric save
         if (modalMode === 'add') {
-          const result = await facilitiesAdminService.addKeyMetric(modalData);
+          const result = await facilitiesAdminService.addKeyMetric(modalData as KeyMetric);
           if (result.success) {
+            showToast('Đã thêm Key Metric!');
+            
+            // Reload data from server
             await loadData();
-            showToast('Thêm Key Metric thành công!', 'success');
-          } else showToast(result.message || 'Thêm thất bại','error');
-        } else if (modalMode === 'edit' && modalIndex !== null) {
-          const updated = [...(facilitiesData?.keyMetrics||[])];
-          updated[modalIndex] = { ...updated[modalIndex], ...modalData };
-          const result = await facilitiesAdminService.updateKeyMetrics(updated);
-          if (result.success) {
-            setFacilitiesData(prev => prev ? { ...prev, keyMetrics: updated } : null);
-            showToast('Cập nhật Key Metric thành công!','success');
-          } else showToast(result.message || 'Cập nhật thất bại','error');
-        }
-      } else if (modalType === 'facilityFeature') {
-        // Xử lý facility feature
-        try {
-          let uploadedUrls: string[] = [];
-          // 1. Upload ảnh nếu có
-          if (newImages.length > 0) {
-            console.log('Uploading images:', newImages);
-            const formData = new FormData();
-            newImages.forEach(file => formData.append('images', file));
-            
-            // Gọi API upload nhiều ảnh
-            const uploadRes = await facilitiesAdminService.uploadMultipleImages(formData);
-            console.log('Upload response:', uploadRes);
-            
-            if (uploadRes.success && Array.isArray(uploadRes.urls)) {
-              uploadedUrls = uploadRes.urls;
-            } else {
-              showToast(uploadRes.message || 'Upload ảnh thất bại', 'error');
-              setSaving(false);
-              return;
-            }
+          } else {
+            showToast(result.message || 'Thêm thất bại', 'error');
           }
-
-          // 2. Chuẩn bị dữ liệu cho facility feature
-          const featureData = {
-            ...modalData,
-            // Đảm bảo có image chính (sử dụng URL đầu tiên trong uploadedUrls nếu có)
-            image: uploadedUrls.length > 0 ? uploadedUrls[0] : modalData.image,
-            // Tạo mảng ảnh từ các URL đã upload
-            images: uploadedUrls.map((url, idx) => ({
-              url,
-              alt: `${modalData.title || 'Feature'} image ${idx + 1}`,
-              order: idx
-            }))
-          };
-          
-          console.log('Saving feature data:', featureData);
-          
-          // 3. Lưu dữ liệu
-          let result;
-          if (modalMode === 'add') {
-            result = await facilitiesAdminService.addFacilityFeature(featureData);
-            console.log('Add feature response:', result);
+        } else {
+          // Edit existing metric
+          const metrics = [...(facilitiesData?.keyMetrics || [])];
+          if (modalIndex !== null && metrics[modalIndex]) {
+            metrics[modalIndex] = { ...metrics[modalIndex], ...modalData };
             
+            const result = await facilitiesAdminService.updateKeyMetrics(metrics);
             if (result.success) {
-              await loadData(); // Tải lại dữ liệu
-              showToast('Thêm Facility Feature thành công!', 'success');
-              closeModal();
-              setNewImages([]); // Reset ảnh đã chọn
-            } else {
-              showToast(result.message || 'Thêm thất bại', 'error');
-            }
-          } else if (modalMode === 'edit' && modalIndex !== null) {
-            // Cập nhật feature hiện tại
-            const updated = [...(facilitiesData?.facilityFeatures||[])];
-            
-            // Kết hợp images hiện tại với images mới
-            const currentImages = updated[modalIndex].images || [];
-            const newFeatureImages = [
-              ...currentImages,
-              ...uploadedUrls.map((url, idx) => ({
-                url,
-                alt: `${modalData.title || 'Feature'} image ${currentImages.length + idx + 1}`,
-                order: currentImages.length + idx
-              }))
-            ];
-            
-            // Cập nhật dữ liệu
-            updated[modalIndex] = { 
-              ...updated[modalIndex], 
-              ...modalData,
-              images: newFeatureImages,
-              // Chỉ cập nhật image chính nếu có upload ảnh mới
-              ...(uploadedUrls.length > 0 ? { image: uploadedUrls[0] } : {})
-            };
-            
-            result = await facilitiesAdminService.updateFacilityFeatures(updated);
-            
-            if (result.success) {
-              setFacilitiesData(prev => prev ? { ...prev, facilityFeatures: updated } : null);
-              showToast('Cập nhật Facility Feature thành công!', 'success');
-              closeModal();
-              setNewImages([]); // Reset ảnh đã chọn
+              showToast('Đã cập nhật Key Metric!');
+              
+              // Reload data from server
+              await loadData();
             } else {
               showToast(result.message || 'Cập nhật thất bại', 'error');
             }
           }
-        } catch (error) {
-          console.error('Error handling facility feature:', error);
-          showToast('Có lỗi xảy ra khi xử lý ảnh', 'error');
+        }
+      } else if (modalType === 'facilityFeature') {
+        // Handle facility feature save
+        if (modalMode === 'add') {
+          // Prepare feature data
+          const featureData = { ...modalData };
+          
+          // Process new images if any
+          if (newImages.length > 0) {
+            // Upload images
+            const formData = new FormData();
+            newImages.forEach(file => {
+              formData.append('images', file);
+            });
+            
+            const uploadResult = await facilitiesAdminService.uploadMultipleImages(formData);
+            
+            if (uploadResult.success && uploadResult.urls) {
+              // Create images array for feature
+              featureData.images = uploadResult.urls.map((url, idx) => ({
+                url,
+                alt: `${featureData.title} Image ${idx + 1}`,
+                order: idx
+              }));
+              
+              // Set first image as main image
+              if (uploadResult.urls.length > 0) {
+                featureData.image = uploadResult.urls[0];
+              }
+            }
+          }
+          
+          const result = await facilitiesAdminService.addFacilityFeature(featureData as FacilityFeature);
+          if (result.success) {
+            showToast('Đã thêm Facility Feature!');
+            setNewImages([]);
+            
+            // Reload data from server
+            await loadData();
+          } else {
+            showToast(result.message || 'Thêm thất bại', 'error');
+          }
+        } else {
+          // Edit existing feature
+          const features = [...(facilitiesData?.facilityFeatures || [])];
+          if (modalIndex !== null && features[modalIndex]) {
+            const updatedFeature = { ...features[modalIndex], ...modalData };
+            
+            // Process new images if any
+            if (newImages.length > 0) {
+              // Upload images
+              const formData = new FormData();
+              newImages.forEach(file => {
+                formData.append('images', file);
+              });
+              
+              const uploadResult = await facilitiesAdminService.uploadMultipleImages(formData);
+              
+              if (uploadResult.success && uploadResult.urls) {
+                // Append to existing images array
+                if (!updatedFeature.images) updatedFeature.images = [];
+                
+                const newImagesData = uploadResult.urls.map((url, idx) => ({
+                  url,
+                  alt: `${updatedFeature.title} Image ${updatedFeature.images.length + idx + 1}`,
+                  order: updatedFeature.images.length + idx
+                }));
+                
+                updatedFeature.images = [...updatedFeature.images, ...newImagesData];
+                
+                // Set first image as main image if no main image exists
+                if (!updatedFeature.image && uploadResult.urls.length > 0) {
+                  updatedFeature.image = uploadResult.urls[0];
+                }
+              }
+            }
+            
+            features[modalIndex] = updatedFeature;
+            
+            // Update all features
+            const result = await facilitiesAdminService.updateFacilityFeatures(features);
+            if (result.success) {
+              showToast('Đã cập nhật Facility Feature!');
+              setNewImages([]);
+              
+              // Reload data from server instead of updating state
+              await loadData();
+            } else {
+              showToast(result.message || 'Cập nhật thất bại', 'error');
+            }
+          }
         }
       }
+      
+      closeModal();
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error saving data:", error);
       showToast('Có lỗi xảy ra', 'error');
     } finally {
       setSaving(false);

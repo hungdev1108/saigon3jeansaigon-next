@@ -205,12 +205,19 @@ export default function AdminProductsPage() {
 
   const handleDeleteApplication = async (appId: string) => {
     setSaving(true);
-    const result = await productsAdminService.deleteApplication(appId);
+    if (!selectedProductId) {
+      showMessage("Không tìm thấy sản phẩm được chọn", 'error');
+      setSaving(false);
+      return;
+    }
+    console.log(`Attempting to delete application: productId=${selectedProductId}, appId=${appId}`);
+    const result = await productsAdminService.deleteApplication(selectedProductId, appId);
     if (result.success) {
       showMessage("Xóa application thành công!");
-      loadProducts();
+      loadProductDetail(selectedProductId);  // Tải lại chi tiết sản phẩm thay vì tất cả sản phẩm
     } else {
       showMessage("Xóa application thất bại: " + result.message, 'error');
+      console.error("Delete application error:", result);
     }
     setSaving(false);
   };
@@ -358,7 +365,10 @@ export default function AdminProductsPage() {
                           <div key={app._id || idx} className="application-card">
                             <div className="application-card-actions">
                               <button className="edit-btn" title="Sửa" onClick={() => handleEditApplication(app)}><FiEdit /></button>
-                              <button className="delete-btn" title="Xóa" onClick={() => handleDeleteApplication(app._id)}><FiTrash2 /></button>
+                              <button className="delete-btn" title="Xóa" onClick={() => {
+                                console.log("Deleting application with ID:", app._id);
+                                handleDeleteApplication(app._id);
+                              }}><FiTrash2 /></button>
                             </div>
                             <div className="application-header">{app.title}</div>
                             <div className="application-content">
