@@ -4,7 +4,6 @@ import Image from "next/image";
 import React, { useEffect } from "react";
 import { BACKEND_DOMAIN } from '@/api/config';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import useSWR from "swr";
 
 // Interfaces for TypeScript
 interface Hero {

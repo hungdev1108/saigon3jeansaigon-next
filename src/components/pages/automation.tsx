@@ -5,7 +5,6 @@ import Slider, { CustomArrowProps } from "react-slick";
 import Image from "next/image";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import useSWR from "swr";
 
 interface ContentItem {
   _id: string;

@@ -10,7 +10,14 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    // Xóa domains bị deprecated
+    // Enable image optimization
+    unoptimized: false,
+    // Support WebP format
+    formats: ['image/webp'],
+    // Define device sizes for responsive images
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // Define image sizes for thumbnails
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       {
         protocol: "http",
@@ -25,27 +32,22 @@ const nextConfig: NextConfig = {
         pathname: "/images/**",
       },
       {
-        protocol: "https",
-        hostname: "images.unsplash.com",
+        protocol: "http",
+        hostname: "localhost",
+        port: "3007",
         pathname: "/**",
+      },
+      // Production
+      {
+        protocol: "https",
+        hostname: "saigon3jean.com",
+        pathname: "/uploads/**",
       },
       {
         protocol: "https",
         hostname: "saigon3jean.com",
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
-        hostname: "222.255.214.144",
-        port: "3007",
-        pathname: "/**",
-      },
-      {
-        protocol: "http",
-        hostname: "222.255.214.144",
-        port: "3007",
-        pathname: "/uploads/**",
-      },
+        pathname: "/api/**",
+      },    
       // Thêm localhost không cần port
       {
         protocol: "http",
@@ -54,6 +56,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Enable compression for better performance
+  compress: true,
 };
 
 export default nextConfig;

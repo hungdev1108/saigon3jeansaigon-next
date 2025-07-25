@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
 import { BACKEND_DOMAIN } from '@/api/config';
-import useSWR from "swr";
 
 interface GalleryImage {
   id: string;

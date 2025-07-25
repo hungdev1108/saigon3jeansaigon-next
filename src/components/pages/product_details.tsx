@@ -11,7 +11,6 @@ import Zoom from 'yet-another-react-lightbox/plugins/zoom';
 import 'yet-another-react-lightbox/plugins/thumbnails.css';
 import Counter from 'yet-another-react-lightbox/plugins/counter';
 import 'yet-another-react-lightbox/plugins/counter.css';
-import useSWR from "swr";
 import productsService from "@/services/productsService";
 
 // TypeScript interfaces

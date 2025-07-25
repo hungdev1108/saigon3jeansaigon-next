@@ -2,8 +2,7 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import Recruitment from "@/components/pages/recruitment";
 import { BACKEND_DOMAIN } from '@/api/config';
-
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default async function RecruitmentPage() {
   let jobs = [];

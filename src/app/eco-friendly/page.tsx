@@ -3,7 +3,7 @@ import Header from "@/components/header";
 import EcoFriendly from "@/components/pages/eco-friendly";
 import { BACKEND_DOMAIN } from '@/api/config';
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 async function fetchEcoFriendlyData() {
   const res = await fetch(`${BACKEND_DOMAIN}/api/eco-friendly/data`, { cache: 'no-store' });

@@ -49,7 +49,7 @@ interface NewsData {
   author: string;
 }
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 async function fetchHomeData() {
   const res = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { cache: 'no-store' });

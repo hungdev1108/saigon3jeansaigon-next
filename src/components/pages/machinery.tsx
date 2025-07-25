@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Slider from "react-slick";
 import { BACKEND_DOMAIN } from '@/api/config';
-import useSWR from "swr";
 
 interface Machine {
   id: string;

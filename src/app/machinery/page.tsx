@@ -3,7 +3,7 @@ import Header from "@/components/header";
 import Machinery from "@/components/pages/machinery";
 import { BACKEND_DOMAIN } from '@/api/config';
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 async function fetchMachineryData() {
   const res = await fetch(`${BACKEND_DOMAIN}/api/machinery/data`, { cache: 'no-store' });

@@ -3,7 +3,7 @@ import Header from "@/components/header";
 import Contact from "@/components/pages/contact";
 import { BACKEND_DOMAIN } from '@/api/config';
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 async function fetchContactInfo() {
   const res = await fetch(`${BACKEND_DOMAIN}/api/contact/data`, { cache: 'no-store' });
