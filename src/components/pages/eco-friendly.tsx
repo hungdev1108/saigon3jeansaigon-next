@@ -262,8 +262,8 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
                 />
                 <h2>{section.title}</h2>
                 <p>{section.description}</p>
-                <div className="stats">
-                  <div className="stat-box">
+                <div className="stats" style={{ alignItems: 'flex-end' }}>
+                  <div className="stat-box" style={{ width: '340px', minWidth: '320px', margin: '0 1.8rem' }}>
                     <div className="stat-icon">
                       <i className="bi bi-fire"></i>
                     </div>
@@ -273,7 +273,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
                       <span>boilers with 8-ton capacity</span>
                     </div>
                   </div>
-                  <div className="stat-box">
+                  <div className="stat-box" style={{ width: '340px', minWidth: '320px', margin: '0 1.8rem', alignSelf: 'flex-end' }}>
                     <div className="stat-icon">
                       <i className="bi bi-tree"></i>
                     </div>

@@ -84,6 +84,7 @@
   border-bottom-right-radius: 8px;
   z-index: 1;
   padding-bottom: 2rem;
+  flex-wrap: wrap; /* Cho phép các box xuống dòng nếu cần */
 }
 
 .eco-section .stat-box {
@@ -176,6 +177,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
+  width: 340px;
+  min-width: 320px;
+  margin: 0 1.8rem;
 }
 
 /* Thêm margin-bottom cho box cuối cùng trong Biomass Boiler */

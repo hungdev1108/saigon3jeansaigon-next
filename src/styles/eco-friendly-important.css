@@ -9,7 +9,7 @@
   width: 100% !important;
   max-width: 100% !important;
   display: flex !important;
-  align-items: center !important;
+  align-items: center !important; /* Thay đổi từ flex-end sang center để căn giữa theo chiều dọc */
   justify-content: center !important;
   gap: 1.5rem !important;
   padding: 2rem 0 !important;
@@ -25,24 +25,30 @@
 #eco-friendly .solar-system .stats .stat-box,
 #eco-friendly .ai-revolution .stats .stat-box,
 #eco-friendly .biomass-boiler .stats .stat-box {
-  width: 220px !important;
+  width: 340px !important; /* Tăng chiều rộng lên 340px như trong ảnh */
   max-width: 100% !important;
-  min-width: 200px !important;
-  margin: 0 0.8rem !important;
+  min-width: 320px !important; /* Tăng min-width lên 320px như trong ảnh */
+  margin: 0 1.8rem !important; /* Tăng margin ngang lên 1.8rem như trong ảnh */
   background-color: rgba(0, 0, 0, 0.18) !important;
   border-radius: 10px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 1rem 0.8rem !important;
+  padding: 1.5rem 1rem !important; /* Tăng padding lên để box rộng hơn */
   height: 280px !important;
   min-height: 280px !important;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
   position: relative !important;
   transition: all 0.3s ease !important;
-  margin-bottom: 1.5rem !important;
+  margin-bottom: 0 !important; /* Bỏ margin-bottom */
   overflow: hidden !important;
+}
+
+/* Box thứ hai trong Biomass Boiler (BIOMASS FUEL) */
+#eco-friendly .biomass-boiler .stats .stat-box:nth-child(2) {
+  margin-top: 0 !important; /* Loại bỏ margin-top nếu có */
+  margin-bottom: 0 !important; /* Đảm bảo margin-bottom giống với box khác */
 }
 
 /* Icon */
@@ -158,7 +164,15 @@
     width: 100% !important;
     max-width: 100% !important;
     background: linear-gradient(180deg, rgba(18, 108, 184, 0) 0%, var(--space-blue) 100%) !important;
+    align-items: center !important; /* Trở lại center cho mobile */
   }
+  
+  /* Bỏ quy tắc align-self cho màn hình mobile */
+  #eco-friendly .biomass-boiler .stats .stat-box:nth-child(2) {
+    align-self: center !important;
+  }
+  
+  /* Các style cho stat box trên tablet */
   .eco-section .stat-box,
   #eco-friendly .solar-system .stats .stat-box,
   #eco-friendly .ai-revolution .stats .stat-box,
@@ -265,27 +279,27 @@
   }
   
   /* Specific fix for Biomass Boiler section */
-.eco-section.biomass-boiler .stats .stat-box,
-#eco-friendly .biomass-boiler .stats .stat-box,
-#biomass-section .stats .stat-box {
-  width: 90% !important;
-  max-width: 90% !important;
-  min-width: 200px !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: flex !important;
-  position: relative !important;
-  z-index: 50 !important;
-  transform: none !important;
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  bottom: auto !important;
-  margin: 0 auto 1.5rem !important;
-  height: 280px !important;
-  min-height: 280px !important;
-  overflow: visible !important;
-}
+  .eco-section.biomass-boiler .stats .stat-box,
+  #eco-friendly .biomass-boiler .stats .stat-box,
+  #biomass-section .stats .stat-box {
+    width: 90% !important;
+    max-width: 90% !important;
+    min-width: 200px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+    position: relative !important;
+    z-index: 50 !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    margin: 0 auto 1.5rem !important;
+    height: 280px !important;
+    min-height: 280px !important;
+    overflow: visible !important;
+  }
   
   /* Strong values (numbers) */
   .eco-section .stat-value strong,
