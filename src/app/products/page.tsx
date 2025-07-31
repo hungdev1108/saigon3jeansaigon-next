@@ -3,7 +3,7 @@ import Header from "@/components/header";
 import Products from "@/components/pages/products";
 import { BACKEND_DOMAIN } from '@/api/config';
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 async function fetchProductsData() {
   const res = await fetch(`${BACKEND_DOMAIN}/api/products/data`, { cache: 'no-store' });

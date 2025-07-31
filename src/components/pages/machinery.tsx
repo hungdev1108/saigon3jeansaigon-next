@@ -75,11 +75,19 @@ function MachineImageSlider({ images, alt, containerHeight }: MachineImageSlider
     ],
   };
 
+  // Format image URL correctly
+  const getImageUrl = (url: string) => {
+    if (!url) return '/images/placeholder.jpg';
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/')) return `${BACKEND_DOMAIN}${url}`;
+    return `${BACKEND_DOMAIN}/${url}`;
+  };
+
   // If only one image, display without slider
   if (images.length === 1) {
     return (
       <Image
-        src={`${BACKEND_DOMAIN}${images[0].url}`}
+        src={getImageUrl(images[0].url)}
         alt={images[0].alt || alt}
         className="img-fluid"
         width={1500}
@@ -134,6 +142,7 @@ export default function Machinery({ machineryData }: MachineryProps) {
   const [activeStage, setActiveStage] = useState(1);
   const [activeMachine, setActiveMachine] = useState<string>("");
   const [stagesHeight, setStagesHeight] = useState(0);
+  const [stageItemHeight, setStageItemHeight] = useState(0);
   const stagesContainerRef = useRef<HTMLDivElement>(null);
   const machinesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -148,13 +157,36 @@ export default function Machinery({ machineryData }: MachineryProps) {
   useEffect(() => {
     const updateHeight = () => {
       if (stagesContainerRef.current) {
-        const height = stagesContainerRef.current.clientHeight - 80;
-        setStagesHeight(height);
+        // Calculate fixed container height (e.g., 600px or based on viewport)
+        const containerHeight = Math.max(600, window.innerHeight * 0.7);
+        
+        // Calculate height for exactly 4 stages
+        if (data && data.stages) {
+          if (data.stages.length <= 4) {
+            // If 4 or fewer stages, calculate height with margins
+            // Account for margins (8px per stage except last one)
+            const totalMargins = (data.stages.length - 1) * 8;
+            const itemHeight = (containerHeight - totalMargins) / data.stages.length;
+            setStageItemHeight(itemHeight);
+            setStagesHeight(containerHeight);
+          } else {
+            // If more than 4 stages, calculate height for exactly 4 stages with margins
+            // Account for margins (8px per stage except last one)
+            const totalMargins = 3 * 8; // 3 margins for 4 stages
+            const itemHeight = (containerHeight - totalMargins) / 4;
+            setStageItemHeight(itemHeight);
+            // Set container height to exactly fit 4 stages with margins
+            // Subtract 4px to ensure no part of the 5th stage is visible
+            setStagesHeight((itemHeight * 4 + totalMargins) - 4);
+          }
+        }
       }
     };
+    
     updateHeight();
     window.addEventListener('resize', updateHeight);
     const timer = setTimeout(updateHeight, 100);
+    
     return () => {
       window.removeEventListener('resize', updateHeight);
       clearTimeout(timer);
@@ -183,12 +215,6 @@ export default function Machinery({ machineryData }: MachineryProps) {
     // Fallback to single image as object structure
     return [{ url: machine.image, alt: machine.imageAlt, order: 0 }];
   };
-
-  // const testImages = [
-  //   "http://222.255.214.144:3007/uploads/images/facilities-page/section_1-outdoor.jpg",
-  //   "http://222.255.214.144:3007/uploads/images/facilities-page/section_2-office.jpg",
-  //   "http://222.255.214.144:3007/uploads/images/facilities-page/section_3-facilities.jpg",
-  // ];
 
   // Handle stage selection
   const handleStageClick = (stageNumber: number) => {
@@ -234,6 +260,9 @@ export default function Machinery({ machineryData }: MachineryProps) {
       machine.name.toLowerCase().replace(/\s+/g, "") === activeMachine
   );
 
+  console.log('Current machine:', currentMachine);
+  console.log('Machine images:', currentMachine ? processMachineImages(currentMachine) : []);
+
   return (
     <>
       <section className="machinery-section py-5">
@@ -243,14 +272,32 @@ export default function Machinery({ machineryData }: MachineryProps) {
           <div className="row">
             {/* Stages Column */}
             <div className="col-md-5">
-              <div className="stages-container" ref={stagesContainerRef}>
+              <div 
+                className="stages-container" 
+                ref={stagesContainerRef}
+                style={{ 
+                  height: `${stagesHeight}px`,
+                  overflowY: data.stages.length > 4 ? 'auto' : 'hidden',
+                  paddingBottom: '0' // No extra padding needed
+                }}
+              >
                 {data.stages.map((stage, idx) => (
                   <div
                     key={stage.id || idx}
                     className={`stage-item ${activeStage === stage.stageNumber ? "active" : ""}`}
                     data-stage={stage.stageNumber}
                     onClick={() => handleStageClick(stage.stageNumber)}
-                    style={{ cursor: "pointer" }}
+                    style={{ 
+                      cursor: "pointer",
+                      height: `${stageItemHeight}px`,
+                      minHeight: `${stageItemHeight}px`,
+                      maxHeight: `${stageItemHeight}px`,
+                      boxSizing: 'border-box',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      overflow: 'hidden'
+                    }}
                   >
                     <h3>{stage.title}</h3>
                     <p>{stage.description}</p>
@@ -261,7 +308,11 @@ export default function Machinery({ machineryData }: MachineryProps) {
 
             {/* Machines Column */}
             <div className="col-md-7">
-              <div className="machines-container" ref={machinesContainerRef}>
+              <div 
+                className="machines-container" 
+                ref={machinesContainerRef}
+                style={{ height: `${stagesHeight}px` }}
+              >
                 {/* Current Stage Machines */}
                 <div className="machines-wrapper active">
                   {/* Machine Tabs */}
@@ -377,12 +428,35 @@ export default function Machinery({ machineryData }: MachineryProps) {
             flex-direction: column;
             height: 100%;
             margin-bottom: 0;
+            scrollbar-width: thin;
+            scrollbar-color: #1a4b8c #f0f0f0;
+            padding-right: 10px; /* Add padding to prevent content from being hidden by scrollbar */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+            box-sizing: border-box; /* Ensure padding is included in the height */
+            clip-path: inset(0 0 0 0); /* Clip any overflow content */
+            /* Remove the mask image that was causing the fade effect */
+          }
+          .stages-container::-webkit-scrollbar {
+            width: 6px;
+          }
+          .stages-container::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 10px;
+          }
+          .stages-container::-webkit-scrollbar-thumb {
+            background-color: #1a4b8c;
+            border-radius: 10px;
           }
           .stage-item {
             padding: 20px;
-            margin-bottom: 15px;
+            margin-bottom: 8px; /* Restore margin between items */
             border-left: 3px solid #e0e0e0;
             transition: all 0.3s ease;
+            flex-shrink: 0; /* Prevent stage items from shrinking */
+            box-sizing: border-box; /* Ensure padding is included in the height */
+          }
+          .stage-item:nth-child(4) {
+            margin-bottom: 8px; /* Add margin to the 4th item to match other items */
           }
           .stage-item:last-child {
             margin-bottom: 0;
@@ -404,9 +478,11 @@ export default function Machinery({ machineryData }: MachineryProps) {
           }
           .machine-tab-content {
             width: 100%;
+            height: calc(100% - 50px); /* Subtract tabs height */
           }
           .machine-item {
             width: 100%;
+            height: 100%;
           }
         `}</style>
       </section>

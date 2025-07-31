@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
 import { BACKEND_DOMAIN } from "../../api/config";
 import ClientOnly from "../ClientOnly";
-import useSWR from "swr";
+import { getOptimizedImageUrls } from "../../shared/imageUtils";
+import Link from "next/link";
 
 // Type definitions
 interface HeroData {
@@ -15,6 +16,7 @@ interface HeroData {
   backgroundImage: string;
   videoUrl: string;
   isActive: boolean;
+  aiBannerImage?: string;
 }
 
 interface SectionData {
@@ -71,26 +73,183 @@ interface HomeProps {
   homeData: HomeData | null;
 }
 
+interface ResponsiveImgProps {
+  srcs: {
+    origin?: string;
+    webp?: string;
+    medium?: string;
+    thumbnail?: string;
+  };
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  style?: React.CSSProperties;
+}
+
+// Helper để render ảnh tối ưu responsive (dùng <img> thường nếu cần srcSet)
+/**
+ * ResponsiveImg - Component để hiển thị hình ảnh tối ưu cho từng kích thước màn hình
+ * 
+ * Cách sử dụng:
+ * <ResponsiveImg 
+ *   srcs={getOptimizedImageUrls(image)} 
+ *   alt="Mô tả hình ảnh" 
+ *   width={400} 
+ *   height={300} 
+ *   className="your-class" 
+ * />
+ */
+function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: ResponsiveImgProps) {
+  // Kiểm tra nếu không có srcs
+  if (!srcs) {
+    console.warn(`No image sources provided for: ${alt}`);
+    return null;
+  }
+  
+  try {
+    // Chọn ảnh phù hợp nhất dựa trên kích thước và độ phân giải
+    const getBestImageUrl = () => {
+      // Nếu có kích thước cụ thể, chọn ảnh phù hợp
+      if (width && width <= 300) {
+        // Ưu tiên thumbnail cho kích thước nhỏ
+        return srcs.thumbnail || srcs.medium || srcs.webp || srcs.origin;
+      } else if (width && width <= 800) {
+        // Ưu tiên medium cho kích thước trung bình
+        return srcs.medium || srcs.webp || srcs.origin;
+      } else {
+        // Ưu tiên webp cho kích thước lớn
+        return srcs.webp || srcs.origin;
+      }
+    };
+    
+    // Lấy URL ảnh tốt nhất
+    const imgSrc = getBestImageUrl() || '';
+    
+    // Kiểm tra xem URL có hợp lệ không
+    const isValidUrl = imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('/'));
+    
+    if (!isValidUrl) {
+      console.error(`Invalid image URL for ${alt}:`, imgSrc);
+      return null;
+    }
+    
+    // Tạo srcSet chỉ khi có đủ các phiên bản
+    const srcSet = (() => {
+      // Nếu có đủ các phiên bản, tạo srcSet
+      if (srcs.thumbnail && srcs.medium && srcs.webp) {
+        return `${srcs.thumbnail} 300w, ${srcs.medium} 800w, ${srcs.webp} 1920w`;
+      }
+      // Nếu chỉ có một số phiên bản
+      const sets = [];
+      if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
+      if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
+      
+      return sets.length > 0 ? sets.join(', ') : undefined;
+    })();
+    
+    // Chuẩn bị sizes attribute nếu không được cung cấp
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, 1920px";
+    
+    return (
+      <img
+        src={imgSrc}
+        srcSet={srcSet}
+        sizes={sizes || defaultSizes}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading="lazy"
+        style={style}
+        onError={(e) => {
+          console.error(`Failed to load image: ${imgSrc}`);
+          // Fallback to origin if available and different from current src
+          if (srcs.origin && srcs.origin !== imgSrc) {
+            console.log(`Falling back to origin: ${srcs.origin}`);
+            (e.target as HTMLImageElement).src = srcs.origin;
+          }
+        }}
+      />
+    );
+  } catch (error) {
+    console.error(`Error rendering image ${alt}:`, error);
+    return null;
+  }
+}
+
 export default function Home({ homeData }: HomeProps) {
   useClientScript();
-
-  // Không dùng SWR, chỉ nhận homeData từ props
-  const data = homeData;
-
+  
+  // Sử dụng useState để lưu trữ dữ liệu
+  const [data, setData] = useState<HomeData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Fetch dữ liệu từ API nếu không có homeData từ props
   useEffect(() => {
+    if (homeData) {
+      setData(homeData);
+      setLoading(false);
+    } else {
+      const fetchData = async () => {
+        try {
+          // Gọi API để lấy dữ liệu trang chủ
+          const response = await fetch(`${BACKEND_DOMAIN}/api/home/data`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+          if (result.success) {
+            setData(result.data);
+          } else {
+            setError("Không thể tải dữ liệu trang chủ");
+          }
+        } catch (err) {
+          console.error("Error fetching home data:", err);
+          setError("Lỗi khi tải dữ liệu trang chủ");
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      fetchData();
+    }
+    
+    // Thêm class loaded vào body
     if (typeof window !== "undefined") {
       document.body.classList.add("loaded");
     }
     return () => {
       document.body.classList.remove("loaded");
     };
-  }, []);
+  }, [homeData]);
 
-  // Nếu không có dữ liệu
-  if (!data) {
+  // Nếu đang tải dữ liệu
+  if (loading) {
     return (
       <div className="alert alert-info m-3" role="alert">
         Đang tải dữ liệu trang chủ...
+      </div>
+    );
+  }
+  
+  // Nếu có lỗi
+  if (error) {
+    return (
+      <div className="alert alert-danger m-3" role="alert">
+        {error}
+      </div>
+    );
+  }
+  
+  // Nếu không có dữ liệu
+  if (!data) {
+    return (
+      <div className="alert alert-warning m-3" role="alert">
+        Không có dữ liệu trang chủ
       </div>
     );
   }
@@ -182,16 +341,14 @@ export default function Home({ homeData }: HomeProps) {
               className="w-100 h-100 object-fit-cover"
             />
           ) : (
-            <Image
-              src={
-                hero?.backgroundImage
-                  ? `${BACKEND_DOMAIN}${hero.backgroundImage}`
-                  : "/images/home_banner-section2.jpg"
-              }
+            // fallback giữ nguyên
+            <ResponsiveImg
+              srcs={getOptimizedImageUrls(hero?.backgroundImage || "/images/home_banner-section2.jpg")}
               alt="Factory Aerial View"
               className="img-fluid w-100"
               width={1920}
               height={1080}
+              sizes="100vw"
             />
           )}
           <div className="overlay"></div>
@@ -232,17 +389,20 @@ export default function Home({ homeData }: HomeProps) {
                           Your browser does not support the video tag.
                         </video>
                       ) : (
-                        <Image
-                          src={
-                            section.mediaUrl
-                              ? `${BACKEND_DOMAIN}${section.mediaUrl}`
-                              : "/images/home_banner-section2.jpg"
-                          }
-                          alt={section.title}
-                          className="img-fluid w-100"
-                          width={1920}
-                          height={1080}
-                        />
+                        (() => {
+                          const img = getOptimizedImageUrls(section.mediaUrl || "");
+                          return (
+                            <ResponsiveImg
+                              srcs={img}
+                              alt={section.title}
+                              className="img-fluid w-100"
+                              width={800}
+                              height={600}
+                              sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 800px"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                            />
+                          );
+                        })()
                       )}
                     </div>
                     <div
@@ -302,13 +462,23 @@ export default function Home({ homeData }: HomeProps) {
         <div className="container-fluid p-0">
           <div className="row g-0">
             <div className="col-12 position-relative ai-integration-banner">
-              <Image
-                src="/images/SectionAI.jpg"
-                alt="Conference Room"
-                className="img-fluid w-100"
-                width={1920}
-                height={1080}
-              />
+              {(() => {
+                // Sử dụng homeData.aiBannerImage đúng chuẩn
+                const aiBannerImage = data?.hero?.aiBannerImage || null;
+                
+                // Sử dụng đúng đường dẫn cho ảnh AI Banner
+                const aiImg = getOptimizedImageUrls(aiBannerImage || "/images/SectionAI.jpg");
+                return (
+                  <ResponsiveImg
+                    srcs={aiImg}
+                    alt="AI Banner"
+                    className="img-fluid w-100"
+                    width={1920}
+                    height={1080}
+                    sizes="(max-width: 600px) 100vw, 1920px"
+                  />
+                );
+              })()}
               <div className="overlay"></div>
               <div className="ai-content text-center text-white">
                 <h2 className="fw-bold">
@@ -358,12 +528,13 @@ export default function Home({ homeData }: HomeProps) {
           <div className="customers-wrapper position-relative">
             {/* Background Image */}
             <div className="customers-background">
-              <Image
-                src="/images/branding_our_customer/back_ground.png"
+              <ResponsiveImg
+                srcs={getOptimizedImageUrls("/images/branding_our_customer/back_ground.png")}
                 alt="World Map"
                 className="world-map-bg"
                 width={1920}
                 height={1080}
+                sizes="100vw"
               />
             </div>
 
@@ -383,23 +554,23 @@ export default function Home({ homeData }: HomeProps) {
                         className="customer-slider"
                       >
                         {customers.denimWoven.map(
-                          (customer: CustomerData, index: number) => (
-                            <div key={`denim-${index}`} className="px-2">
-                              <div className="customer-logo-item">
-                                <Image
-                                  src={
-                                    customer.logo
-                                      ? `${BACKEND_DOMAIN}${customer.logo}`
-                                      : "/images/placeholder-logo.png"
-                                  }
-                                  alt={customer.name}
-                                  className="img-fluid customer-logo"
-                                  width={200}
-                                  height={120}
-                                />
+                          (customer: CustomerData, index: number) => {
+                            const logoImg = getOptimizedImageUrls(customer.logo || "");
+                            return (
+                              <div key={`denim-${index}`} className="px-2">
+                                <div className="customer-logo-item">
+                                  <ResponsiveImg
+                                    srcs={logoImg}
+                                    alt={customer.name}
+                                    className="img-fluid customer-logo"
+                                    width={200}
+                                    height={120}
+                                    sizes="(max-width: 600px) 100vw, 200px"
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          )
+                            );
+                          }
                         )}
                       </Slider>
                     ) : (
@@ -420,23 +591,23 @@ export default function Home({ homeData }: HomeProps) {
                         className="customer-slider"
                       >
                         {customers.knit.map(
-                          (customer: CustomerData, index: number) => (
-                            <div key={`knit-${index}`} className="px-2">
-                              <div className="customer-logo-item">
-                                <Image
-                                  src={
-                                    customer.logo
-                                      ? `${BACKEND_DOMAIN}${customer.logo}`
-                                      : "/images/placeholder-logo.png"
-                                  }
-                                  alt={customer.name}
-                                  className="img-fluid customer-logo"
-                                  width={200}
-                                  height={120}
-                                />
+                          (customer: CustomerData, index: number) => {
+                            const logoImg = getOptimizedImageUrls(customer.logo || "");
+                            return (
+                              <div key={`knit-${index}`} className="px-2">
+                                <div className="customer-logo-item">
+                                  <ResponsiveImg
+                                    srcs={logoImg}
+                                    alt={customer.name}
+                                    className="img-fluid customer-logo"
+                                    width={200}
+                                    height={120}
+                                    sizes="(max-width: 600px) 100vw, 200px"
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          )
+                            );
+                          }
                         )}
                       </Slider>
                     ) : (
@@ -459,27 +630,33 @@ export default function Home({ homeData }: HomeProps) {
             {/* Hiển thị LEED GOLD và ISO certifications từ API */}
             {certifications &&
               certifications.map((cert: CertificationData, index: number) => {
+                const certImg = getOptimizedImageUrls(cert.image || "");
                 // Xử lý hiển thị theo category
                 if (cert.name === "LEED GOLD") {
                   return (
                     <div key={index} className="col-lg-4 mb-4">
                       <div className="cert-item leed-cert">
-                        <Image
-                          src={
-                            cert.image
-                              ? `${BACKEND_DOMAIN}${cert.image}`
-                              : "/images/certification/leed_gold.png"
-                          }
+                        <ResponsiveImg
+                          srcs={certImg}
                           alt={cert.name}
                           className="cert-image"
-                          width={1920}
-                          height={1080}
+                          width={800}
+                          height={600}
+                          sizes="(max-width: 600px) 100vw, 800px"
                         />
                         <div className="leed-text-container">
-                          <div className="leed-text-item">LEADERSHIP IN</div>
-                          <div className="leed-text-item">ENERGY &</div>
-                          <div className="leed-text-item">ENVIRONMENTAL</div>
-                          <div className="leed-text-item">DESIGN</div>
+                          <div className="leed-text-row">
+                            <span className="leed-letter">L</span>EADERSHIP IN
+                          </div>
+                          <div className="leed-text-row">
+                            <span className="leed-letter">E</span>NERGY &
+                          </div>
+                          <div className="leed-text-row">
+                            <span className="leed-letter">E</span>NVIRONMENTAL
+                          </div>
+                          <div className="leed-text-row">
+                            <span className="leed-letter">D</span>ESIGN
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -488,17 +665,13 @@ export default function Home({ homeData }: HomeProps) {
                   return (
                     <div key={index} className="col-lg-4 mb-4">
                       <div className="cert-item iso-cert">
-                        <Image
-                          src={
-                            cert.image
-                              ? `${BACKEND_DOMAIN}${cert.image}`
-                              : "/images/certification/certificate.png"
-                          }
+                        <ResponsiveImg
+                          srcs={certImg}
                           alt={cert.name}
                           className="cert-image"
-                          width={1920}
-                          height={1080}
-                          objectFit="cover"
+                          width={800}
+                          height={600}
+                          sizes="(max-width: 600px) 100vw, 800px"
                         />
                         <div className="iso-text-container">
                           <div className="iso-text-item">
@@ -515,40 +688,42 @@ export default function Home({ homeData }: HomeProps) {
 
             {/* Hiển thị các certifications khác từ API */}
             <div className="col-lg-4 mb-4">
-              <div className="certifications-list">
-                {certifications &&
-                  certifications
-                    .filter(
-                      (cert) =>
-                        !cert.name.includes("LEED") &&
-                        !cert.name.includes("ISO")
-                    )
-                    .map((cert: CertificationData, index: number) => (
-                      <div key={index} className="cert-row">
-                        <div
-                          className={`cert-row-content ${cert.name
-                            .toLowerCase()
-                            .replace(/\s+/g, "-")}-cert`}
-                        >
-                          <div className="cert-icon">
-                            <Image
-                              src={
-                                cert.image
-                                  ? `${BACKEND_DOMAIN}${cert.image}`
-                                  : "/images/placeholder-cert.png"
-                              }
-                              alt={cert.name}
-                              className="cert-small-image"
-                              width={1920}
-                              height={1080}
-                            />
+              <div className="cert-item">
+                <div className="certifications-list">
+                  {certifications &&
+                    certifications
+                      .filter(
+                        (cert) =>
+                          !cert.name.includes("LEED") &&
+                          !cert.name.includes("ISO")
+                      )
+                      .map((cert: CertificationData, index: number) => {
+                        const certImg = getOptimizedImageUrls(cert.image || "");
+                        return (
+                          <div key={index} className="cert-row">
+                            <div
+                              className={`cert-row-content ${cert.name
+                                .toLowerCase()
+                                .replace(/\s+/g, "-")}-cert`}
+                            >
+                              <div className="cert-icon">
+                                <ResponsiveImg
+                                  srcs={certImg}
+                                  alt={cert.name}
+                                  className="cert-small-image"
+                                  width={800}
+                                  height={600}
+                                  sizes="(max-width: 600px) 100vw, 800px"
+                                />
+                              </div>
+                              <div className="cert-text">
+                                <div className="cert-title">{cert.description}</div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="cert-text">
-                            <div className="cert-title">{cert.description}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })}
+                </div>
               </div>
             </div>
           </div>
@@ -558,146 +733,159 @@ export default function Home({ homeData }: HomeProps) {
       <section className="news py-5">
         <div className="container">
           <h2 className="section-title text-center">NEWS</h2>
-          <div className="row mt-4">
+          <div className="row mt-4 news-flex-row" style={{ display: 'flex', alignItems: 'stretch' }}>
             {/* Featured News - Hiển thị tin đầu tiên */}
             {featuredNews && featuredNews.length > 0 && (
-              <div className="col-md-5 mb-4 news-item-container">
-                <div className="news-item position-relative">
-                  <Image
-                    src={
-                      featuredNews[0].image
-                        ? `${BACKEND_DOMAIN}${featuredNews[0].image}`
-                        : "/images/news/post_1.jpg"
-                    }
-                    alt={featuredNews[0].title}
-                    className="img-fluid w-100"
-                    width={1920}
-                    height={1080}
-                  />
-                  <div className="news-overlay">
-                    <h5 className="text-white">{featuredNews[0].title}</h5>
-                    <p className="text-white text-justify mb-3">
-                      {featuredNews[0].excerpt}
-                    </p>
-                    <a href="#" className="btn btn-primary">
-                      READ MORE
-                    </a>
+              <div className="col-md-5 mb-4 news-item-container" style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, height: '100%' }}>
+                  <div className="news-item position-relative" style={{ height: '100%' }}>
+                    <Link href={`/news/${featuredNews[0].slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      {(() => {
+                        const newsImg = getOptimizedImageUrls(featuredNews[0].image || "");
+                        return (
+                          <ResponsiveImg
+                            srcs={newsImg}
+                            alt={featuredNews[0].title}
+                            className="img-fluid w-100"
+                            width={800}
+                            height={600}
+                            sizes="(max-width: 600px) 100vw, 800px"
+                          />
+                        );
+                      })()}
+                      <div className="news-overlay">
+                        <h5 className="text-white">{featuredNews[0].title}</h5>
+                        <p className="text-white text-justify mb-3">
+                          {featuredNews[0].excerpt}
+                        </p>
+                        <span className="btn btn-primary">
+                          READ MORE
+                        </span>
+                      </div>
+                    </Link>
                   </div>
                 </div>
               </div>
             )}
-
             {/* News List - Hiển thị các tin thường */}
-            <div className="col-md-7 mb-4">
-              <div className="news-list">
-                {regularNews && regularNews.length > 0 && regularNews.map((news: NewsData, index: number) => (
-                  <div key={news.id || index} className="news-list-item mb-3">
-                    <div className="news-item-content">
-                      <div className="news-thumbnail">
-                        <Image
-                          src={
-                            news.image
-                              ? `${BACKEND_DOMAIN}${news.image}`
-                              : "/images/news/post_1.jpg"
-                          }
-                          alt={news.title}
-                          className="img-fluid"
-                          width={1920}
-                          height={1080}
-                        />
-                      </div>
-                      <div className="news-info">
-                        <h6 className="news-title">{news.title}</h6>
-                        <p className="news-excerpt">{news.excerpt}</p>
-                        <span className="news-date">
-                          {new Date(news.publishDate).toLocaleDateString(
-                            "vi-VN"
-                          )}
-                        </span>
-                      </div>
+            <div className="col-md-7 mb-4" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'stretch' }}>
+              <div className="news-list" style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between', gap: '16px' }}>
+                {regularNews && regularNews.length > 0 && regularNews.map((news: NewsData, index: number) => {
+                  const newsImg = getOptimizedImageUrls(news.image || "");
+                  return (
+                    <div key={news.id || index} className="news-list-item" style={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
+                      <Link href={`/news/${news.slug}`} className="news-item-link" style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
+                        <div className="news-item-content" style={{ display: 'flex', height: '100%' }}>
+                          <div className="news-thumbnail">
+                            <ResponsiveImg
+                              srcs={newsImg}
+                              alt={news.title}
+                              className="img-fluid"
+                              width={800}
+                              height={600}
+                              sizes="(max-width: 600px) 100vw, 800px"
+                            />
+                          </div>
+                          <div className="news-info">
+                            <h6 className="news-title">{news.title}</h6>
+                            <p className="news-excerpt">{news.excerpt}</p>
+                            <span className="news-date">
+                              {new Date(news.publishDate).toLocaleDateString(
+                                "vi-VN"
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
                     </div>
-                  </div>
-                ))}
-                {/* Fallback news nếu không có dữ liệu từ API */}
+                  );
+                })}
+                {/* Fallback news nếu không có dữ liệu từ API giữ nguyên */}
                 {(!regularNews || regularNews.length === 0) && (
                   <>
                     <div className="news-list-item mb-3">
-                      <div className="news-item-content">
-                        <div className="news-thumbnail">
-                          <Image
-                            src="/images/news/post_1.jpg"
-                            alt="News Thumbnail"
-                            className="img-fluid"
-                            width={1920}
-                            height={1080}
-                          />
+                      <Link href="/news/saigon-3-jean-achieves-leed-gold-certification" className="news-item-link">
+                        <div className="news-item-content">
+                          <div className="news-thumbnail">
+                            <Image
+                              src="/images/news/post_1.jpg"
+                              alt="News Thumbnail"
+                              className="img-fluid"
+                              width={1920}
+                              height={1080}
+                            />
+                          </div>
+                          <div className="news-info">
+                            <h6 className="news-title">
+                              SAIGON 3 JEAN ACHIEVES LEED GOLD CERTIFICATION FOR
+                              GREEN MANUFACTURING
+                            </h6>
+                            <p className="news-excerpt">
+                              Our state-of-the-art denim manufacturing facility
+                              officially receives LEED Gold certification,
+                              reinforcing our commitment to sustainable
+                              development and environmental responsibility....
+                            </p>
+                            <span className="news-date">05/08/2025</span>
+                          </div>
                         </div>
-                        <div className="news-info">
-                          <h6 className="news-title">
-                            SAIGON 3 JEAN ACHIEVES LEED GOLD CERTIFICATION FOR
-                            GREEN MANUFACTURING
-                          </h6>
-                          <p className="news-excerpt">
-                            Our state-of-the-art denim manufacturing facility
-                            officially receives LEED Gold certification,
-                            reinforcing our commitment to sustainable
-                            development and environmental responsibility....
-                          </p>
-                          <span className="news-date">05/08/2025</span>
-                        </div>
-                      </div>
+                      </Link>
                     </div>
                     <div className="news-list-item mb-3">
-                      <div className="news-item-content">
-                        <div className="news-thumbnail">
-                          <Image
-                            src="/images/news/post_5.png"
-                            alt="News Thumbnail"
-                            className="img-fluid"
-                            width={1920}
-                            height={1080}
-                          />
+                      <Link href="/news/launching-eco-friendly-denim-collection" className="news-item-link">
+                        <div className="news-item-content">
+                          <div className="news-thumbnail">
+                            <Image
+                              src="/images/news/post_5.png"
+                              alt="News Thumbnail"
+                              className="img-fluid"
+                              width={1920}
+                              height={1080}
+                            />
+                          </div>
+                          <div className="news-info">
+                            <h6 className="news-title">
+                              LAUNCHING ECO-FRIENDLY DENIM COLLECTION FALL 2025
+                            </h6>
+                            <p className="news-excerpt">
+                              Our new denim collection features 100% organic
+                              cotton and non-toxic dyeing technology, delivering
+                              sustainable fashion choices for modern consumers
+                              worldwide....
+                            </p>
+                            <span className="news-date">03/15/2025</span>
+                          </div>
                         </div>
-                        <div className="news-info">
-                          <h6 className="news-title">
-                            LAUNCHING ECO-FRIENDLY DENIM COLLECTION FALL 2025
-                          </h6>
-                          <p className="news-excerpt">
-                            Our new denim collection features 100% organic
-                            cotton and non-toxic dyeing technology, delivering
-                            sustainable fashion choices for modern consumers
-                            worldwide....
-                          </p>
-                          <span className="news-date">03/15/2025</span>
-                        </div>
-                      </div>
+                      </Link>
                     </div>
                     <div className="news-list-item mb-3">
-                      <div className="news-item-content">
-                        <div className="news-thumbnail">
-                          <Image
-                            src="/images/news/post_6.png"
-                            alt="News Thumbnail"
-                            className="img-fluid"
-                            width={1920}
-                            height={1080}
-                          />
+                      <Link href="/news/sg3-jean-wins-best-sustainable-factory-award" className="news-item-link">
+                        <div className="news-item-content">
+                          <div className="news-thumbnail">
+                            <Image
+                              src="/images/news/post_6.png"
+                              alt="News Thumbnail"
+                              className="img-fluid"
+                              width={1920}
+                              height={1080}
+                            />
+                          </div>
+                          <div className="news-info">
+                            <h6 className="news-title">
+                              SG3 JEAN WINS &quot;BEST SUSTAINABLE FACTORY&quot;
+                              AWARD 2025
+                            </h6>
+                            <p className="news-excerpt">
+                              SG3 Jean has been honored with the &quot;Best
+                              Sustainable Factory&quot; award for 2025,
+                              recognizing our leadership in eco-friendly
+                              manufacturing and innovation in the denim
+                              industry....
+                            </p>
+                            <span className="news-date">03/15/2025</span>
+                          </div>
                         </div>
-                        <div className="news-info">
-                          <h6 className="news-title">
-                            SG3 JEAN WINS &quot;BEST SUSTAINABLE FACTORY&quot;
-                            AWARD 2025
-                          </h6>
-                          <p className="news-excerpt">
-                            SG3 Jean has been honored with the &quot;Best
-                            Sustainable Factory&quot; award for 2025,
-                            recognizing our leadership in eco-friendly
-                            manufacturing and innovation in the denim
-                            industry....
-                          </p>
-                          <span className="news-date">03/15/2025</span>
-                        </div>
-                      </div>
+                      </Link>
                     </div>
                   </>
                 )}
@@ -706,12 +894,35 @@ export default function Home({ homeData }: HomeProps) {
           </div>
           <div className="row mt-2">
             <div className="col-12 text-center">
-              <a href="#" className="btn btn-outline-primary btn-lg px-4">
+              <Link href="/news" className="btn btn-outline-primary btn-lg px-4">
                 View all news
-              </a>
+              </Link>
             </div>
           </div>
         </div>
+        <style jsx>{`
+          .news-list .news-title,
+          .news-list .news-excerpt,
+          .news-list .news-item-link,
+          .news-list .news-item-link:hover,
+          .news-list .news-item-link:focus {
+            text-decoration: none !important;
+            border-bottom: none !important;
+            color: inherit !important;
+            box-shadow: none !important;
+          }
+          .news-list-item {
+            background: #f7f9fa;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            transition: box-shadow 0.2s, background 0.2s;
+            border-bottom: 2px solid #e3eaf2;
+          }
+          .news-list-item:hover {
+            background: linear-gradient(90deg, #e6f0fa 0%, #eaf6fd 100%);
+            box-shadow: 0 4px 16px rgba(13, 110, 253, 0.10);
+          }
+        `}</style>
       </section>
       {/* Contact Section */}
       <section className="contact-section py-5">

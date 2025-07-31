@@ -1,0 +1,323 @@
+/* CSS với độ ưu tiên cao nhất để ghi đè tất cả các style khác */
+
+/* Stats section background */
+.eco-section .stats,
+#eco-friendly .solar-system .stats,
+#eco-friendly .ai-revolution .stats,
+#eco-friendly .biomass-boiler .stats {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.5rem !important;
+  padding: 2rem 0 !important;
+  margin-top: auto !important;
+  background: linear-gradient(180deg, rgba(18, 108, 184, 0) 0%, var(--space-blue) 100%) !important;
+  box-shadow: 0 -4px 12px rgba(42, 117, 188, 0.18) !important;
+  z-index: 1 !important;
+  padding-bottom: 2rem !important;
+}
+
+/* Stat boxes */
+.eco-section .stat-box,
+#eco-friendly .solar-system .stats .stat-box,
+#eco-friendly .ai-revolution .stats .stat-box,
+#eco-friendly .biomass-boiler .stats .stat-box {
+  width: 220px !important;
+  max-width: 100% !important;
+  min-width: 200px !important;
+  margin: 0 0.8rem !important;
+  background-color: rgba(0, 0, 0, 0.18) !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 1rem 0.8rem !important;
+  height: 280px !important;
+  min-height: 280px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  position: relative !important;
+  transition: all 0.3s ease !important;
+  margin-bottom: 1.5rem !important;
+  overflow: hidden !important;
+}
+
+/* Icon */
+.eco-section .stat-icon,
+#eco-friendly .solar-system .stat-icon,
+#eco-friendly .ai-revolution .stat-icon,
+#eco-friendly .biomass-boiler .stat-icon {
+  font-size: 2.8rem !important;
+  margin-bottom: 0.8rem !important;
+  color: #fff !important;
+  line-height: 1 !important;
+  height: 2.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+/* Title */
+.eco-section .stat-title,
+#eco-friendly .solar-system .stat-title,
+#eco-friendly .ai-revolution .stat-title,
+#eco-friendly .biomass-boiler .stat-title {
+  font-size: 1.8rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  color: #fff !important;
+  margin-bottom: 0.8rem !important;
+  text-align: center !important;
+  padding: 0 0.5rem !important;
+  min-height: 1.8rem !important;
+}
+
+/* Value container */
+.eco-section .stat-value,
+#eco-friendly .solar-system .stat-value,
+#eco-friendly .ai-revolution .stat-value,
+#eco-friendly .biomass-boiler .stat-value {
+  margin-top: auto !important;
+  padding-top: 0.8rem !important;
+}
+
+/* Strong values (numbers) */
+.eco-section .stat-value strong,
+#eco-friendly .solar-system .stat-value strong,
+#eco-friendly .ai-revolution .stat-value strong,
+#eco-friendly .biomass-boiler .stat-value strong {
+  font-size: 2.6rem !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  display: block !important;
+  text-align: center !important;
+  line-height: 1 !important;
+}
+
+/* Text under numbers */
+.eco-section .stat-value span,
+#eco-friendly .solar-system .stat-value span,
+#eco-friendly .ai-revolution .stat-value span,
+#eco-friendly .biomass-boiler .stat-value span {
+  font-size: 1.4rem !important;
+  color: #fff !important;
+  display: block !important;
+  text-align: center !important;
+  margin-top: 0.5rem !important;
+  line-height: 1.2 !important;
+  white-space: normal !important;
+  overflow: hidden !important;
+  max-height: 4.2rem !important;
+}
+
+/* Units */
+.eco-section .stat-value .unit,
+#eco-friendly .solar-system .stat-value .unit,
+#eco-friendly .ai-revolution .stat-value .unit,
+#eco-friendly .biomass-boiler .stat-value .unit {
+  font-size: 1.4rem !important;
+  font-weight: 600 !important;
+  display: inline-block !important;
+  margin-left: 0.2rem !important;
+}
+
+/* Special handling for "boilers with 8-ton capacity" */
+.eco-section .biomass-boiler .stat-box:first-child .stat-value span,
+#eco-friendly .biomass-boiler .stat-box:first-child .stat-value span {
+  line-height: 1.2 !important;
+  display: block !important;
+  margin-top: 0.5rem !important;
+  white-space: normal !important;
+  font-size: 1.4rem !important;
+  overflow: hidden !important;
+  max-height: 4.2rem !important;
+}
+
+/* Ensure both boxes in Biomass Boiler have the same height */
+/* Removed special case for biomass-boiler - using unified styles */
+
+/* Add margin-bottom for the last box in Biomass Boiler */
+/* All boxes now have consistent margin-bottom from unified styles */
+
+/* Responsive styles for tablet */
+@media (max-width: 768px) {
+  .eco-section .stats,
+  #eco-friendly .solar-system .stats,
+  #eco-friendly .ai-revolution .stats,
+  #eco-friendly .biomass-boiler .stats {
+    flex-direction: column !important;
+    gap: 1.5rem !important;
+    padding: 2rem 1rem !important;
+    padding-bottom: 2rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: linear-gradient(180deg, rgba(18, 108, 184, 0) 0%, var(--space-blue) 100%) !important;
+  }
+  .eco-section .stat-box,
+  #eco-friendly .solar-system .stats .stat-box,
+  #eco-friendly .ai-revolution .stats .stat-box,
+  #eco-friendly .biomass-boiler .stats .stat-box {
+    width: 90% !important;
+    min-width: 0 !important;
+    height: 280px !important;
+    min-height: 280px !important;
+    padding: 1rem 0.8rem !important;
+    margin: 0 auto 1.5rem !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+  }
+  
+  .eco-section .biomass-boiler .stats .stat-box,
+  #eco-friendly .biomass-boiler .stats .stat-box {
+    height: 280px !important;
+    min-height: 280px !important;
+    overflow: hidden !important;
+  }
+  
+  .eco-section .stat-value strong,
+  #eco-friendly .solar-system .stat-value strong,
+  #eco-friendly .ai-revolution .stat-value strong,
+  #eco-friendly .biomass-boiler .stat-value strong {
+    font-size: 2.4rem !important;
+  }
+  
+  .eco-section .stat-value span,
+  #eco-friendly .solar-system .stat-value span,
+  #eco-friendly .ai-revolution .stat-value span,
+  #eco-friendly .biomass-boiler .stat-value span {
+    font-size: 1.3rem !important;
+    margin-top: 0.5rem !important;
+    line-height: 1.2 !important;
+    white-space: normal !important;
+    max-height: 4.2rem !important;
+  }
+  
+  .eco-section .stat-title,
+  #eco-friendly .solar-system .stat-title,
+  #eco-friendly .ai-revolution .stat-title,
+  #eco-friendly .biomass-boiler .stat-title {
+    font-size: 1.6rem !important;
+  }
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 576px) {
+  .eco-section .stats,
+  #eco-friendly .solar-system .stats,
+  #eco-friendly .ai-revolution .stats {
+    flex-direction: column !important;
+    gap: 1.2rem !important;
+    padding: 1.5rem 0.8rem !important;
+    padding-bottom: 1.5rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: linear-gradient(180deg, rgba(18, 108, 184, 0) 0%, var(--space-blue) 100%) !important;
+    margin-bottom: 6rem !important;
+    z-index: 10 !important;
+    min-height: 100px !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+  }
+  
+  /* Đặc biệt cho Biomass Boiler */
+  .eco-section.biomass-boiler .stats,
+  #eco-friendly .biomass-boiler .stats {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    z-index: 20 !important;
+  }
+  
+  /* Unified styles for ALL stat boxes on mobile */
+  .eco-section .stat-box,
+  #eco-friendly .solar-system .stats .stat-box,
+  #eco-friendly .ai-revolution .stats .stat-box,
+  #eco-friendly .biomass-boiler .stats .stat-box {
+    width: 90% !important;
+    height: 280px !important;
+    min-height: 280px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    overflow: visible !important;
+    margin: 0 auto 1.5rem !important;
+    padding: 1.5rem 1rem !important;
+    background-color: rgba(0, 0, 0, 0.18) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: 20 !important;
+  }
+  
+  /* Specific fix for Biomass Boiler section */
+.eco-section.biomass-boiler .stats .stat-box,
+#eco-friendly .biomass-boiler .stats .stat-box,
+#biomass-section .stats .stat-box {
+  width: 90% !important;
+  max-width: 90% !important;
+  min-width: 200px !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+  position: relative !important;
+  z-index: 50 !important;
+  transform: none !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  margin: 0 auto 1.5rem !important;
+  height: 280px !important;
+  min-height: 280px !important;
+  overflow: visible !important;
+}
+  
+  /* Strong values (numbers) */
+  .eco-section .stat-value strong,
+  #eco-friendly .solar-system .stat-value strong,
+  #eco-friendly .ai-revolution .stat-value strong,
+  #eco-friendly .biomass-boiler .stat-value strong {
+    font-size: 2.2rem !important;
+    display: block !important;
+    text-align: center !important;
+    line-height: 1 !important;
+    margin: 0 auto !important;
+  }
+  
+  .eco-section .stat-value span,
+  #eco-friendly .solar-system .stat-value span,
+  #eco-friendly .ai-revolution .stat-value span,
+  #eco-friendly .biomass-boiler .stat-value span {
+    font-size: 1.2rem !important;
+    line-height: 1.2 !important;
+    margin-top: 0.5rem !important;
+    white-space: normal !important;
+    max-height: 4.2rem !important;
+    display: block !important;
+    text-align: center !important;
+  }
+  
+  .eco-section .stat-title,
+  #eco-friendly .solar-system .stat-title,
+  #eco-friendly .ai-revolution .stat-title,
+  #eco-friendly .biomass-boiler .stat-title {
+    font-size: 1.5rem !important;
+    text-align: center !important;
+    padding: 0 0.5rem !important;
+  }
+}

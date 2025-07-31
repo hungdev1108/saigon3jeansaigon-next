@@ -1,0 +1,200 @@
+/* CSS để ghi đè các style cũ trong styles.css */
+
+/* Ghi đè FORCE OVERRIDE STAT-BOX STYLE */
+#eco-friendly .solar-system .stats .stat-box,
+#eco-friendly .ai-revolution .stat-box,
+#eco-friendly .biomass-boiler .stat-box {
+  width: 200px !important;
+  min-width: 180px !important;
+  min-height: 160px !important;
+  padding: 1.2rem 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Đảm bảo chiều cao đồng nhất cho tất cả các section */
+#eco-friendly .solar-system,
+#eco-friendly .ai-revolution,
+#eco-friendly .biomass-boiler {
+  min-height: 800px !important;
+}
+
+#eco-friendly .stats .stat-title {
+  font-size: 1.2rem !important;
+  margin-bottom: 0.8rem !important;
+}
+
+#eco-friendly .stats .stat-value strong {
+  font-size: 2.8rem !important;
+}
+
+#eco-friendly .stats .stat-value span {
+  font-size: 1.2rem !important;
+  margin-top: 0.4rem !important;
+  line-height: 1.4 !important;
+  white-space: normal !important; /* Ngăn chặn lỗi hydration */
+}
+
+/* Xử lý các đơn vị bằng data attributes */
+#eco-friendly .stats .stat-value span.has-unit {
+  font-size: 1.2rem !important;
+  font-weight: 400 !important;
+}
+
+#eco-friendly .stats .stat-value span.has-unit::after {
+  content: attr(data-unit);
+  font-size: 1.3rem !important;
+  font-weight: 600 !important;
+  margin-left: 0.2rem !important;
+}
+
+/* Ghi đè icon styles */
+#eco-friendly .solar-system .stats .stat-icon,
+#eco-friendly .ai-revolution .stat-icon,
+#eco-friendly .biomass-boiler .stat-icon {
+  font-size: 2.6rem !important;
+  margin-bottom: 1.2rem !important;
+}
+
+/* Ghi đè các style khác */
+#eco-friendly .biomass-boiler .stat-icon {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 auto 1.2rem !important;
+}
+
+#eco-friendly .biomass-boiler .stat-title {
+  font-size: 1.2rem !important;
+  padding: 0 !important;
+  margin-bottom: 0.8rem !important;
+}
+
+#eco-friendly .biomass-boiler .stat-value strong {
+  font-size: 2.8rem !important;
+  margin: 0 0 0.3rem 0 !important;
+}
+
+#eco-friendly .biomass-boiler .stat-value span {
+  font-size: 1.2rem !important;
+  padding-top: 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Xử lý vấn đề với boilers with 8-ton capacity bằng data attribute */
+#eco-friendly .biomass-boiler .stat-box:first-child .stat-value span[data-capacity="true"] {
+  line-height: 1.2 !important;
+  display: block !important;
+  margin-top: 0.3rem !important;
+  height: auto !important;
+  white-space: pre-wrap !important;
+}
+
+#eco-friendly .biomass-boiler .stat-box:first-child .stat-value span[data-capacity="true"]::before {
+  content: "boilers with" !important;
+  display: block !important;
+}
+
+#eco-friendly .biomass-boiler .stat-box:first-child .stat-value span[data-capacity="true"]::after {
+  content: "8-ton capacity" !important;
+  display: block !important;
+}
+
+/* Đảm bảo box cuối cùng trong Biomass Boiler có margin-bottom */
+#eco-friendly .biomass-boiler .stats {
+  padding-bottom: 3rem !important;
+}
+
+/* Thêm margin-bottom cho box cuối cùng trong Biomass Boiler */
+#eco-friendly .biomass-boiler .stats .stat-box:last-child {
+  margin-bottom: 3rem !important;
+}
+
+/* Responsive styles */
+@media (max-width: 1200px) {
+  #eco-friendly .stats .stat-value strong {
+    font-size: 2.5rem !important;
+  }
+  
+  #eco-friendly .stats .stat-value span {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 992px) {
+  #eco-friendly .solar-system,
+  #eco-friendly .ai-revolution,
+  #eco-friendly .biomass-boiler {
+    min-height: 700px !important;
+  }
+  
+  #eco-friendly .solar-system .stats .stat-box,
+  #eco-friendly .ai-revolution .stat-box,
+  #eco-friendly .biomass-boiler .stat-box {
+    width: 180px !important;
+    min-width: 160px !important;
+    min-height: 150px !important;
+  }
+  
+  #eco-friendly .stats .stat-value strong {
+    font-size: 2.4rem !important;
+  }
+  
+  #eco-friendly .stats .stat-value span {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  #eco-friendly .solar-system,
+  #eco-friendly .ai-revolution,
+  #eco-friendly .biomass-boiler {
+    height: auto !important;
+    min-height: 100vh !important;
+    padding-bottom: 40px !important;
+  }
+  
+  #eco-friendly .solar-system .stats .stat-box,
+  #eco-friendly .ai-revolution .stat-box,
+  #eco-friendly .biomass-boiler .stat-box {
+    width: 90% !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  #eco-friendly .solar-system .stats .stat-icon,
+  #eco-friendly .ai-revolution .stat-icon,
+  #eco-friendly .biomass-boiler .stat-icon {
+    font-size: 2.4rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  #eco-friendly .stats .stat-title {
+    font-size: 1.1rem !important;
+  }
+  
+  #eco-friendly .stats .stat-value strong {
+    font-size: 2.2rem !important;
+  }
+  
+  #eco-friendly .stats .stat-value span {
+    font-size: 1.1rem !important;
+  }
+  
+  /* Đảm bảo khoảng cách phù hợp trên mobile */
+  #eco-friendly .biomass-boiler .stats {
+    padding-bottom: 3rem !important;
+  }
+  
+  /* Tăng margin-bottom cho box cuối cùng trong Biomass Boiler trên mobile */
+  #eco-friendly .biomass-boiler .stats .stat-box:last-child {
+    margin-bottom: 3rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  #eco-friendly .solar-system,
+  #eco-friendly .ai-revolution,
+  #eco-friendly .biomass-boiler {
+    min-height: auto !important;
+    padding-bottom: 60px !important;
+  }
+} 

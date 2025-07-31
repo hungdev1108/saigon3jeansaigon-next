@@ -11,6 +11,80 @@ function normalizeUrl(url) {
 }
 
 /**
+ * Tạo các phiên bản tối ưu của hình ảnh (origin, webp, medium, thumbnail)
+ * @param {string} imageUrl - URL của hình ảnh gốc
+ * @returns {Object} Các URL của các phiên bản hình ảnh
+ */
+export function getOptimizedImageUrls(imageUrl) {
+  if (!imageUrl) return { origin: "" };
+  
+  // Fix đường dẫn hình ảnh
+  const fixedUrl = fixImagePath(imageUrl);
+  
+  // Tạo các phiên bản
+  const origin = fixedUrl;
+  let webp = "";
+  let medium = "";
+  let thumbnail = "";
+  
+  try {
+    // Kiểm tra nếu URL đã là webp
+    if (fixedUrl.toLowerCase().endsWith('.webp')) {
+      // Nếu đã là webp, thì dùng luôn cho các phiên bản
+      webp = fixedUrl;
+      
+      // Kiểm tra nếu đã có -medium.webp hoặc -thumbnail.webp trong URL
+      if (fixedUrl.includes('-medium.webp')) {
+        medium = fixedUrl;
+        // Tạo thumbnail từ medium
+        thumbnail = fixedUrl.replace('-medium.webp', '-thumbnail.webp');
+      } else if (fixedUrl.includes('-thumbnail.webp')) {
+        thumbnail = fixedUrl;
+        // Tạo medium từ thumbnail
+        medium = fixedUrl.replace('-thumbnail.webp', '-medium.webp');
+      } else {
+        // Nếu là webp thường, tạo medium và thumbnail
+        medium = fixedUrl.replace('.webp', '-medium.webp');
+        thumbnail = fixedUrl.replace('.webp', '-thumbnail.webp');
+      }
+    } 
+    // Nếu URL có dạng .jpg, .png, .jpeg thì tạo các phiên bản tối ưu
+    else if (/\.(jpg|jpeg|png)$/i.test(fixedUrl)) {
+      webp = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+      medium = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '-medium.webp');
+      thumbnail = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '-thumbnail.webp');
+    } else {
+      // Nếu không phải định dạng ảnh phổ biến, sử dụng URL gốc cho tất cả
+      console.log('Unknown image format, using original URL for all versions:', fixedUrl);
+      webp = fixedUrl;
+      medium = fixedUrl;
+      thumbnail = fixedUrl;
+    }
+    
+    // Kiểm tra xem các phiên bản có tồn tại không
+    console.log('Image URLs:', {
+      origin,
+      webp,
+      medium,
+      thumbnail
+    });
+  } catch (error) {
+    console.error('Error in getOptimizedImageUrls:', error);
+    // Fallback to origin for all versions
+    webp = origin;
+    medium = origin;
+    thumbnail = origin;
+  }
+  
+  return {
+    origin,
+    webp,
+    medium,
+    thumbnail
+  };
+}
+
+/**
  * Fix đường dẫn hình ảnh từ API để đảm bảo URL đúng
  * @param {string} imagePath - Đường dẫn hình ảnh từ API
  * @returns {string} Đường dẫn đã được sửa
@@ -20,16 +94,31 @@ export function fixImagePath(imagePath) {
 
   // Clean input path
   const cleanPath = imagePath.trim();
+  
+  // Log đường dẫn gốc để debug
+  console.log("fixImagePath - Original path:", cleanPath);
 
   // Nếu là relative path và đã có /uploads/ thì thêm base URL
   if (cleanPath.startsWith("/uploads/")) {
-    const result = normalizeUrl(`${BACKEND_DOMAIN}${cleanPath}`);
+    // Kiểm tra xem BACKEND_DOMAIN có kết thúc bằng / không
+    const domain = BACKEND_DOMAIN.endsWith('/') 
+      ? BACKEND_DOMAIN.slice(0, -1) // Bỏ dấu / cuối nếu có
+      : BACKEND_DOMAIN;
+    
+    const result = normalizeUrl(`${domain}${cleanPath}`);
+    console.log("fixImagePath - Fixed uploads path:", result);
     return result;
   }
 
   // Nếu là relative path không có /uploads/ thì thêm /uploads/
   if (cleanPath.startsWith("/images/")) {
-    const result = normalizeUrl(`${BACKEND_DOMAIN}/uploads${cleanPath}`);
+    // Kiểm tra xem BACKEND_DOMAIN có kết thúc bằng / không
+    const domain = BACKEND_DOMAIN.endsWith('/') 
+      ? BACKEND_DOMAIN.slice(0, -1) // Bỏ dấu / cuối nếu có
+      : BACKEND_DOMAIN;
+      
+    const result = normalizeUrl(`${domain}/uploads${cleanPath}`);
+    console.log("fixImagePath - Fixed images path:", result);
     return result;
   }
 
@@ -62,6 +151,7 @@ export function fixImagePath(imagePath) {
         return result;
       }
 
+      console.log("fixImagePath - Normalized URL:", normalizedUrl);
       return normalizedUrl;
     } catch (error) {
       console.error(`[ERROR] Invalid URL: "${cleanPath}"`, error);
@@ -76,7 +166,9 @@ export function fixImagePath(imagePath) {
         if (pathMatch && pathMatch[1]) {
           const pathPart = pathMatch[1];
           if (pathPart.startsWith("images/")) {
-            return normalizeUrl(`${BACKEND_DOMAIN}/uploads/${pathPart}`);
+            const fixedUrl = normalizeUrl(`${BACKEND_DOMAIN}/uploads/${pathPart}`);
+            console.log("fixImagePath - Fixed malformed URL:", fixedUrl);
+            return fixedUrl;
           }
         }
       }
@@ -96,7 +188,13 @@ export function fixImagePath(imagePath) {
   // Remove any remaining protocol prefixes
   cleanRelativePath = cleanRelativePath.replace(/^https?:\/\/[^\/]*/, "");
 
-  const result = normalizeUrl(`${BACKEND_DOMAIN}/uploads/${cleanRelativePath}`);
+  // Kiểm tra xem BACKEND_DOMAIN có kết thúc bằng / không
+  const domain = BACKEND_DOMAIN.endsWith('/') 
+    ? BACKEND_DOMAIN.slice(0, -1) // Bỏ dấu / cuối nếu có
+    : BACKEND_DOMAIN;
+
+  const result = normalizeUrl(`${domain}/uploads/${cleanRelativePath}`);
+  console.log("fixImagePath - Fallback result:", result);
   return result;
 }
 

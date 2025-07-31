@@ -4,7 +4,7 @@ import ProductDetails from "@/components/pages/product_details";
 import productsService from "@/services/productsService";
 import { BACKEND_DOMAIN } from '@/api/config';
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 async function fetchProductDetail(id: string) {
   let productData = null;

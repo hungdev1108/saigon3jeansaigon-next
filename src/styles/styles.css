@@ -906,19 +906,20 @@ body.loaded .text-overlay {
 }
 
 .cert-item {
-  background: white;
-  border-radius: 10px;
-  padding: 20px;
-  height: 100%;
+  min-height: 650px; /* Chiều cao cố định cho cả 3 cột */
+  height: 650px; /* Chiều cao cố định cho cả 3 cột */
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  justify-content: flex-start; /* Align content from the top */
+  overflow: visible; /* Đổi từ hidden sang visible để tránh mất nội dung */
   position: relative;
-  overflow: hidden;
-  min-height: 450px;
+  margin-bottom: 30px;
 }
 
 .cert-item:hover {
@@ -927,93 +928,133 @@ body.loaded .text-overlay {
 }
 
 .cert-image {
-  max-width: 100%;
-  max-height: 520px;
+  max-height: 500px; /* Giảm chiều cao để chừa khoảng trống cho text phía dưới */
   width: auto;
-  height: auto;
+  max-width: 95%;
   object-fit: contain;
-  transform: scale(1.05);
+  display: block;
+  margin: 0 auto;
+  transform: scale(1);
+  transition: transform 0.3s ease;
 }
 
-/* ISO Text Container for Column 2 */
 .iso-text-container {
-  margin-top: 10px;
-  text-align: center;
+  margin-top: 15px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 20px;
-  flex-wrap: nowrap;
+  gap: 5px;
+  text-align: center;
+  padding: 5px;
+  position: relative; /* Đảm bảo phần text luôn hiển thị đúng vị trí */
+  z-index: 2; /* Đảm bảo hiển thị trên cùng */
 }
 
 .iso-text-item {
-  background: transparent;
-  color: var(--primary-color);
-  padding: 0;
-  margin: 0;
-  border-radius: 0;
   font-size: 18px;
-  font-weight: var(--font-semibold);
-  letter-spacing: 1px;
-  box-shadow: none;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  margin-top: 20px;
-}
-
-.iso-text-item:hover {
-  transform: none;
-  box-shadow: none;
-  color: var(--secondary-color);
-}
-
-/* LEED Text Container for Column 1 */
-.leed-text-container {
-  margin-top: 10px;
-}
-
-.leed-text-item {
-  font-size: 20px;
-  margin: 6px 0;
-  font-weight: var(--font-semibold);
-  letter-spacing: 1.5px;
+  font-weight: 600;
   color: var(--primary-color);
+  margin: 5px 0;
+  transition: color 0.3s ease;
 }
 
-.leed-text-item::first-letter {
-  color: #ff8c00;
-  font-size: 1.2em;
-  font-weight: var(--font-semibold);
+.iso-image-wrapper {
+  height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
-/* Column 3 - Certifications List */
+.leed-text-container {
+  margin-top: 20px;
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  gap: 12px;
+  padding-left: 100px;
+}
+
+.leed-text-row {
+  font-size: 22px;
+  font-weight: 600;
+  color: #194569;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  display: block;
+  position: relative;
+  padding-left: 23px; /* Tăng thêm khoảng cách */
+  text-align: left;
+  margin: 3px 0; /* Khoảng cách đều giữa các dòng */
+}
+
+.leed-letter {
+  color: #D4AF37;
+  font-weight: 700;
+  font-size: 22px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  letter-spacing: 0;
+  margin-right: 10px;
+  display: inline-block;
+  width: 20px;
+  text-align: center; /* Đổi thành căn giữa để chữ D thẳng hàng */
+}
+
+.leed-word {
+  color: #194569;
+  font-weight: 600;
+  font-size: 20px;
+  margin-left: 14px;
+  letter-spacing: 0.5px;
+  text-align: left;
+  display: block;
+}
+
+.highlight-letter {
+  color: #D4AF37; /* Gold color for first letter */
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-right: -2px;
+}
+
 .certifications-list {
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  min-height: 450px;
+  height: 100%;
+  min-height: 610px; /* Chiều cao của phần nội dung (650px - 2*20px padding) */
+  padding: 10px 0;
 }
 
 .cert-row {
-  margin-bottom: 8px;
+  flex: 1;
+  height: 115px; /* Chiều cao cố định cho mỗi item */
+  display: flex;
+  padding: 3px 0;
 }
 
 .cert-row-content {
-  background: #f8f8f8;
-  border-radius: 8px;
-  padding: 8px 12px;
-  height: 100%;
   display: flex;
   align-items: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  padding: 3px 5px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
-  min-height: 78px;
-  max-height: 78px;
+  min-height: 100%;
+  height: 100%; /* Đảm bảo chiều cao đúng bằng .cert-row */
   overflow: hidden;
+  flex: 1;
+  margin: 0 5px;
+}
+
+.cert-row:last-child {
+  margin-bottom: 0;
 }
 
 .cert-row-content:hover {
@@ -1022,14 +1063,14 @@ body.loaded .text-overlay {
 }
 
 .cert-icon {
-  flex-shrink: 0;
-  width: 90px;
+  width: 100px;
   height: 100%;
+  margin-right: 8px;
+  max-height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 20px;
-  max-height: 75px;
+  flex-shrink: 0;
 }
 
 .cert-small-image {
@@ -1038,6 +1079,12 @@ body.loaded .text-overlay {
   object-fit: contain;
   max-width: 100%;
   max-height: 100%;
+  transition: transform 0.3s ease;
+  padding: 2px;
+}
+
+.cert-row-content:hover .cert-small-image {
+  transform: scale(1.05);
 }
 
 .cert-text {
@@ -1045,7 +1092,7 @@ body.loaded .text-overlay {
 }
 
 .cert-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: var(--font-medium);
   color: var(--dark-text);
   letter-spacing: 0.3px;
@@ -1081,12 +1128,12 @@ body.loaded .text-overlay {
 }
 
 .sedex-cert {
-  background: white;
+  /* background: white; */
   color: var(--dark-text);
 }
 
 .sedex-cert .cert-title {
-  color: var(--primary-color);
+  color: var(--dark-text); /* Đổi về màu chữ mặc định, không xanh */
 }
 
 .fast-cert {
@@ -1099,20 +1146,21 @@ body.loaded .text-overlay {
 }
 
 /* Responsive Design for Certification */
-@media (max-width: 992px) {
+  @media (max-width: 992px) {
   .cert-item {
-    min-height: 350px;
+    min-height: 600px; /* Chiều cao cố định cho cả 3 cột */
+    height: 600px; /* Đảm bảo cả 3 cột có chiều cao bằng nhau */
     padding: 15px;
   }
 
   .cert-image {
-    max-height: 380px;
-    transform: scale(1.05);
+    max-height: 485px; /* Điều chỉnh chiều cao hình ảnh theo tỷ lệ với box 600px */
+    transform: scale(1);
   }
 
   .iso-text-container {
-    margin-top: 10px;
-    gap: 18px;
+    margin-top: 15px;
+    gap: 15px;
   }
 
   .iso-text-item {
@@ -1120,7 +1168,7 @@ body.loaded .text-overlay {
   }
 
   .leed-text-container {
-    margin-top: 10px;
+    margin-top: 15px;
   }
 
   .leed-text-item {
@@ -1129,17 +1177,26 @@ body.loaded .text-overlay {
   }
 
   .cert-row-content {
-    padding: 8px 12px;
-    min-height: 80px;
-    max-height: 80px;
+    padding: 5px 8px;
+    min-height: 100%;
+    height: 100%;
   }
 
   .cert-icon {
-    width: 85px;
+    width: 100px;
     height: 100%;
-    margin-right: 18px;
-    max-height: 65px;
+    margin-right: 10px;
+    max-height: 100%;
   }
+  
+  .certifications-list {
+    min-height: 570px; /* Chiều cao nội dung = 600px - 2*15px padding */
+  }
+  
+  .cert-row {
+    height: 102px; /* (570px) / 5 = 102px cho mỗi item */
+  }
+}
 
   .cert-small-image {
     max-width: 100%;
@@ -1147,24 +1204,25 @@ body.loaded .text-overlay {
   }
 
   .cert-title {
-    font-size: 12px;
+    font-size: 14px;
+    line-height: 1.4;
   }
-}
 
-@media (max-width: 768px) {
+  @media (max-width: 768px) {
   .cert-item {
-    min-height: 300px;
+    min-height: 550px; /* Chiều cao cố định cho cả 3 cột */
+    height: 550px; /* Đảm bảo cả 3 cột có chiều cao bằng nhau */
     padding: 12px;
     margin-bottom: 20px;
   }
 
   .cert-image {
-    max-height: 280px;
+    max-height: 440px; /* Điều chỉnh chiều cao hình ảnh để phù hợp với box 550px */
     transform: scale(1);
   }
 
   .iso-text-container {
-    margin-top: 8px;
+    margin-top: 12px;
     gap: 12px;
   }
 
@@ -1174,7 +1232,7 @@ body.loaded .text-overlay {
   }
 
   .leed-text-container {
-    margin-top: 8px;
+    margin-top: 12px;
   }
 
   .leed-text-item {
@@ -1183,20 +1241,23 @@ body.loaded .text-overlay {
   }
 
   .cert-row {
-    margin-bottom: 15px !important;
+    margin-bottom: 0;
+    height: 93px; /* (550px - 2*12px padding) / 5 = 93px */
+    display: flex;
   }
 
   .cert-row-content {
-    padding: 6px 10px;
-    min-height: 70px;
-    max-height: 70px;
+    padding: 4px 6px;
+    min-height: 100%;
+    height: 100%;
+    flex: 1;
   }
 
   .cert-icon {
-    width: 75px;
+    width: 80px;
     height: 100%;
-    margin-right: 15px;
-    max-height: 55px;
+    margin-right: 8px;
+    max-height: 100%;
   }
 
   .cert-small-image {
@@ -1205,7 +1266,79 @@ body.loaded .text-overlay {
   }
 
   .cert-title {
-    font-size: 11px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .certifications-list {
+    min-height: 526px; /* Chiều cao nội dung = 550px - 2*12px padding */
+  }
+}
+
+  @media (max-width: 576px) {
+  .cert-item {
+    min-height: 480px; /* Chiều cao cố định cho cả 3 cột */
+    height: 480px; /* Đảm bảo cả 3 cột có chiều cao bằng nhau */
+    padding: 8px;
+    margin-bottom: 15px;
+  }
+
+  .cert-image {
+    max-height: 380px; /* Điều chỉnh chiều cao hình ảnh để phù hợp với box 480px */
+    transform: scale(1);
+  }
+
+  .iso-text-container {
+    margin-top: 10px;
+    gap: 8px;
+  }
+
+  .iso-text-item {
+    font-size: 13px;
+    margin: 2px 0;
+  }
+
+  .leed-text-container {
+    margin-top: 10px;
+  }
+
+  .leed-text-item {
+    font-size: 14px;
+    margin: 2px 0;
+  }
+
+  .cert-row {
+    margin-bottom: 0;
+    height: 85px; /* (480px - 2*8px padding) / 5 = ~93px */
+    display: flex;
+  }
+
+  .cert-row-content {
+    padding: 3px 5px;
+    min-height: 100%;
+    height: 100%;
+    flex: 1;
+  }
+
+  .cert-icon {
+    width: 65px;
+    height: 100%;
+    margin-right: 6px;
+    max-height: 100%;
+  }
+
+  .cert-small-image {
+    max-width: 100%;
+    max-height: 100%;
+  }
+
+  .cert-title {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  
+  .certifications-list {
+    min-height: 464px; /* Chiều cao nội dung = 480px - 2*8px padding */
   }
 }
 
@@ -6339,6 +6472,213 @@ footer a:hover {
   box-shadow: 0 0 10px rgba(79, 195, 247, 0.6);
 }
 
+/* Responsive styles for desktop (1200px - 1600px) */
+@media (max-width: 1600px) {
+  #eco-friendly .circle-layout {
+    height: 650px;
+  }
+  
+  #eco-friendly .features-left {
+    width: 700px;
+  }
+  
+  #eco-friendly .left-select-item {
+    width: 800px;
+    height: 800px;
+  }
+  
+  #eco-friendly .right-item p {
+    width: 300px;
+  }
+  
+  #eco-friendly .right-item li {
+    width: 350px;
+  }
+}
+
+/* Laptop screens (992px - 1200px) */
+@media (max-width: 1200px) {
+  #eco-friendly .circle-layout {
+    height: 550px;
+  }
+  
+  #eco-friendly .features-left {
+    width: 600px;
+    left: -5%;
+  }
+  
+  #eco-friendly .left-select-item {
+    width: 700px;
+    height: 700px;
+    left: -10%;
+  }
+  
+  #eco-friendly .right-item {
+    height: 100px;
+    padding: 12px;
+  }
+  
+  #eco-friendly .right-item p {
+    width: 250px;
+    font-size: 18px;
+  }
+  
+  #eco-friendly .right-item li {
+    width: 300px;
+    font-size: 14px;
+  }
+  
+  #eco-friendly .right-item .line {
+    margin: 0 20px;
+  }
+}
+
+/* Tablet screens (768px - 992px) */
+@media (max-width: 992px) {
+  #eco-friendly .circle-layout {
+    height: 500px;
+    flex-direction: column;
+  }
+  
+  #eco-friendly .features-left {
+    position: relative;
+    width: 450px;
+    transform: none;
+    top: 0;
+    left: 0;
+    margin: 0 auto 30px;
+  }
+  
+  #eco-friendly .left-select-item {
+    width: 500px;
+    height: 500px;
+    top: 0;
+    left: -5%;
+  }
+  
+  #eco-friendly .features-right {
+    width: 90%;
+    margin: 0 auto;
+  }
+  
+  #eco-friendly .right-item p {
+    width: 200px;
+    font-size: 16px;
+  }
+  
+  #eco-friendly .right-item li {
+    width: 250px;
+    font-size: 14px;
+    margin-right: 0;
+  }
+  
+  /* Adjust dot positions for tablet */
+  #eco-friendly .left-select-item .dot-1 {
+    top: 20%;
+    left: 90%;
+  }
+  
+  #eco-friendly .left-select-item .dot-2 {
+    top: 35%;
+    left: 95%;
+  }
+  
+  #eco-friendly .left-select-item .dot-3 {
+    top: 50%;
+    left: 97%;
+  }
+  
+  #eco-friendly .left-select-item .dot-4 {
+    top: 65%;
+    left: 95%;
+  }
+  
+  #eco-friendly .left-select-item .dot-5 {
+    top: 80%;
+    left: 90%;
+  }
+}
+
+/* Mobile screens (< 768px) */
+@media (max-width: 768px) {
+  #eco-friendly .features {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+  
+  /* Show mobile navigation */
+  #eco-friendly .mobile-feature-nav {
+    display: flex;
+  }
+  
+  #eco-friendly .circle-layout {
+    height: auto;
+    display: block;
+  }
+  
+  /* Hide globe image on mobile */
+  #eco-friendly .features-left {
+    display: none;
+  }
+  
+  #eco-friendly .features-right {
+    width: 95%;
+    margin: 0 auto;
+  }
+  
+  #eco-friendly .right-item {
+    flex-direction: column;
+    height: auto;
+    padding: 15px;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+  
+  #eco-friendly .right-item p {
+    width: 100%;
+    font-size: 16px;
+    margin-bottom: 10px;
+    text-align: left;
+  }
+  
+  #eco-friendly .right-item .line {
+    display: none;
+  }
+  
+  #eco-friendly .right-item ul {
+    padding-left: 20px;
+  }
+  
+  #eco-friendly .right-item li {
+    width: 100%;
+    font-size: 14px;
+    margin-bottom: 5px;
+    text-align: left;
+  }
+  
+  /* Remove connection lines */
+  #eco-friendly .right-item.active::before,
+  #eco-friendly .left-select-item .dot.active::before {
+    display: none;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 576px) {
+  #eco-friendly .features {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  
+  #eco-friendly .right-item p {
+    font-size: 15px;
+  }
+  
+  #eco-friendly .right-item li {
+    font-size: 13px;
+  }
+}
+
 #eco-friendly .highlight {
   background-color: var(--earth-green);
   padding: 20px;
@@ -7082,4 +7422,1185 @@ footer a:hover {
 .navbar-nav .nav-link.active::after {
   width: 100%;
   left: 0;
+}
+
+/* Mobile feature navigation */
+#eco-friendly .mobile-feature-nav {
+  display: none;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 0 15px;
+}
+
+#eco-friendly .mobile-feature-nav-item {
+  padding: 10px 15px;
+  background: #ffffff;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+#eco-friendly .mobile-feature-nav-item.active {
+  background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #4fc3f7 100%);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(13, 71, 161, 0.4);
+  transform: translateY(-2px);
+}
+
+.news-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(13,110,253,0.13);
+  color: #0d6efd;
+  border-radius: 16px;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  cursor: default;
+  transition: background 0.2s, color 0.2s;
+}
+.news-tag:hover {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.news-page-title {
+ padding-top: 80px;
+}
+.news-card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 8px;
+  transition: color 0.2s;
+}
+.news-card-title-link {
+  color: #0d6efd;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.news-card-title-link:hover {
+  color: #0d6efd;
+}
+.featured-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  background-color: #ffc107;
+  padding: 5px 10px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.news-date-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+}
+
+.timeline-item {
+  padding: 2rem 2rem 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* height: unset; */
+  /* min-height: unset; */
+}
+
+.milestone-description {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  /* flex-grow: unset; */
+}
+
+@media (max-width: 1200px) {
+  .timeline-item {
+    padding: 2rem 2rem 2.5rem 2rem;
+    /* height: unset; */
+    /* min-height: unset; */
+  }
+}
+@media (max-width: 992px) {
+  .timeline-item {
+    padding: 1.5rem 1.5rem 2rem 1.5rem;
+    /* height: unset; */
+    /* min-height: unset; */
+  }
+}
+@media (max-width: 768px) {
+  .timeline-item {
+    padding: 1.2rem 1.2rem 1.7rem 1.2rem;
+    /* height: unset; */
+    /* min-height: unset; */
+  }
+}
+@media (max-width: 576px) {
+  .timeline-item {
+    padding: 1rem 1rem 1.5rem 1rem;
+    /* height: unset; */
+    /* min-height: unset; */
+  }
+}
+@media (max-width: 480px) {
+  .timeline-item {
+    padding: 0.8rem 0.8rem 1.2rem 0.8rem;
+    /* height: unset; */
+    /* min-height: unset; */
+  }
+}
+@media (max-width: 375px) {
+  .timeline-item {
+    padding: 0.6rem 0.6rem 1rem 0.6rem;
+    /* height: unset; */
+    /* min-height: unset; */
+  }
+}
+
+@media (max-width: 768px) {
+  .features {
+    padding-top: 64px;
+  }
+}
+/* Responsive Eco-friendly Section Fixes */
+.eco-section {
+  position: relative;
+  color: white;
+  text-align: center;
+  width: 100%;
+  min-height: 800px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 60px;
+  margin-bottom: 60px;
+  box-shadow: 0 10px 30px rgba(10, 20, 50, 0.5);
+  border-radius: 8px;
+  background: transparent;
+}
+
+.eco-bg-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #0a3d91;
+}
+
+.eco-section > h2,
+.eco-section > p,
+.eco-section > .stats {
+  position: relative;
+  z-index: 1;
+}
+
+.eco-section .stats {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2rem;
+  padding: 2rem 0 2.5rem 0;
+  background: linear-gradient(180deg, rgba(18, 108, 184, 0) 20%, var(--space-blue, #0a3d91) 100%);
+  box-shadow: 0 -4px 12px rgba(42, 117, 188, 0.18);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  margin-bottom: 0;
+}
+
+.eco-section .stat-box {
+  width: 200px;
+  min-width: 180px;
+  min-height: 160px;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem 1rem;
+  margin: 0 1rem 1rem 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.eco-section .stat-icon {
+  font-size: 2.6rem;
+  margin-bottom: 1.2rem;
+  color: #fff;
+}
+
+.eco-section .stat-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+    letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+
+.eco-section .stat-value strong {
+  font-size: 2.8rem;
+    font-weight: 700;
+  color: #fff;
+  display: block;
+  text-align: center;
+}
+
+.eco-section .stat-value span {
+  font-size: 1.2rem;
+  color: #fff;
+  display: block;
+  text-align: center;
+  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+.eco-section .stat-value .unit {
+  font-size: 1.3rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-left: 0.2rem;
+}
+
+.biomass-multiline {
+  display: block;
+  line-height: 1.2;
+  white-space: pre-line;
+}
+
+/* Responsive: Ẩn nền kéo dài bên dưới box ở mobile */
+@media (max-width: 900px) {
+  .eco-bg-img {
+    height: 40vh !important;
+    min-height: 200px !important;
+    max-height: 300px !important;
+    object-fit: cover !important;
+    border-radius: 8px 8px 0 0;
+  }
+  .eco-section {
+    min-height: unset !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    background: transparent !important;
+  }
+  .eco-section .stats {
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 0 !important;
+    background: linear-gradient(180deg, rgba(18, 108, 184, 0) 20%, var(--space-blue, #0a3d91) 100%);
+  }
+  .eco-section {
+    overflow: visible !important;
+  }
+  .eco-bg-img {
+    margin-bottom: 0 !important;
+  }
+}
+
+/* ================= ECO-FRIENDLY SECTION - CHUẨN CHỈNH NHẤT ================= */
+.eco-section {
+  position: relative;
+  color: white;
+  text-align: center;
+  width: 100%;
+  min-height: 800px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 60px;
+  margin-bottom: 60px;
+  box-shadow: 0 10px 30px rgba(10, 20, 50, 0.5);
+  border-radius: 8px;
+  background: transparent;
+}
+
+.eco-bg-img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #0a3d91;
+}
+
+.eco-section > h2,
+.eco-section > p,
+.eco-section > .stats {
+  position: relative;
+  z-index: 1;
+}
+
+.eco-section .stats {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2.5rem;
+  padding: 2.5rem 0 3rem 0;
+  background: linear-gradient(180deg, rgba(18, 108, 184, 0) 20%, var(--space-blue, #0a3d91) 100%);
+  box-shadow: 0 -4px 12px rgba(42, 117, 188, 0.18);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  margin-top: 0;
+}
+
+.eco-section .stat-box {
+  width: 300px;
+  min-width: 220px;
+  min-height: 200px;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  margin: 0 1.5rem 1.5rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.eco-section .stat-icon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.eco-section .stat-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+    text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.eco-section .stat-value strong {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: #fff;
+    display: block;
+    text-align: center;
+  }
+
+.eco-section .stat-value span {
+  font-size: 1.3rem;
+  color: #fff;
+  display: block;
+  text-align: center;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.eco-section .stat-value .unit {
+  font-size: 1.4rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-left: 0.2rem;
+}
+
+.biomass-multiline {
+  display: block;
+  line-height: 1.2;
+  white-space: pre-line;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .eco-section .stat-box {
+    width: 95vw;
+    min-width: 0;
+    min-height: 120px;
+    padding: 1rem 0.5rem;
+    margin: 0 auto 1rem auto;
+  }
+  .eco-section .stat-title { font-size: 1rem; }
+  .eco-section .stat-value strong { font-size: 2rem; }
+  .eco-section .stat-value span { font-size: 1rem; }
+  .eco-section .stat-value .unit { font-size: 1.1rem; }
+}
+/* ================= ECO-FRIENDLY SECTION - BIG, CONSISTENT, EASY TO READ ================= */
+.eco-section {
+  position: relative;
+  color: white;
+  text-align: center;
+  width: 100%;
+  min-height: 850px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 60px;
+  margin-bottom: 60px;
+  box-shadow: 0 10px 30px rgba(10, 20, 50, 0.5);
+  border-radius: 8px;
+  background: transparent;
+}
+
+.eco-section > h2 {
+  margin-top: 12vh;
+  margin-bottom: 2.5rem;
+  font-size: 4.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.eco-section > p {
+  margin-bottom: 2.8rem;
+  font-size: 1.7rem;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.eco-section .stats {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 3rem;
+  padding: 3rem 0 3.5rem 0;
+  background: linear-gradient(180deg, rgba(18, 108, 184, 0) 20%, var(--space-blue, #0a3d91) 100%);
+  box-shadow: 0 -4px 12px rgba(42, 117, 188, 0.18);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  margin-top: 0;
+}
+
+.eco-section .stat-box {
+  width: 340px;
+  min-width: 240px;
+  min-height: 220px;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 2rem;
+  margin: 0 1.5rem 1.5rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.eco-section .stat-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.7rem;
+  color: #fff;
+}
+
+.eco-section .stat-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.eco-section .stat-value strong {
+  font-size: 3.8rem;
+  font-weight: 700;
+  color: #fff;
+  display: block;
+  text-align: center;
+}
+
+.eco-section .stat-value span {
+  font-size: 1.5rem;
+  color: #fff;
+  display: block;
+  text-align: center;
+  margin-top: 0.7rem;
+  line-height: 1.4;
+}
+
+.eco-section .stat-value .unit {
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: inline-block;
+  margin-left: 0.2rem;
+}
+
+.biomass-multiline {
+  display: block;
+  line-height: 1.2;
+  white-space: pre-line;
+  text-align: center;
+}
+
+/* Responsive: Mobile vẫn giữ box lớn, dễ đọc */
+@media (max-width: 900px) {
+  .eco-section {
+    min-height: unset !important;
+    height: auto !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    background: transparent !important;
+  }
+  .eco-section > h2 { margin-top: 4vh; font-size: 2.2rem; }
+  .eco-section > p { font-size: 1.1rem; margin-bottom: 1.2rem; }
+  .eco-section .stats {
+    border-radius: 0 0 8px 8px;
+    margin-bottom: 0 !important;
+    background: linear-gradient(180deg, rgba(18, 108, 184, 0) 20%, var(--space-blue, #0a3d91) 100%);
+    gap: 1.2rem;
+    padding: 1.2rem 0 2rem 0;
+  }
+  .eco-section .stat-box {
+    width: 98vw;
+    min-width: 0;
+    min-height: 120px;
+    padding: 1.2rem 0.5rem;
+    margin: 0 auto 1rem auto;
+  }
+  .eco-section .stat-title { font-size: 1.1rem; }
+  .eco-section .stat-value strong { font-size: 2.2rem; }
+  .eco-section .stat-value span { font-size: 1.1rem; }
+  .eco-section .stat-value .unit { font-size: 1.1rem; }
+}
+
+/* ================= ECO-FRIENDLY SECTION - BIG, BOLD, CENTERED, RESPONSIVE ================= */
+.eco-section {
+  min-height: 900px;
+  padding: 0 2vw;
+}
+.eco-section > h2 {
+  margin-top: 10vh;
+  margin-bottom: 2.8rem;
+  font-size: 4.5rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.eco-section > p {
+  margin-bottom: 3.2rem;
+  font-size: 2.2rem;
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.eco-section .stats {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4rem;
+  padding: 3.5rem 0 4rem 0;
+  flex-wrap: wrap;
+}
+.eco-section .stat-box {
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 4px 32px 0 rgba(10,20,50,0.10);
+  width: 400px;
+  min-width: 260px;
+  min-height: 260px;
+  padding: 3rem 2.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+  transition: box-shadow 0.2s;
+}
+.eco-section .stat-box:hover {
+  box-shadow: 0 8px 40px 0 rgba(10,20,50,0.18);
+}
+.eco-section .stat-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+.eco-section .stat-title {
+  font-size: 1.7rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.5px;
+}
+.eco-section .stat-value {
+  font-size: 1.7rem;
+  font-weight: 400;
+  margin-bottom: 0.5rem;
+}
+.eco-section .stat-value strong {
+  font-size: 4.2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: block;
+}
+.eco-section .stat-value span,
+.eco-section .unit {
+  font-size: 1.7rem;
+  font-weight: 500;
+  margin-left: 0.3rem;
+}
+
+/* Responsive: Tablet */
+@media (max-width: 1100px) {
+  .eco-section .stats {
+    gap: 2.2rem;
+  }
+  .eco-section .stat-box {
+    width: 320px;
+    min-width: 180px;
+    min-height: 180px;
+    padding: 2.2rem 1.2rem;
+  }
+  .eco-section > h2 {
+    font-size: 3.2rem;
+  }
+  .eco-section > p {
+    font-size: 1.5rem;
+  }
+  .eco-section .stat-icon {
+    font-size: 2.7rem;
+  }
+  .eco-section .stat-title {
+    font-size: 1.2rem;
+  }
+  .eco-section .stat-value strong {
+    font-size: 2.7rem;
+  }
+  .eco-section .stat-value,
+  .eco-section .stat-value span,
+  .eco-section .unit {
+    font-size: 1.2rem;
+  }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 700px) {
+  .eco-section {
+    min-height: 600px;
+    padding: 0 1vw;
+  }
+  .eco-section > h2 {
+    margin-top: 6vh;
+    font-size: 2.1rem;
+    margin-bottom: 1.2rem;
+  }
+  .eco-section > p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  .eco-section .stats {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.2rem 0 1.5rem 0;
+  }
+  .eco-section .stat-box {
+    width: 95vw;
+    min-width: 0;
+    min-height: 100px;
+    padding: 1.1rem 0.5rem;
+    margin-bottom: 0.7rem;
+  }
+  .eco-section .stat-icon {
+    font-size: 1.7rem;
+    margin-bottom: 0.7rem;
+  }
+  .eco-section .stat-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .eco-section .stat-value strong {
+    font-size: 1.5rem;
+  }
+  .eco-section .stat-value,
+  .eco-section .stat-value span,
+  .eco-section .unit {
+    font-size: 1rem;
+  }
+}
+.eco-section > h2 {
+  margin-top: 10vh;
+  margin-bottom: 3.5rem;      /* Tăng khoảng cách dưới tiêu đề */
+  font-size: 4.5rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.eco-section > p {
+  margin-bottom: 3.5rem;      /* Tăng khoảng cách dưới nội dung */
+  font-size: 2.7rem;          /* Chữ nội dung lớn hơn nữa */
+  font-weight: 400;
+  line-height: 1.5;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 1100px) {
+  .eco-section > h2 {
+    font-size: 3.2rem;
+    margin-bottom: 2.2rem;
+  }
+  .eco-section > p {
+    font-size: 2rem;
+    margin-bottom: 2.2rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .eco-section > h2 {
+    margin-top: 6vh;
+    font-size: 2.1rem;
+    margin-bottom: 1.2rem;
+  }
+  .eco-section > p {
+    font-size: 1.3rem;
+    margin-bottom: 1.2rem;
+  }
+}
+
+/* ================= ECO-FRIENDLY SECTION - ĐỒNG BỘ TIÊU ĐỀ, NỘI DUNG, BOX ================= */
+.eco-section > h2 {
+  margin-top: 8vh;
+  margin-bottom: 3.2rem;
+  font-size: 4.8rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  line-height: 1.1;
+}
+.eco-section > p {
+  margin-bottom: 3.8rem;
+  font-size: 2.8rem;
+  font-weight: 400;
+  line-height: 1.4;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.eco-section .stats {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 4rem;
+  padding: 3.5rem 0 4rem 0;
+  flex-wrap: wrap;
+}
+.eco-section .stat-box {
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 4px 32px 0 rgba(10,20,50,0.10);
+  width: 400px;
+  min-width: 260px;
+  min-height: 260px;
+  padding: 3.2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0;
+  transition: box-shadow 0.2s;
+}
+.eco-section .stat-box:hover {
+  box-shadow: 0 8px 40px 0 rgba(10,20,50,0.18);
+}
+.eco-section .stat-icon {
+  font-size: 4.5rem;
+  margin-bottom: 1.7rem;
+  display: block;
+}
+.eco-section .stat-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.3rem;
+  letter-spacing: 0.5px;
+}
+.eco-section .stat-value {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-bottom: 0.7rem;
+}
+.eco-section .stat-value strong {
+  font-size: 4.5rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: block;
+}
+.eco-section .stat-value span,
+.eco-section .unit {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+
+/* Responsive: Tablet */
+@media (max-width: 1100px) {
+  .eco-section > h2 {
+    font-size: 3.2rem;
+    margin-bottom: 2.2rem;
+  }
+  .eco-section > p {
+    font-size: 2rem;
+    margin-bottom: 2.2rem;
+  }
+  .eco-section .stats {
+    gap: 2.2rem;
+  }
+  .eco-section .stat-box {
+    width: 320px;
+    min-width: 180px;
+    min-height: 180px;
+    padding: 2.2rem 1.2rem;
+  }
+  .eco-section .stat-icon {
+    font-size: 2.7rem;
+  }
+  .eco-section .stat-title {
+    font-size: 1.3rem;
+  }
+  .eco-section .stat-value strong {
+    font-size: 2.7rem;
+  }
+  .eco-section .stat-value,
+  .eco-section .stat-value span,
+  .eco-section .unit {
+    font-size: 1.3rem;
+  }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 700px) {
+  .eco-section {
+    min-height: 600px;
+    padding: 0 1vw;
+  }
+  .eco-section > h2 {
+    margin-top: 4vh;
+    font-size: 1.7rem;
+    margin-bottom: 1.1rem;
+  }
+  .eco-section > p {
+    font-size: 1.1rem;
+    margin-bottom: 1.1rem;
+  }
+  .eco-section .stats {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.2rem 0 1.5rem 0;
+  }
+  .eco-section .stat-box {
+    width: 95vw;
+    min-width: 0;
+    min-height: 100px;
+    padding: 1.1rem 0.5rem;
+    margin-bottom: 0.7rem;
+  }
+  .eco-section .stat-icon {
+    font-size: 1.7rem;
+    margin-bottom: 0.7rem;
+  }
+  .eco-section .stat-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .eco-section .stat-value strong {
+    font-size: 1.5rem;
+  }
+  .eco-section .stat-value,
+  .eco-section .stat-value span,
+  .eco-section .unit {
+    font-size: 1rem;
+  }
+}
+
+#eco-friendly .solar-system .stats .stat-box,
+#eco-friendly .ai-revolution .stat-box,
+#eco-friendly .biomass-boiler .stat-box {
+  width: 400px;
+  min-width: 260px;
+  min-height: 260px;
+  padding: 3.2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 4px 32px 0 rgba(10,20,50,0.10);
+  margin-bottom: 0;
+  transition: box-shadow 0.2s;
+}
+#eco-friendly .solar-system .stat-icon,
+#eco-friendly .ai-revolution .stat-icon,
+#eco-friendly .biomass-boiler .stat-icon {
+  font-size: 4.5rem;
+  margin-bottom: 1.7rem;
+  display: block;
+}
+#eco-friendly .solar-system .stat-title,
+#eco-friendly .ai-revolution .stat-title,
+#eco-friendly .biomass-boiler .stat-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.3rem;
+  letter-spacing: 0.5px;
+}
+#eco-friendly .solar-system .stat-value,
+#eco-friendly .ai-revolution .stat-value,
+#eco-friendly .biomass-boiler .stat-value {
+  font-size: 2rem;
+  font-weight: 400;
+  margin-bottom: 0.7rem;
+}
+#eco-friendly .solar-system .stat-value strong,
+#eco-friendly .ai-revolution .stat-value strong,
+#eco-friendly .biomass-boiler .stat-value strong {
+  font-size: 4.5rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: block;
+}
+#eco-friendly .solar-system .stat-value span,
+#eco-friendly .ai-revolution .stat-value span,
+#eco-friendly .biomass-boiler .stat-value span,
+#eco-friendly .solar-system .unit,
+#eco-friendly .ai-revolution .unit,
+#eco-friendly .biomass-boiler .unit {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+#eco-friendly .solar-system h2,
+#eco-friendly .ai-revolution h2,
+#eco-friendly .biomass-boiler h2 {
+  margin-top: 8vh;
+  margin-bottom: 3.2rem;
+  font-size: 4.8rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  line-height: 1.1;
+}
+#eco-friendly .solar-system p,
+#eco-friendly .ai-revolution p,
+#eco-friendly .biomass-boiler p {
+  margin-bottom: 3.8rem;
+  font-size: 2.8rem;
+  font-weight: 400;
+  line-height: 1.4;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+/* ----------- ECO-FRIENDLY PAGE STYLES (chuẩn nhất) ----------- */
+
+/* Solar Cell System Section */
+#eco-friendly .solar-system {
+  position: relative;
+  color: white;
+  text-align: center;
+  width: 100%;
+  height: 100vh;
+  margin-top: 60px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(10, 20, 50, 0.5);
+  border-radius: 8px;
+}
+#eco-friendly .solar-system img {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  background: lightgray 50%;
+  filter: brightness(1.1) saturate(1.2);
+  object-fit: cover;
+}
+#eco-friendly .solar-system::after {
+  content: "";
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(180deg, rgba(10, 20, 50, 0.2) 0%, rgba(10, 20, 50, 0.7) 100%);
+  z-index: 0;
+}
+#eco-friendly .solar-system h2,
+#eco-friendly .solar-system p,
+#eco-friendly .solar-system .stats {
+  position: relative;
+  z-index: 1;
+}
+#eco-friendly .solar-system h2 {
+  color: #fff;
+  text-align: center;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.25);
+  font-family: Inter;
+  font-size: 80px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-transform: uppercase;
+  margin-top: 18vh;
+}
+#eco-friendly .solar-system p {
+  color: #fff;
+  text-align: center;
+  text-shadow: 4px 4px 4px rgba(0, 0, 0, 0.5);
+  font-family: Inter;
+  font-size: 25px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-top: 35px;
+  padding: 0 180px;
+}
+#eco-friendly .solar-system .stats {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 18px 0;
+  background: linear-gradient(180deg, rgba(18, 108, 184, 0) 20%, var(--space-blue) 100%);
+  box-shadow: 0 -4px 12px rgba(42, 117, 188, 0.18);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  position: relative;
+  z-index: 1;
+}
+#eco-friendly .solar-system .stats .stat-box {
+  width: 180px;
+  max-width: 100%;
+  min-width: 120px;
+  min-height: 140px;
+  margin: 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  position: relative;
+  transition: all 0.3s ease;
+}
+#eco-friendly .solar-system .stat-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+#eco-friendly .solar-system .stat-title {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #fff;
+  margin-bottom: 8px;
+  text-align: center;
+}
+#eco-friendly .solar-system .stat-value strong {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  display: block;
+  text-align: center;
+}
+#eco-friendly .solar-system .stat-value span {
+  font-size: 16px;
+  color: #fff;
+  display: block;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Effluent Treatment Plant Section (AI Revolution) */
+#eco-friendly .ai-revolution { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution img { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution::after { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution h2,
+#eco-friendly .ai-revolution p,
+#eco-friendly .ai-revolution .stats { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution h2 { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution p { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution .stats { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution .stat-box { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution .stat-icon { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution .stat-title { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution .stat-value strong { /* ... giống solar-system ... */ }
+#eco-friendly .ai-revolution .stat-value span { /* ... giống solar-system ... */ }
+
+/* Biomass Boiler Section */
+#eco-friendly .biomass-boiler { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler img { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler::after { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler h2,
+#eco-friendly .biomass-boiler p,
+#eco-friendly .biomass-boiler .stats { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler h2 { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler p { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler .stats { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler .stat-box { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler .stat-icon { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler .stat-title { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler .stat-value strong { /* ... giống solar-system ... */ }
+#eco-friendly .biomass-boiler .stat-value span { /* ... giống solar-system ... */ }
+
+/* Responsive (Tablet, Mobile) */
+@media (max-width: 768px) {
+  #eco-friendly .solar-system .stats,
+  #eco-friendly .ai-revolution .stats,
+  #eco-friendly .biomass-boiler .stats {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  #eco-friendly .solar-system .stats .stat-box,
+  #eco-friendly .ai-revolution .stat-box,
+  #eco-friendly .biomass-boiler .stat-box {
+    width: 95%;
+    margin: 0 auto;
+    min-width: 0;
+    padding: 10px 6px;
+  }
+  #eco-friendly .solar-system h2,
+  #eco-friendly .ai-revolution h2,
+  #eco-friendly .biomass-boiler h2 {
+    font-size: 2.2rem;
+    margin-top: 4vh;
+  }
+  #eco-friendly .solar-system p,
+  #eco-friendly .ai-revolution p,
+  #eco-friendly .biomass-boiler p {
+    font-size: 1.1rem;
+    margin-bottom: 1.2rem;
+    padding: 0 10px;
+  }
 }

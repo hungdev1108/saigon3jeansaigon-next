@@ -4,7 +4,7 @@ import { useState, useEffect, ChangeEvent } from "react";
 import Image from "next/image";
 import homeService from "@/services/homeService";
 import { BACKEND_DOMAIN } from "@/api/config";
-import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX } from 'react-icons/fi';
+import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX, FiCalendar, FiEye } from 'react-icons/fi';
 import { toast, ToastOptions } from "react-toastify";
 
 // Toast config
@@ -28,6 +28,7 @@ interface HeroData {
   backgroundImage: string;
   videoUrl: string;
   isActive: boolean;
+  aiBannerImage?: string;
 }
 interface SectionData {
   title: string;
@@ -55,6 +56,7 @@ interface NewsData {
   _id: string;
   title: string;
   excerpt: string;
+  content: string; // Thêm field content
   image: string;
   isPublished: boolean;
   isFeatured: boolean;
@@ -63,6 +65,8 @@ interface NewsData {
   slug: string;
   tags: string[];
   author: string;
+  onHome: boolean; // Thêm field onHome
+  views: number; // Thêm field views
 }
 interface HomeData {
   hero: HeroData;
@@ -131,7 +135,9 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
         id: '',
         slug: '',
         tags: [],
-        author: 'Saigon 3 Jean'
+        author: 'Saigon 3 Jean',
+        onHome: false, // Thêm onHome mặc định
+        views: 0 // Thêm views mặc định
       });
       setImagePreview(null);
     }
@@ -143,7 +149,14 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const isCheckbox = type === 'checkbox';
-    setFormData(prev => ({ ...prev!, [name]: isCheckbox ? e.target.checked : value }));
+    const newValue = isCheckbox ? (e.target as HTMLInputElement).checked : value;
+    
+    console.log(`Changing ${name} to:`, newValue);
+    
+    setFormData(prev => {
+      if (!prev) return null;
+      return { ...prev, [name]: newValue };
+    });
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -202,6 +215,79 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
               />
             </div>
             <div className="form-group">
+              <label>Tags (tối đa 3 tags)</label>
+              <div className="tags-input-container">
+                <div className="tags-display">
+                  {formData.tags && Array.isArray(formData.tags) && formData.tags.map((tag, index) => (
+                    <span key={index} className="tag-item">
+                      {tag}
+                      <button 
+                        type="button" 
+                        className="tag-remove-btn" 
+                        onClick={() => {
+                          console.log(`Removing tag at index ${index}:`, formData.tags[index]);
+                          
+                          // Ensure tags is an array before splicing
+                          if (Array.isArray(formData.tags)) {
+                            const newTags = [...formData.tags];
+                            newTags.splice(index, 1);
+                            console.log("New tags after removal:", newTags);
+                            
+                            setFormData(prev => {
+                              if (!prev) return null;
+                              return { ...prev, tags: newTags };
+                            });
+                          }
+                        }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <input 
+                  type="text" 
+                  className="tag-input" 
+                  placeholder={formData.tags && Array.isArray(formData.tags) && formData.tags.length >= 3 ? "Đã đạt giới hạn tags" : "Nhập tag và nhấn Enter"}
+                  disabled={formData.tags && Array.isArray(formData.tags) && formData.tags.length >= 3}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const input = e.target as HTMLInputElement;
+                      const tag = input.value.trim();
+                      
+                      if (tag) {
+                        console.log("Adding tag:", tag);
+                        
+                        // Ensure tags is an array
+                        const currentTags = Array.isArray(formData.tags) ? [...formData.tags] : [];
+                        
+                        // Check if we're under the limit
+                        if (currentTags.length < 3) {
+                          // Check for duplicates
+                          if (!currentTags.includes(tag)) {
+                            const newTags = [...currentTags, tag];
+                            console.log("New tags array:", newTags);
+                            
+                            setFormData(prev => {
+                              if (!prev) return null;
+                              return { ...prev, tags: newTags };
+                            });
+                            
+                            input.value = '';
+                          } else {
+                            console.log("Tag already exists:", tag);
+                          }
+                        } else {
+                          console.log("Tag limit reached (3)");
+                        }
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            <div className="form-group">
               <label>Hình ảnh</label>
               {imagePreview && (
                 <div className="image-preview-container">
@@ -243,6 +329,17 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
                   className="form-checkbox" 
                 />
                 <label htmlFor="isFeatured">Tin nổi bật</label>
+              </div>
+              <div className="form-check">
+                <input 
+                  type="checkbox" 
+                  id="onHome" 
+                  name="onHome" 
+                  checked={formData.onHome} 
+                  onChange={handleInputChange} 
+                  className="form-checkbox" 
+                />
+                <label htmlFor="onHome">Trang chủ</label>
               </div>
             </div>
           </div>
@@ -306,55 +403,82 @@ export default function AdminHomePage() {
   };
 
   // --- Handlers ---
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, section: string, index?: number, subSection?: string) => {
-    const { name, value } = e.target;
+  const handleInputChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    section: string,
+    index?: number,
+    subSection?: string
+  ) => {
+    const { name, value, type } = e.target;
+    let inputValue: any = value;
+    if (type === 'checkbox' && 'checked' in e.target) {
+      inputValue = (e.target as HTMLInputElement).checked;
+    }
     setHomeData(prevData => {
-        if (!prevData) return null;
-        const newData = JSON.parse(JSON.stringify(prevData));
-        if (subSection && index === undefined) { // customers
-            const nameParts = name.split('_');
-            if (nameParts.length >= 2) {
-                const fieldName = nameParts[0];
-                // Lấy phần còn lại làm ID (để hỗ trợ ID tạm thời dài)
-                const customerId = nameParts.slice(1).join('_');
-                
-                // Tìm khách hàng theo ID
-                const customerIndex = newData.customers[subSection].findIndex(
-                    (c: CustomerData) => String(c._id) === String(customerId)
-                );
-                
-            if (customerIndex !== -1) {
-                newData.customers[subSection][customerIndex][fieldName] = value;
-                } else {
-                    console.error(`Không tìm thấy khách hàng với ID: ${customerId}`);
-                }
-            }
-        } else if (index !== undefined) { // sections
-            newData[section][index][name] = value;
-        } else { // hero
-            newData[section][name] = value;
+      if (!prevData) return null;
+      const newData = JSON.parse(JSON.stringify(prevData));
+      if (subSection && index === undefined) {
+        const nameParts = name.split('_');
+        if (nameParts.length >= 2) {
+          const fieldName = nameParts[0];
+          const customerId = nameParts.slice(1).join('_');
+          const customerIndex = newData.customers[subSection].findIndex(
+            (c: CustomerData) => String(c._id) === String(customerId)
+          );
+          if (customerIndex !== -1) {
+            newData.customers[subSection][customerIndex][fieldName] = inputValue;
+          } else {
+            console.error(`Không tìm thấy khách hàng với ID: ${customerId}`);
+          }
         }
-        return newData;
+      } else if (index !== undefined) {
+        newData[section][index][name] = inputValue;
+      } else {
+        newData[section][name] = inputValue;
+      }
+      return newData;
     });
   };
 
-  const handleCheckboxChange = async (newsId: string, field: 'isFeatured' | 'isPublished', checked: boolean) => {
+  const handleCheckboxChange = async (newsId: string, field: 'isFeatured' | 'isPublished' | 'onHome', checked: boolean) => {
       const newsItem = homepageNews.find(n => n._id === newsId);
       if (!newsItem) return;
+      
+      // Log trạng thái trước khi thay đổi
+      console.log(`Changing ${field} for news "${newsItem.title}" from ${newsItem[field]} to ${checked}`);
+      
+      // Mô tả trạng thái cho người dùng
+      let statusMessage = "";
+      if (field === 'isPublished') {
+        statusMessage = checked ? "Đã đăng tin tức" : "Đã hủy đăng tin tức";
+      } else if (field === 'isFeatured') {
+        statusMessage = checked ? "Đã đặt làm tin nổi bật" : "Đã bỏ tin nổi bật";
+      } else if (field === 'onHome') {
+        statusMessage = checked ? "Đã hiển thị trên trang chủ" : "Đã bỏ hiển thị trên trang chủ";
+      }
+      
       const updatedNewsItem = { ...newsItem, [field]: checked };
       setSaving(newsId);
       try {
           const result = await homeService.updateNews(newsId, updatedNewsItem, undefined);
           if (result.success) {
-              toast.success("Đã cập nhật trạng thái tin tức!", { ...toastOptions, icon: <FiCheck /> });
+              toast.success(statusMessage, { ...toastOptions, icon: <FiCheck /> });
               setHomepageNews(prevNews =>
                 prevNews.map(n => (n._id === newsId ? updatedNewsItem : n))
               );
+              
+              // Log kết quả thành công
+              console.log(`Successfully updated news status:`, {
+                id: newsId,
+                field,
+                newValue: checked,
+                result: result.success
+              });
           } else {
               throw new Error(result.message || "Cập nhật thất bại");
           }
       } catch (error) {
-          handleError(error, `cập nhật tin tức`);
+          handleError(error, `cập nhật trạng thái tin tức`);
       } finally {
           setSaving(false);
       }
@@ -365,18 +489,30 @@ export default function AdminHomePage() {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, key: string) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Log thông tin file để debug
+      console.log('File selected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        key: key
+      });
+      
       setFiles(prevFiles => ({ ...prevFiles, [key]: file }));
-
       // Preview cho từng loại:
-      if (key.startsWith("customers")) {
+      if (key === 'hero-aiBannerImage') {
+        const reader = new FileReader();
+        reader.onload = (event) => setHeroPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
+        reader.readAsDataURL(file);
+      } else if (key.startsWith('customers')) {
         const reader = new FileReader();
         reader.onload = (event) => setLogoPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
         reader.readAsDataURL(file);
-      } else if (key.startsWith("sections")) {
+      } else if (key.startsWith('sections')) {
         const reader = new FileReader();
         reader.onload = (event) => setMediaPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
         reader.readAsDataURL(file);
-      } else if (key.startsWith("hero")) {
+      } else if (key.startsWith('hero') && key !== 'hero-aiBannerImage') {
         const reader = new FileReader();
         reader.onload = (event) => setHeroPreview(prev => ({ ...prev, [key]: event.target?.result as string }));
         reader.readAsDataURL(file);
@@ -424,6 +560,20 @@ export default function AdminHomePage() {
             obj[fileKey] = files[key];
             return obj;
           }, {} as Record<string, File>);
+        
+        // Đảm bảo truyền đúng key cho AI Banner
+        if (files['hero-aiBannerImage']) {
+          filesToSave['aiBannerImage'] = files['hero-aiBannerImage'];
+        }
+        
+        // Log thông tin trước khi gửi lên server
+        console.log(`Saving ${section} with files:`, Object.keys(filesToSave).map(key => ({
+          key,
+          fileName: filesToSave[key].name,
+          fileType: filesToSave[key].type,
+          fileSize: filesToSave[key].size
+        })));
+        
         switch(section) {
           case 'hero':
               result = await homeService.updateHero(dataToSave as HeroData, filesToSave);
@@ -437,6 +587,9 @@ export default function AdminHomePage() {
           default:
               throw new Error("Section chưa được hỗ trợ lưu.");
         }
+        
+        console.log(`Save ${section} result:`, result);
+        
         if (result.success) {
           toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
           setFiles({});
@@ -551,18 +704,39 @@ export default function AdminHomePage() {
     try {
       let result;
       if (newsData._id) {
+        console.log("Updating existing news:", newsData._id);
         result = await homeService.updateNews(newsData._id, newsData, file);
       } else {
+        console.log("Creating new news with data:", {
+          title: newsData.title,
+          excerpt: newsData.excerpt?.substring(0, 30) + "...",
+          hasImage: !!file,
+          tags: newsData.tags
+        });
+        
         const formData = new FormData();
         Object.entries(newsData).forEach(([key, value]) => {
           if (key !== 'image' && key !== '_id' && key !== 'id') {
-            if (Array.isArray(value)) formData.append(key, value.join(','));
-            else formData.append(key, String(value));
+            if (key === 'tags' && Array.isArray(value)) {
+              // Xử lý đúng cách cho tags
+              formData.append(key, value.join(','));
+              console.log(`Adding tags: ${value.join(',')}`);
+            } else {
+              formData.append(key, String(value));
+            }
           }
         });
-        if (file) formData.append('newsImage', file);
+        
+        if (file) {
+          console.log(`Adding image file: ${file.name} (${file.type}, ${file.size} bytes)`);
+          formData.append('newsImage', file);
+        }
+        
         result = await homeService.createNews(formData);
       }
+      
+      console.log("API result:", result);
+      
       if (result.success) {
         toast.success(newsData._id ? "Đã cập nhật tin tức!" : "Đã thêm tin tức mới!", { ...toastOptions, icon: <FiCheck /> });
         const updatedNews = await homeService.getHomepageNews();
@@ -649,6 +823,21 @@ export default function AdminHomePage() {
                        )}
                     </div>
                     <input type="file" onChange={(e) => handleFileChange(e, 'hero-backgroundImage')} accept="image/*" className="form-file-input"/>
+                </FormItem>
+                <FormItem label="Ảnh AI Banner" icon={<FiImage />}>
+                  <div className="image-preview-container">
+                    {heroPreview['hero-aiBannerImage']
+                      ? <Image src={heroPreview['hero-aiBannerImage']} alt="AI Banner" width={300} height={150} className="image-preview" />
+                      : (files['hero-aiBannerImage']
+                        ? <Image src={URL.createObjectURL(files['hero-aiBannerImage'])} alt="AI Banner" width={300} height={150} className="image-preview" />
+                        : (homeData.hero.aiBannerImage
+                          ? <Image src={`${BACKEND_DOMAIN}${homeData.hero.aiBannerImage}`} alt="AI Banner" width={300} height={150} className="image-preview" />
+                          : null
+                        )
+                      )
+                    }
+                  </div>
+                  <input type="file" onChange={(e) => handleFileChange(e, 'hero-aiBannerImage')} accept="image/*" className="form-file-input"/>
                 </FormItem>
             </div>
         </div>
@@ -817,6 +1006,11 @@ export default function AdminHomePage() {
                           <p className="news-date">{new Date(news.publishDate).toLocaleDateString()}</p>
                           <p className="news-excerpt">{news.excerpt}</p>
                           {news.isFeatured && <span className="news-featured-badge">Tin nổi bật</span>}
+                        </div>
+                        <div className="news-status-badges">
+                          {news.isPublished && <span className="status-badge published">Đã đăng</span>}
+                          {news.isFeatured && <span className="status-badge featured">Nổi bật</span>}
+                          {news.onHome && <span className="status-badge on-home">Trang chủ</span>}
                         </div>
                       </div>
                   ))}

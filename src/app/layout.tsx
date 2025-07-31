@@ -3,6 +3,10 @@ import { Montserrat, Merriweather } from "next/font/google";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../styles/styles.css";
 import "../styles/facility-slider.css";
+import "../styles/eco-friendly-unified.css";
+import "../styles/eco-friendly-override.css";
+import "../styles/eco-friendly-responsive.css";
+import "../styles/eco-friendly-important.css";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 

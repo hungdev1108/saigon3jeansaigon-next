@@ -3,10 +3,9 @@ import Header from "@/components/header";
 import Overview from "@/components/pages/overview";
 import ScrollToTop from "@/components/ScrollToTop";
 import HeaderScrollEffect from "@/components/HeaderScrollEffect";
-import overviewService from "@/services/overviewService";
 import { BACKEND_DOMAIN } from '@/api/config';
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export default async function OverviewPage() {
   const res = await fetch(`${BACKEND_DOMAIN}/api/overview/data`, { cache: 'no-store' });

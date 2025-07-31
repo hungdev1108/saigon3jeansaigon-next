@@ -136,7 +136,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
               <div className="left-item">
                 <Image
                   // src={`${BACKEND_DOMAIN}${ecoFriendlyData!.mainImage}`}
-                  src="/images/eco-friendly/quadiacau1.png"
+                  src="/images/eco-friendly/globe.png"
                   alt={data!.mainImageAlt}
                   width={500}
                   height={500}
@@ -165,7 +165,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           if (section.title.toLowerCase().includes('solar')) {
             // Section đầu tiên - Solar System với stats
             return (
-              <section key={section.id || idx} className="solar-system">
+              <section key={section.id || idx} className="eco-section solar-system">
                 <Image
                   src={`${BACKEND_DOMAIN}${section.image}`}
                   alt={section.imageAlt}
@@ -214,7 +214,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           } else if (section.title.toLowerCase().includes('ai') || section.title.toLowerCase().includes('effluent')) {
             // Section thứ hai - AI Revolution với water stats
             return (
-              <section key={section.id || idx} className="ai-revolution content-animate">
+              <section key={section.id || idx} className="eco-section ai-revolution content-animate">
                 <Image
                   src={`${BACKEND_DOMAIN}${section.image}`}
                   alt={section.imageAlt}
@@ -252,7 +252,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           } else if (section.title.toLowerCase().includes('biomass')) {
             // Luôn luôn hardcode 2 box cho Biomass Boiler
             return (
-              <section key={section.id || idx} className="biomass-boiler content-animate">
+              <section key={section.id || idx} className="eco-section biomass-boiler content-animate" id="biomass-section">
                 <Image
                   src={`${BACKEND_DOMAIN}${section.image}`}
                   alt={section.imageAlt}
@@ -290,7 +290,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           // Các section khác (nếu có)
           console.log("Rendering other section:", section.title);
           return (
-            <section key={section.id || idx} className="content-animate">
+            <section key={section.id || idx} className="eco-section content-animate">
               <Image
                 src={`${BACKEND_DOMAIN}${section.image}`}
                 alt={section.imageAlt}

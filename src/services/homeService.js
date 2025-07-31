@@ -621,6 +621,16 @@ class HomeService {
    */
   async createNews(formData) {
     try {
+      // Log thông tin về FormData trước khi gửi
+      console.log("FormData entries:");
+      for (let [key, value] of formData.entries()) {
+        if (key === 'newsImage') {
+          console.log(`${key}: File name=${value.name}, type=${value.type}, size=${value.size}bytes`);
+        } else {
+          console.log(`${key}: ${value}`);
+        }
+      }
+      
       const response = await fetch(`${BACKEND_DOMAIN}/api/home/news`, {
         method: 'POST',
         headers: getAuthHeaders(true),
@@ -633,7 +643,9 @@ class HomeService {
         throw new Error(`Server error: ${response.status} ${errorText}`);
       }
       
-      return response.json();
+      const result = await response.json();
+      console.log("Create news response:", result);
+      return result;
     } catch (error) {
       console.error("❌ HomeService - Error creating news:", error);
       throw error;
