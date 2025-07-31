@@ -36,10 +36,10 @@ export default function Footer() {
             <h5>WHO WE ARE</h5>
             <ul className="list-unstyled">
               <li>
-                <Link href="/about">Overview</Link>
+                <Link href="/overview">Overview</Link>
               </li>
               <li>
-                <Link href="/factory">Factory</Link>
+                <Link href="/facilities">Facilities</Link>
               </li>
               <li>
                 <Link href="/recruitment">Careers</Link>
@@ -50,10 +50,10 @@ export default function Footer() {
             <h5>TECHNOLOGY</h5>
             <ul className="list-unstyled">
               <li>
-                <Link href="/technology">Machinery</Link>
+                <Link href="/machinery">Machinery</Link>
               </li>
               <li>
-                <Link href="/production">Production</Link>
+                <Link href="/products">Production</Link>
               </li>
             </ul>
           </div>
