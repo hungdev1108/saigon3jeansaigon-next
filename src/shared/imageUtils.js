@@ -18,14 +18,21 @@ function normalizeUrl(url) {
 export function getOptimizedImageUrls(imageUrl) {
   if (!imageUrl) return { origin: "" };
   
+  // Debug log trước khi fix
+  console.log("getOptimizedImageUrls - Original URL:", imageUrl);
+  
   // Fix đường dẫn hình ảnh
   const fixedUrl = fixImagePath(imageUrl);
+  
+  // Debug log sau khi fix
+  console.log("getOptimizedImageUrls - Fixed URL:", fixedUrl);
   
   // Tạo các phiên bản
   const origin = fixedUrl;
   let webp = "";
   let medium = "";
   let thumbnail = "";
+  let low = "";
   
   try {
     // Kiểm tra nếu URL đã là webp
@@ -53,12 +60,14 @@ export function getOptimizedImageUrls(imageUrl) {
       webp = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '.webp');
       medium = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '-medium.webp');
       thumbnail = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '-thumbnail.webp');
+      low = fixedUrl.replace(/\.(jpg|jpeg|png)$/i, '-low.webp');
     } else {
       // Nếu không phải định dạng ảnh phổ biến, sử dụng URL gốc cho tất cả
       console.log('Unknown image format, using original URL for all versions:', fixedUrl);
       webp = fixedUrl;
       medium = fixedUrl;
       thumbnail = fixedUrl;
+      low = fixedUrl;
     }
     
     // Kiểm tra xem các phiên bản có tồn tại không
@@ -66,7 +75,8 @@ export function getOptimizedImageUrls(imageUrl) {
       origin,
       webp,
       medium,
-      thumbnail
+      thumbnail,
+      low
     });
   } catch (error) {
     console.error('Error in getOptimizedImageUrls:', error);
@@ -74,13 +84,15 @@ export function getOptimizedImageUrls(imageUrl) {
     webp = origin;
     medium = origin;
     thumbnail = origin;
+    low = origin;
   }
   
   return {
     origin,
     webp,
     medium,
-    thumbnail
+    thumbnail,
+    low
   };
 }
 
@@ -108,6 +120,27 @@ export function fixImagePath(imagePath) {
     const result = normalizeUrl(`${domain}${cleanPath}`);
     console.log("fixImagePath - Fixed uploads path:", result);
     return result;
+  }
+  
+  // Xử lý đường dẫn từ thư mục automation - có thể có nhiều định dạng
+  if (cleanPath.includes("/automation/") || cleanPath.includes("/images/automation/")) {
+    console.log("Detected automation path:", cleanPath);
+    
+    const domain = BACKEND_DOMAIN.endsWith('/') 
+      ? BACKEND_DOMAIN.slice(0, -1)
+      : BACKEND_DOMAIN;
+    
+    // Nếu đường dẫn đã có /uploads/ thì không thêm nữa
+    if (cleanPath.includes("/uploads/")) {
+      const result = normalizeUrl(`${domain}${cleanPath}`);
+      console.log("fixImagePath - Fixed automation path with uploads:", result);
+      return result;
+    } else {
+      // Nếu không có /uploads/ thì thêm vào
+      const result = normalizeUrl(`${domain}/uploads${cleanPath.startsWith("/") ? cleanPath : "/" + cleanPath}`);
+      console.log("fixImagePath - Fixed automation path without uploads:", result);
+      return result;
+    }
   }
 
   // Nếu là relative path không có /uploads/ thì thêm /uploads/

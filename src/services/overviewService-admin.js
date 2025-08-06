@@ -220,17 +220,25 @@ class OverviewAdminService {
   /**
    * Cập nhật CEO message
    */
-  async updateMessage(messageData) {
+  async updateMessage(messageData, isFormData = false) {
     try {
-      const response = await fetch(
-        `${BACKEND_DOMAIN}/api/overview/message`,
-        {
+      let options;
+      if (isFormData) {
+        options = {
+          method: "PUT",
+          body: messageData // FormData
+        };
+      } else {
+        options = {
           method: "PUT",
           headers: this.getAuthHeaders(),
-          body: JSON.stringify(messageData),
-        }
+          body: JSON.stringify(messageData)
+        };
+      }
+      const response = await fetch(
+        `${BACKEND_DOMAIN}/api/overview/message`,
+        options
       );
-
       const data = await response.json();
       return data;
     } catch (error) {

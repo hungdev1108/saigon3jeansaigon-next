@@ -158,7 +158,7 @@ export default function AdminSidebar() {
     <div className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Logo section */}
       <div className="sidebar-logo">
-        <Link href="/admin" className="logo-container">
+        <div className="logo-container">
           {isCollapsed ? (
             <Image
               src="/images/sg3_small_logo.svg"
@@ -179,7 +179,7 @@ export default function AdminSidebar() {
               priority
             />
           )}
-        </Link>
+        </div>
         <CollapseButton 
           isCollapsed={isCollapsed} 
           onClick={() => setIsCollapsed(!isCollapsed)}

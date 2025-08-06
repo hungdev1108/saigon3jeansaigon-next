@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Slider from "react-slick";
 import useClientScript from "../../app/hooks/useClientScript";
 import { BACKEND_DOMAIN } from "../../api/config";
@@ -17,6 +17,7 @@ interface HeroData {
   videoUrl: string;
   isActive: boolean;
   aiBannerImage?: string;
+  aiBannerTitle?: string;
 }
 
 interface SectionData {
@@ -57,9 +58,26 @@ interface NewsData {
   author: string;
 }
 
+interface HomeContactData {
+  contact: {
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink: string;
+  };
+  workWithUs: {
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink: string;
+  };
+  isActive: boolean;
+}
+
 interface HomeData {
   hero: HeroData;
   sections: SectionData[];
+  factoryVideo?: string;
   customers: {
     denimWoven: CustomerData[];
     knit: CustomerData[];
@@ -67,6 +85,7 @@ interface HomeData {
   certifications: CertificationData[];
   featuredNews: NewsData[];
   regularNews: NewsData[];
+  homeContact?: HomeContactData;
 }
 
 interface HomeProps {
@@ -79,6 +98,7 @@ interface ResponsiveImgProps {
     webp?: string;
     medium?: string;
     thumbnail?: string;
+    low?: string;
   };
   alt: string;
   className?: string;
@@ -114,12 +134,15 @@ function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: Re
       // Nếu có kích thước cụ thể, chọn ảnh phù hợp
       if (width && width <= 300) {
         // Ưu tiên thumbnail cho kích thước nhỏ
-        return srcs.thumbnail || srcs.medium || srcs.webp || srcs.origin;
+        return srcs.thumbnail || srcs.medium || srcs.low || srcs.webp || srcs.origin;
       } else if (width && width <= 800) {
         // Ưu tiên medium cho kích thước trung bình
-        return srcs.medium || srcs.webp || srcs.origin;
+        return srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 1200) {
+        // Ưu tiên low cho kích thước lớn (nhưng không quá lớn)
+        return srcs.low || srcs.webp || srcs.origin;
       } else {
-        // Ưu tiên webp cho kích thước lớn
+        // Ưu tiên webp cho kích thước rất lớn
         return srcs.webp || srcs.origin;
       }
     };
@@ -138,20 +161,21 @@ function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: Re
     // Tạo srcSet chỉ khi có đủ các phiên bản
     const srcSet = (() => {
       // Nếu có đủ các phiên bản, tạo srcSet
-      if (srcs.thumbnail && srcs.medium && srcs.webp) {
-        return `${srcs.thumbnail} 300w, ${srcs.medium} 800w, ${srcs.webp} 1920w`;
+      if (srcs.thumbnail && srcs.medium && srcs.low && srcs.webp) {
+        return `${srcs.thumbnail} 300w, ${srcs.medium} 800w, ${srcs.low} 1200w, ${srcs.webp} 1920w`;
       }
       // Nếu chỉ có một số phiên bản
       const sets = [];
       if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
       if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.low) sets.push(`${srcs.low} 1200w`);
       if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
       
       return sets.length > 0 ? sets.join(', ') : undefined;
     })();
     
     // Chuẩn bị sizes attribute nếu không được cung cấp
-    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, 1920px";
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px";
     
     return (
       <img
@@ -187,6 +211,7 @@ export default function Home({ homeData }: HomeProps) {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   // Fetch dữ liệu từ API nếu không có homeData từ props
   useEffect(() => {
@@ -254,7 +279,36 @@ export default function Home({ homeData }: HomeProps) {
     );
   }
 
-  const { hero, sections, customers, certifications, featuredNews, regularNews } = data;
+  const { hero, sections, factoryVideo, customers, certifications, featuredNews, regularNews } = data;
+  
+  // Log để debug
+  console.log("Factory Video URL:", factoryVideo);
+  console.log("Hero Video URL:", hero?.videoUrl);
+  
+  // Hàm xử lý URL video
+  const getVideoUrl = (url: string | undefined) => {
+    if (!url) return "/videos/STORY_SG3J.mp4";
+    
+    try {
+      // Nếu URL đã là đường dẫn đầy đủ (bắt đầu bằng http hoặc https)
+      if (url.startsWith('http')) {
+        return url;
+      }
+      
+      // Nếu URL là đường dẫn tương đối (bắt đầu bằng /)
+      if (url.startsWith('/')) {
+        // Đảm bảo không có // kép trong URL
+        const baseUrl = BACKEND_DOMAIN.endsWith('/') ? BACKEND_DOMAIN.slice(0, -1) : BACKEND_DOMAIN;
+        return `${baseUrl}${url}`;
+      }
+      
+      // Trường hợp khác
+      return `${BACKEND_DOMAIN}/${url}`;
+    } catch (error) {
+      console.error("Error processing video URL:", error);
+      return "/videos/STORY_SG3J.mp4"; // Fallback về video mặc định
+    }
+  };
 
   // Function to get customer slider settings
   const getCustomerSliderSettings = () => ({
@@ -333,13 +387,15 @@ export default function Home({ homeData }: HomeProps) {
         <div className="video-container">
           {hero?.videoUrl ? (
             <video 
-              src={`${BACKEND_DOMAIN}${hero.videoUrl}`}
               autoPlay
               muted
               loop
               playsInline
               className="w-100 h-100 object-fit-cover"
-            />
+            >
+              <source src={getVideoUrl(hero.videoUrl)} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           ) : (
             // fallback giữ nguyên
             <ResponsiveImg
@@ -377,15 +433,17 @@ export default function Home({ homeData }: HomeProps) {
                   <div className="card h-100">
                     <div className="card-img-top video-container">
                       {section.mediaType === "video" ? (
-                        <video className="w-100" muted loop controls autoPlay>
-                          <source
-                            src={
-                              section.mediaUrl
-                                ? `${BACKEND_DOMAIN}${section.mediaUrl}`
-                                : "/videos/STORY_SG3J.mp4"
-                            }
-                            type="video/mp4"
-                          />
+                        <video 
+                          ref={videoRef}
+                          src={homeData?.hero?.videoUrl
+                            ? homeData.hero.videoUrl.startsWith('/uploads')
+                              ? `${BACKEND_DOMAIN}${homeData.hero.videoUrl}`
+                              : homeData.hero.videoUrl
+                            : ''}
+                          controls
+                          style={{ width: '100%', maxHeight: '300px', background: '#000' }}
+                        >
+                          <source src={getVideoUrl(section.mediaUrl)} type="video/mp4" />
                           Your browser does not support the video tag.
                         </video>
                       ) : (
@@ -428,6 +486,14 @@ export default function Home({ homeData }: HomeProps) {
                             ? "watchVideoBtn"
                             : undefined
                         }
+                        onClick={(e) => {
+                          if (section.buttonText === "WATCH VIDEO") {
+                            e.preventDefault();
+                            if (videoRef.current && videoRef.current.requestFullscreen) {
+                              videoRef.current.requestFullscreen();
+                            }
+                          }
+                        }}
                       >
                         {section.buttonText}
                         {section.buttonText === "WATCH VIDEO" && (
@@ -443,20 +509,6 @@ export default function Home({ homeData }: HomeProps) {
           </div>
         </div>
       </section>
-      {/* Video Modal Popup */}
-      <div className="video-modal" id="videoModal">
-        <div className="video-modal-content">
-          <div className="video-modal-body">
-            <button className="video-modal-close" id="closeVideoModal">
-              <i className="fas fa-times"></i>
-            </button>
-            <video id="videoPlayer" controls>
-              <source src="/videos/STORY_SG3J.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-          </div>
-        </div>
-      </div>
       {/* AI Integration Section */}
       <section className="ai-integration">
         <div className="container-fluid p-0">
@@ -482,8 +534,11 @@ export default function Home({ homeData }: HomeProps) {
               <div className="overlay"></div>
               <div className="ai-content text-center text-white">
                 <h2 className="fw-bold">
-                SMARTER FUTURE 
-                WITH AI AND AUTOMATION
+                  {hero?.aiBannerTitle?.trim() ? hero.aiBannerTitle : (
+                    <>
+                      SMARTER FUTURE <br />WITH AI AND AUTOMATION
+                    </>
+                  )}
                 </h2>
                 <a
                   href="/automation"
@@ -511,15 +566,63 @@ export default function Home({ homeData }: HomeProps) {
       {/* Factory View Section */}
       <section className="factory-view mb-4">
         <div className="container-fluid p-0">
-          <video
-            src="/videos/STORY_SG3J.mp4"
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="img-fluid w-100"
-            style={{ objectFit: "cover", width: "100%", height: "auto" }}
-          />
+          {factoryVideo ? (
+            <div className="position-relative">
+              <video 
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-100"
+                style={{ 
+                  display: "block",
+                  width: "100%",
+                  height: "auto"
+                }}
+                onError={(e) => console.error("Video error:", e)}
+              >
+                <source src={getVideoUrl(factoryVideo)} type="video/mp4" />
+                <source src={getVideoUrl(factoryVideo)} type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="overlay" style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "rgba(0,0,0,0.1)"
+              }}></div>
+            </div>
+          ) : (
+            <div className="position-relative">
+              <video 
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-100"
+                style={{ 
+                  display: "block",
+                  width: "100%",
+                  height: "auto"
+                }}
+                onError={(e) => console.error("Video error:", e)}
+              >
+                <source src={getVideoUrl("/videos/STORY_SG3J.mp4")} type="video/mp4" />
+                <source src={getVideoUrl("/videos/STORY_SG3J.mp4")} type="video/webm" />
+                Your browser does not support the video tag.
+              </video>
+              <div className="overlay" style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "rgba(0,0,0,0.1)"
+              }}></div>
+            </div>
+          )}
         </div>
       </section>
       {/* Our Customers Section */}
@@ -649,7 +752,7 @@ export default function Home({ homeData }: HomeProps) {
                             <span className="leed-letter">L</span>EADERSHIP IN
                           </div>
                           <div className="leed-text-row">
-                            <span className="leed-letter">E</span>NERGY &
+                            <span className="leed-letter">E</span>NERGY &amp;
                           </div>
                           <div className="leed-text-row">
                             <span className="leed-letter">E</span>NVIRONMENTAL
@@ -729,6 +832,37 @@ export default function Home({ homeData }: HomeProps) {
           </div>
         </div>
       </section>
+
+      {/* Contact Section */}
+      <section className="contact-section py-5">
+        <div className="container">
+          <div className="row">
+            <div className="col-md-4 mb-4">
+              <div className="contact-box">
+                <h4>{homeData?.homeContact?.contact?.title || 'CONTACT'}</h4>
+                <p className="contact-description">
+                {homeData?.homeContact?.contact?.description || 'Seeking us and you\'ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint'}
+                </p>
+                <Link href={homeData?.homeContact?.contact?.buttonLink || '/contact'} className="btn btn-dark">
+                  {homeData?.homeContact?.contact?.buttonText || 'CONTACT US'}
+                </Link>
+              </div>
+            </div>
+            <div className="col-md-4 mb-4">
+              <div className="work-with-us-box">
+                <h4>{homeData?.homeContact?.workWithUs?.title || 'WORK WITH US'}</h4>
+                <p className="work-description">
+                  {homeData?.homeContact?.workWithUs?.description || 'We are looking for intelligent, passionate individuals who are ready to join us in building and growing the company'}
+                </p>
+                <Link href={homeData?.homeContact?.workWithUs?.buttonLink || '/recruitment'} className="btn btn-dark">
+                  {homeData?.homeContact?.workWithUs?.buttonText || 'LEARN MORE'}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* News Section */}
       <section className="news py-5">
         <div className="container">
@@ -922,6 +1056,11 @@ export default function Home({ homeData }: HomeProps) {
             background: linear-gradient(90deg, #e6f0fa 0%, #eaf6fd 100%);
             box-shadow: 0 4px 16px rgba(13, 110, 253, 0.10);
           }
+          .watch-video-btn {
+            margin-top: 16px; padding: 10px 24px; border-radius: 24px; border: none; background: #174c7c; color: #fff; font-weight: 600; font-size: 18px; cursor: pointer;
+            transition: background 0.2s;
+          }
+          .watch-video-btn:hover { background: #0d2c4a; }
         `}</style>
       </section>
       {/* Contact Section */}

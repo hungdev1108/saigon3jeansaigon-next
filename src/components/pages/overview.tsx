@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import Slider from "react-slick";
 import { BACKEND_DOMAIN } from '@/api/config';
+import { getOptimizedImageUrls } from '../../shared/imageUtils';
 
 // Interfaces for TypeScript
 interface Banner {
@@ -232,6 +233,18 @@ export default function Overview({ overviewData }: OverviewProps) {
     });
   }
 
+  // Hàm nối domain và path đúng chuẩn
+  const joinUrl = (domain: string, path: string) =>
+    domain.replace(/\/$/, '') + '/' + path.replace(/^\//, '');
+
+  // Tính toán bgUrl tối ưu cho background: ưu tiên ảnh gốc nếu có
+  const bgUrl = overviewData.message.backgroundImage
+    ? joinUrl(BACKEND_DOMAIN, overviewData.message.backgroundImage)
+    : overviewData.message.backgroundImageVersions?.medium
+      ? joinUrl(BACKEND_DOMAIN, overviewData.message.backgroundImageVersions.medium)
+      : '/images/overview-page/BgrCEO.jpg';
+  console.log('bgUrl', bgUrl);
+
   if (!overviewData || !overviewData.banner.backgroundImage) {
     return (
       <section className="hero-section" style={{ minHeight: "400px" }}>
@@ -248,67 +261,37 @@ export default function Overview({ overviewData }: OverviewProps) {
     <>
       <section className="page-content py-5">
         {/* <!-- Hero Section with Overlay --> */}
-        <div
-          className="hero-section"
-          ref={(el) => {
-            if (el) animateElementsRef.current[0] = el;
-          }}
-          style={{
-            backgroundImage: `url('${BACKEND_DOMAIN}${overviewData.banner.backgroundImage}${overviewData.banner.updatedAt ? `?t=${overviewData.banner.updatedAt}` : ''}')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            minHeight: `100vh`,
-            width: '100%',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center', // căn giữa dọc
-            justifyContent: 'center',
-            marginTop: '-13px',
-            position: 'relative',
-            zIndex: 2,
-          }}
-        >
-          <div
-            className="hero-content"
+        <div className="hero-section" style={{
+          minHeight: `100vh`,
+          width: '100%',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: '-13px',
+          position: 'relative',
+          zIndex: 2,
+        }}>
+          <ResponsiveImg
+            srcs={getOptimizedImageUrls(overviewData.banner.backgroundImage)}
+            alt={overviewData.banner.title || 'Banner'}
+            width={1920}
+            height={800}
+            className="overview-banner-img"
             style={{
-              color: '#222',
-              textShadow: 'none',
-              textAlign: 'left',
-              fontWeight: 400,
+              position: 'absolute',
+              top: 0,
+              left: 0,
               width: '100%',
-              maxWidth: 1200,
-              margin: '0 auto',
-              marginTop: 80, // Đẩy xuống dưới một chút
-              paddingBottom: 0, // giảm padding dưới
-              paddingTop: 0,    // giảm padding trên
-              background: 'rgba(255,255,255,0.02)'
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: 1,
+              opacity: 0.85
             }}
-          >
-            <h2
-              style={{
-                color: '#111',
-                textShadow: 'none',
-                textAlign: 'left',
-                fontWeight: 700,
-                fontSize: 28,
-                marginBottom: 18,
-                fontFamily: 'DejaVu Serif',
-              }}
-            >
-              {overviewData.banner.title}
-            </h2>
-            <div
-              style={{
-                fontFamily: 'DejaVu Serif, serif',
-                fontSize: 17,
-                lineHeight: 1.6,
-                color: '#222',
-                textAlign: 'justify', // căn đều hai bên
-                fontWeight: 400,
-                margin: 0
-              }}
-            >
+          />
+          <div className="hero-content" style={{ position: 'relative', zIndex: 2, color: '#222', textShadow: 'none', textAlign: 'left', fontWeight: 400, width: '100%', maxWidth: 1200, margin: '0 auto', marginTop: 80, paddingBottom: 0, paddingTop: 0, background: 'rgba(255,255,255,0.02)' }}>
+            <h2 style={{ color: '#111', textShadow: 'none', textAlign: 'left', fontWeight: 700, fontSize: 28, marginBottom: 18, fontFamily: 'DejaVu Serif' }}>{overviewData.banner.title}</h2>
+            <div style={{ fontFamily: 'DejaVu Serif, serif', fontSize: 17, lineHeight: 1.6, color: '#222', textAlign: 'justify', fontWeight: 400, margin: 0 }}>
               {renderBannerDescription(overviewData.banner.description)}
             </div>
           </div>
@@ -342,12 +325,13 @@ export default function Overview({ overviewData }: OverviewProps) {
                       <div className="timeline-item" data-year={milestone.year}>
                         <div className="timeline-date">{milestone.year}</div>
                         <div className="timeline-content">
-                          <Image
-                            src={`${BACKEND_DOMAIN}${milestone.image}?t=${overviewData.banner.updatedAt}`}
+                          <ResponsiveImg
+                            srcs={getOptimizedImageUrls(milestone.image)}
                             alt={`Milestone ${milestone.year}`}
                             width={300}
                             height={200}
-                            objectFit="cover"
+                            className="timeline-img"
+                            style={{ objectFit: 'cover', borderRadius: 12, width: '100%', height: 200, marginBottom: 12 }}
                           />
                           <div className="milestone-description">
                             <h5>{milestone.title}</h5>
@@ -365,33 +349,30 @@ export default function Overview({ overviewData }: OverviewProps) {
 
                 {/* MESSAGE Section */}
         <div
-          className="message-section"
+          className={`message-section${(overviewData.message.backgroundImage || overviewData.message.backgroundImageVersions?.medium) ? ' bg-dynamic' : ''}`}
+          style={(overviewData.message.backgroundImage || overviewData.message.backgroundImageVersions?.medium)
+            ? { ['--bg-url' as any]: `url(${bgUrl})` }
+            : undefined
+          }
           ref={(el) => {
             if (el) animateElementsRef.current[2] = el;
           }}
         >
           {/* Box MESSAGE */}
-          <div
-            className="message-content"
-          >
+          <div className="message-content">
             <div className="message-gradient-overlay"></div>
             <h2 className="section-title text-center">
               MESSAGE
               <span></span>
             </h2>
             <div className="message-text">
-              <p>Dear Valued Shareholders, Partners, Customers, and All Employees of Saigon3 Jean,</p>
-              <p>Over the years, Saigon3 Jean has continually strived to affirm its position in the fashion wash industry, especially in the denim sector—where creativity, quality, and sustainability are our core values. We take pride in being a trusted partner of many international and regional fashion brands.</p>
-              <p>The year 2024 was filled with challenges—marked by global economic fluctuations, rapidly shifting consumer trends, and growing demands for social and environmental responsibility. In response, Saigon3 Jean took a proactive approach by: Restructuring into a leaner organization, Applying technology in production and management, and Reinforcing our commitment to green manufacturing and sustainable development.</p>
-              <p>We believe that long-term growth cannot rely solely on production capacity or cost competitiveness. True sustainability must be rooted in corporate culture, people, and the ability to adapt. With that vision, Saigon3 Jean is transforming from a traditional OEM manufacturer into a &ldquo;comprehensive strategic partner in the denim fashion industry&rdquo;, offering end-to-end solutions&mdash;from design and product development to sustainable manufacturing.</p>
-              <p>I would like to express my deepest gratitude to all our employees&mdash;those who have dedicated their expertise, passion, and belief in the company&rsquo;s future. I also sincerely thank our customers, partners, and shareholders for your continued support and trust in our journey.</p>
-              <p>Looking ahead, Saigon3 Jean remains steadfast in its vision:</p>
-              <blockquote>
-                To become Southeast Asia&rsquo;s leading denim enterprise in quality, creativity, and sustainability.
-              </blockquote>
-              <p>We will continue to invest heavily in human resources, automation, digital transformation, and ESG initiatives, building a business that is not only efficient, but also responsible to the community and the environment.</p>
+              {overviewData.message.content.map((item, idx) => {
+                if (item.type === 'header') return <p key={idx} className="header">{item.paragraph}</p>;
+                if (item.type === 'highlight') return <blockquote key={idx}>{item.paragraph}</blockquote>;
+                return <p key={idx}>{item.paragraph}</p>;
+              })}
               <div className="ceo-signature text-end mt-3">
-                <div className="ceo-name">Nguyễn Khánh Linh</div>
+                <div className="ceo-name">{overviewData.message.ceoName}</div>
                 <div className="ceo-position">Chief Executive Officer</div>
               </div>
             </div>
@@ -400,8 +381,18 @@ export default function Overview({ overviewData }: OverviewProps) {
           <div className="ceo-image-container">
             <img
               className="ceo-image"
-              src="/images/overview-page/CEOrvbg.jpg"
-              alt="CEO Nguyễn Khánh Linh"
+              src={overviewData.message.ceoImageVersions?.medium
+                ? joinUrl(BACKEND_DOMAIN, overviewData.message.ceoImageVersions.medium)
+                : overviewData.message.ceoImageVersions?.webp
+                  ? joinUrl(BACKEND_DOMAIN, overviewData.message.ceoImageVersions.webp)
+                  : overviewData.message.ceoImageVersions?.thumbnail
+                    ? joinUrl(BACKEND_DOMAIN, overviewData.message.ceoImageVersions.thumbnail)
+                    : overviewData.message.ceoImage
+                      ? (overviewData.message.ceoImage.startsWith('/uploads')
+                        ? joinUrl(BACKEND_DOMAIN, overviewData.message.ceoImage)
+                        : overviewData.message.ceoImage)
+                      : '/images/overview-page/CEOrvbg.jpg'}
+              alt={overviewData.message.ceoName}
               draggable={false}
             />
           </div>
@@ -455,6 +446,9 @@ export default function Overview({ overviewData }: OverviewProps) {
             padding: 40px 0;
             overflow: hidden;
             width: 100%;
+          }
+          .message-section.bg-dynamic {
+            background-image: var(--bg-url) !important;
           }
           
           .message-content {
@@ -874,14 +868,14 @@ export default function Overview({ overviewData }: OverviewProps) {
               <div className="col-md-6">
                 <div className="vision-box">
                   <i className={overviewData.visionMission.vision.icon}></i>
-                  <h2 className="section-title ">VISION</h2>
+                  <h2 className="section-title ">{overviewData.visionMission.vision.title}</h2>
                   <p>{overviewData.visionMission.vision.content}</p>
                 </div>
               </div>
               <div className="col-md-6">
                 <div className="mission-box">
                   <i className={overviewData.visionMission.mission.icon}></i>
-                  <h2 className="section-title ">MISSION</h2>
+                  <h2 className="section-title ">{overviewData.visionMission.mission.title}</h2>
                   <p>{overviewData.visionMission.mission.content}</p>
                 </div>
               </div>
@@ -987,4 +981,70 @@ export default function Overview({ overviewData }: OverviewProps) {
       </section>
     </>
   );
+}
+
+interface ResponsiveImgProps {
+  srcs: any;
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  style?: React.CSSProperties;
+}
+
+function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: ResponsiveImgProps) {
+  if (!srcs) {
+    console.warn(`No image sources provided for: ${alt}`);
+    return null;
+  }
+  try {
+    const getBestImageUrl = () => {
+      if (width && width <= 300) {
+        return srcs.thumbnail || srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 800) {
+        return srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 1200) {
+        return srcs.low || srcs.webp || srcs.origin;
+      } else {
+        return srcs.webp || srcs.origin;
+      }
+    };
+    const imgSrc = getBestImageUrl() || '';
+    const isValidUrl = imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('/'));
+    if (!isValidUrl) {
+      console.error(`Invalid image URL for ${alt}:`, imgSrc);
+      return null;
+    }
+    const srcSet = (() => {
+      const sets = [];
+      if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
+      if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.low) sets.push(`${srcs.low} 1200w`);
+      if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
+      return sets.length > 0 ? sets.join(', ') : undefined;
+    })();
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px";
+    return (
+      <img
+        src={imgSrc}
+        srcSet={srcSet}
+        sizes={sizes || defaultSizes}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading="lazy"
+        style={style}
+        onError={(e) => {
+          if (srcs.origin && srcs.origin !== imgSrc) {
+            (e.target as HTMLImageElement).src = srcs.origin;
+          }
+        }}
+      />
+    );
+  } catch (error) {
+    console.error(`Error rendering image ${alt}:`, error);
+    return null;
+  }
 }

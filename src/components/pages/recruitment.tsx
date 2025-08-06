@@ -424,11 +424,12 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                   <div className="card h-100">
                     <div className="card-body text-center">
                       <Image
-                        src={`${BACKEND_DOMAIN}${currentContactInfo?.logo || "/uploads/images/sg3jeans_logo.png"}`}
+                        src="/images/sg3jeans_logo.png"
                         alt="Saigon 3 Jean Logo"
                         className="company-logo mb-4"
-                        width={100}
-                        height={100}
+                        width={160}
+                        height={80}
+                        style={{ objectFit: 'contain', width: 'auto', height: '80px', maxHeight: '80px' }}
                       />
                       <div className="company-description">
                         {currentContactInfo?.description.map((desc: string, index: number) => (

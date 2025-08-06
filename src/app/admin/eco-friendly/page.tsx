@@ -47,6 +47,9 @@ export default function AdminEcoFriendlyPage() {
   const [sectionsChanged, setSectionsChanged] = useState(false);
   // Thêm state lưu blobUrl cho từng section
   const [sectionBlobUrls, setSectionBlobUrls] = useState<{ [id: string]: string }>({});
+  const [mainImageFile, setMainImageFile] = useState<File | null>(null);
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+  const [mainImageAlt, setMainImageAlt] = useState<string>('');
 
   useEffect(() => { loadData(); }, []);
   useEffect(() => {
@@ -55,6 +58,9 @@ export default function AdminEcoFriendlyPage() {
       setSectionsEdit(JSON.parse(JSON.stringify(data.sections)));
       setFeaturesChanged(false);
       setSectionsChanged(false);
+      setMainImageAlt(data.mainImageAlt || '');
+      setMainImagePreview(null);
+      setMainImageFile(null);
     }
   }, [data]);
   const loadData = async () => {
@@ -182,12 +188,61 @@ export default function AdminEcoFriendlyPage() {
     setSaving(false);
   };
 
+  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setMainImageFile(file);
+      setMainImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSaveMainImage = async () => {
+    if (!mainImageFile && mainImageAlt === data?.mainImageAlt) return;
+    setSaving('mainImage');
+    const formData = new FormData();
+    if (mainImageFile) formData.append('mainImage', mainImageFile);
+    formData.append('mainImageAlt', mainImageAlt);
+    const result = await ecoFriendlyAdminService.updateMainImage(formData);
+    if (result.success) {
+      showMessage('Đã lưu ảnh quả địa cầu!', 'success');
+      setMainImageFile(null);
+      setMainImagePreview(null);
+      await loadData();
+    } else {
+      showMessage('Lỗi lưu ảnh quả địa cầu: ' + result.message, 'error');
+    }
+    setSaving(false);
+  };
+
   if (loading) return <div className="admin-loading">Đang tải...</div>;
   if (!data) return <div className="admin-loading">Không thể tải dữ liệu.</div>;
 
   return (
     <div className="admin-page-container">
       <h1 className="admin-page-title">Quản lý Trang Eco-Friendly</h1>
+      {/* Card upload ảnh quả địa cầu */}
+      <AdminSectionCard
+        title="Ảnh Quả Địa Cầu (Earth Image)"
+        onSave={handleSaveMainImage}
+        isSaving={saving === 'mainImage'}
+        hasChanges={!!mainImageFile || mainImageAlt !== data?.mainImageAlt}
+      >
+        <FormItem label="Ảnh quả địa cầu">
+          <div className="image-preview-container">
+            {mainImagePreview ? (
+              <img src={mainImagePreview} alt={mainImageAlt} width={300} height={300} style={{objectFit:'cover',borderRadius:8}} />
+            ) : (
+              data?.mainImage && (
+                <Image src={`${BACKEND_DOMAIN}${data.mainImage}`} alt={data.mainImageAlt} width={300} height={300} style={{objectFit:'cover',borderRadius:8}} />
+              )
+            )}
+          </div>
+          <input type="file" onChange={handleMainImageChange} accept="image/*" className="form-file-input" />
+        </FormItem>
+        <FormItem label="Alt Text cho ảnh">
+          <input type="text" value={mainImageAlt} onChange={e => setMainImageAlt(e.target.value)} className="form-input" />
+        </FormItem>
+      </AdminSectionCard>
       <AdminSectionCard title="Features" onSave={handleSaveFeatures} isSaving={saving === 'features'} hasChanges={featuresChanged}>
         {featuresEdit.map((feature, idx) => (
           <div key={feature._id || idx} className="feature-card">

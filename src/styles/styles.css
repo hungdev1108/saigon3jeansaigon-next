@@ -8444,7 +8444,7 @@ footer a:hover {
   z-index: 0;
   background: lightgray 50%;
   filter: brightness(1.1) saturate(1.2);
-  object-fit: cover;
+  object-fit: cover; /* Đảm bảo ảnh luôn phủ kín */
 }
 #eco-friendly .solar-system::after {
   content: "";
@@ -8602,5 +8602,27 @@ footer a:hover {
     font-size: 1.1rem;
     margin-bottom: 1.2rem;
     padding: 0 10px;
+  }
+}
+
+/* --- OVERRIDE SLICK-SLIDE CHO AUTOMATION --- */
+@media (min-width: 769px) {
+  #automation .slider-image .slick-slide {
+    opacity: 0.6;
+    transform: scale(0.75);
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  #automation .slider-image .slick-slide.slick-center {
+    opacity: 1;
+    transform: scale(1);
+    z-index: 2;
+  }
+}
+@media (max-width: 768px) {
+  #automation .slider-image .slick-slide {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
   }
 }

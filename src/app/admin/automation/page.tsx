@@ -248,53 +248,136 @@ export default function AdminAutomationPage() {
               <h3>{editingItem ? 'Chỉnh sửa Quy trình' : 'Thêm Quy trình mới'}</h3>
               <button className="btn-close" onClick={handleCloseModal}><FiX /></button>
             </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Ảnh đại diện</label>
-                {imagePreview && (
-                  <div className="image-preview-container">
-                    <Image src={imagePreview} alt="Preview" width={300} height={200} />
-                  </div>
-                )}
-                <input type="file" accept="image/*" onChange={handleImageChange} />
-              </div>
-              <div className="form-group">
-                <label>Tiêu đề quy trình</label>
-                <input
-                  type="text"
-                  value={editingItem?.title || ''}
-                  onChange={e => setEditingItem({ ...(editingItem || { steps: [], image: '' }), title: e.target.value })}
-                  className="form-input"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Các bước (Step)</label>
-                <ul className="steps-edit-list">
-                  {steps.map((step, idx) => (
-                    <li key={idx} className="step-edit-item">
-                      <input
-                        type="text"
-                        placeholder="Tiêu đề step"
-                        value={step.title}
-                        onChange={e => handleStepChange(idx, 'title', e.target.value)}
-                        className="form-input"
-                        required
-                      />
-                      <textarea
-                        placeholder="Nội dung step"
-                        value={step.description}
-                        onChange={e => handleStepChange(idx, 'description', e.target.value)}
-                        className="form-textarea"
-                        required
-                      />
-                      <button className="btn-icon btn-delete-step" onClick={() => handleDeleteStep(idx)} title="Xóa step"><FiTrash2 /></button>
-                    </li>
-                  ))}
-                </ul>
-                <button className="btn btn-add-step btn-primary" type="button" onClick={handleAddStep}><FiPlusCircle /> Thêm step</button>
+            <div className="modal-info-banner">
+              <div className="info-icon">ℹ️</div>
+              <div className="info-text">
+                <strong>Lưu ý quan trọng:</strong> Mỗi hình ảnh phải có nội dung tương ứng. Khi người dùng xem trang Automation, 
+                nội dung sẽ hiển thị khớp với hình ảnh đang được chọn.
               </div>
             </div>
+            <style jsx>{`
+              .modal-info-banner {
+                display: flex;
+                align-items: center;
+                background-color: #e8f4fd;
+                border: 1px solid #bce0fd;
+                border-radius: 4px;
+                padding: 10px 15px;
+                margin: 0 20px 15px;
+              }
+              .info-icon {
+                font-size: 20px;
+                margin-right: 10px;
+              }
+              .info-text {
+                font-size: 0.9rem;
+                color: #0c5460;
+              }
+            `}</style>
+            <div className="modal-body">
+              <div className="form-row">
+                <div className="form-column image-column">
+                  <div className="form-group">
+                    <label className="label-highlight">Ảnh đại diện</label>
+                    <p className="form-help-text">Hình ảnh này sẽ hiển thị trong slider và phải tương ứng với nội dung bên phải.</p>
+                    {imagePreview && (
+                      <div className="image-preview-container">
+                        <Image src={imagePreview} alt="Preview" width={300} height={200} />
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="file-input" />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="label-highlight">Tiêu đề quy trình</label>
+                    <p className="form-help-text">Tiêu đề chính của quy trình này.</p>
+                    <input
+                      type="text"
+                      value={editingItem?.title || ''}
+                      onChange={e => setEditingItem({ ...(editingItem || { steps: [], image: '' }), title: e.target.value })}
+                      className="form-input"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-column content-column">
+                  <div className="form-group">
+                    <label className="label-highlight">Nội dung tương ứng với hình ảnh</label>
+                    <p className="form-help-text">Các nội dung này sẽ hiển thị khi người dùng xem hình ảnh tương ứng bên trái.</p>
+                    <ul className="steps-edit-list">
+                      {steps.map((step, idx) => (
+                        <li key={idx} className="step-edit-item">
+                          <div className="step-header">
+                            <button className="btn-icon btn-delete-step" onClick={() => handleDeleteStep(idx)} title="Xóa nội dung"><FiTrash2 /></button>
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Tiêu đề nội dung"
+                            value={step.title}
+                            onChange={e => handleStepChange(idx, 'title', e.target.value)}
+                            className="form-input"
+                            required
+                          />
+                          <textarea
+                            placeholder="Chi tiết nội dung"
+                            value={step.description}
+                            onChange={e => handleStepChange(idx, 'description', e.target.value)}
+                            className="form-textarea"
+                            required
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                    <button className="btn btn-add-step btn-primary" type="button" onClick={handleAddStep}><FiPlusCircle /> Thêm nội dung</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <style jsx>{`
+              .form-row {
+                display: flex;
+                gap: 20px;
+                flex-wrap: wrap;
+              }
+              .form-column {
+                flex: 1;
+                min-width: 300px;
+              }
+              .image-column {
+                border-right: 1px dashed #ccc;
+                padding-right: 20px;
+              }
+              .content-column {
+                padding-left: 10px;
+              }
+              .label-highlight {
+                font-weight: bold;
+                color: #2563eb;
+                font-size: 1.1rem;
+                display: block;
+                margin-bottom: 5px;
+              }
+              .form-help-text {
+                font-size: 0.9rem;
+                color: #666;
+                margin-bottom: 10px;
+              }
+              .step-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 5px;
+              }
+              .step-number {
+                font-weight: bold;
+                color: #555;
+              }
+              .file-input {
+                margin-top: 10px;
+              }
+            `}</style>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={handleCloseModal} disabled={saving}>Hủy</button>
               {editingItem?._id && (

@@ -67,6 +67,13 @@ interface OverviewData {
   coreValues: CoreValue[];
 }
 
+// Thêm type cho từng đoạn message
+interface MessageContent {
+  paragraph: string;
+  type: 'header' | 'normal' | 'highlight' | 'ceo' | 'ceoTitle';
+  order: number;
+}
+
 // FormItem component
 const FormItem = ({ label, icon, children }: { label: string; icon?: React.ReactNode, children: React.ReactNode }) => (
   <div className="form-item">
@@ -166,6 +173,18 @@ export default function AdminOverviewPage() {
       if (files['banner-backgroundImage']) return true;
       return false;
     }
+    if (section === 'visionMission') {
+      return JSON.stringify(overviewData.visionMission) !== JSON.stringify(originalData.visionMission);
+    }
+    if (section === 'coreValues') {
+      return JSON.stringify(overviewData.coreValues) !== JSON.stringify(originalData.coreValues);
+    }
+    if (section === 'message') {
+      if (JSON.stringify(overviewData.message.content) !== JSON.stringify(originalData.message.content)) return true;
+      if (overviewData.message.ceoName !== originalData.message.ceoName) return true;
+      if (files['message-ceoImage'] || files['message-backgroundImage']) return true;
+      return false;
+    }
     // milestones giữ nguyên logic cũ
     return Object.keys(files).some(key => key.startsWith(section)) || 
            Object.keys(imagePreview).some(key => key.startsWith(section));
@@ -247,6 +266,56 @@ export default function AdminOverviewPage() {
           await loadData();
       } else {
           toast.error("❌ " + result.message, toastOptions);
+        }
+      }
+      else if (section === 'visionMission') {
+        const result = await overviewAdminService.updateVisionMission(overviewData.visionMission);
+        if (result.success) {
+          toast.success("Cập nhật Vision & Mission thành công!", toastOptions);
+          await loadData();
+        } else {
+          toast.error("❌ " + result.message, toastOptions);
+        }
+      }
+      else if (section === 'coreValues') {
+        const result = await overviewAdminService.updateCoreValues(overviewData.coreValues);
+        if (result.success) {
+          toast.success("Cập nhật Core Values thành công!", toastOptions);
+          await loadData();
+        } else {
+          toast.error("❌ " + result.message, toastOptions);
+        }
+      }
+      else if (section === 'message') {
+        if (files['message-ceoImage'] || files['message-backgroundImage']) {
+          const formData = new FormData();
+          formData.append('ceoName', overviewData?.message.ceoName || '');
+          formData.append('content', JSON.stringify(overviewData?.message.content || []));
+          if (files['message-ceoImage']) {
+            formData.append('ceoImage', files['message-ceoImage']);
+          }
+          if (files['message-backgroundImage']) {
+            formData.append('backgroundImage', files['message-backgroundImage']);
+          }
+          const result = await overviewAdminService.updateMessage(formData, true);
+          if (result.success) {
+            toast.success("Cập nhật CEO Message thành công!", toastOptions);
+            await loadData();
+          } else {
+            toast.error("❌ " + result.message, toastOptions);
+          }
+        } else {
+          const messageData = {
+            ceoName: overviewData?.message.ceoName || '',
+            content: overviewData?.message.content || [],
+          };
+          const result = await overviewAdminService.updateMessage(messageData);
+          if (result.success) {
+            toast.success("Cập nhật CEO Message thành công!", toastOptions);
+            await loadData();
+          } else {
+            toast.error("❌ " + result.message, toastOptions);
+          }
         }
       }
       
@@ -387,6 +456,106 @@ export default function AdminOverviewPage() {
     if (m.year !== o.year || m.title !== o.title || m.description !== o.description) return true;
     if (files[`milestones-${index}-image`]) return true;
     return false;
+  };
+
+  const handleVisionMissionChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    section: 'vision' | 'mission',
+    field: string
+  ) => {
+    const { value } = e.target;
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        visionMission: {
+          ...prev.visionMission,
+          [section]: {
+            ...prev.visionMission[section],
+            [field]: value
+          }
+        }
+      };
+    });
+  };
+
+  const handleCoreValueChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, field: string) => {
+    const { value } = e.target;
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      const updated = [...prev.coreValues];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, coreValues: updated };
+    });
+  };
+
+  const handleAddCoreValue = () => {
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        coreValues: [
+          ...prev.coreValues,
+          { icon: '', title: '', content: '', order: prev.coreValues.length + 1, _id: '' }
+        ]
+      };
+    });
+  };
+
+  const handleDeleteCoreValue = (index: number) => {
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        coreValues: prev.coreValues.filter((_, i) => i !== index)
+      };
+    });
+  };
+
+  // Thêm UI quản lý message section
+  const handleMessageTypeChange = (e: React.ChangeEvent<HTMLSelectElement>, idx: number) => {
+    const value = e.target.value;
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      const updated = [...prev.message.content];
+      updated[idx] = { ...updated[idx], type: value };
+      return { ...prev, message: { ...prev.message, content: updated } };
+    });
+  };
+  const handleMessageContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>, idx: number) => {
+    const value = e.target.value;
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      const updated = [...prev.message.content];
+      updated[idx] = { ...updated[idx], paragraph: value };
+      return { ...prev, message: { ...prev.message, content: updated } };
+    });
+  };
+  const handleDeleteMessageItem = (idx: number) => {
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      const updated = prev.message.content.filter((_, i) => i !== idx);
+      return { ...prev, message: { ...prev.message, content: updated } };
+    });
+  };
+  const handleAddMessageItem = () => {
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      const updated = [...prev.message.content, { paragraph: '', type: 'normal', order: prev.message.content.length + 1 }];
+      return { ...prev, message: { ...prev.message, content: updated } };
+    });
+  };
+  const handleMoveMessageItem = (idx: number, dir: number) => {
+    setOverviewData(prev => {
+      if (!prev) return prev;
+      const updated = [...prev.message.content];
+      const newIndex = idx + dir;
+      if (newIndex < 0 || newIndex >= updated.length) return prev;
+      const temp = updated[idx];
+      updated[idx] = updated[newIndex];
+      updated[newIndex] = temp;
+      return { ...prev, message: { ...prev.message, content: updated } };
+    });
   };
 
   const renderLoading = () => <div className="admin-loading">Đang tải dữ liệu...</div>;
@@ -583,6 +752,165 @@ export default function AdminOverviewPage() {
             </div>
           </div>
         ))}
+      </AdminSectionCard>
+
+      {/* Vision & Mission Section */}
+      <AdminSectionCard
+        title="Vision & Mission"
+        onSave={() => handleSave('visionMission')}
+        isSaving={saving === 'visionMission'}
+        hasChanges={hasChanges('visionMission')}
+      >
+        <div className="grid-2-col">
+          <div className="form-column">
+            <FormItem label="Vision Title">
+              <input
+                type="text"
+                value={overviewData?.visionMission?.vision.title || ''}
+                onChange={e => handleVisionMissionChange(e, 'vision', 'title')}
+                className="form-input"
+              />
+            </FormItem>
+            <FormItem label="Vision Content">
+              <textarea
+                value={overviewData?.visionMission?.vision.content || ''}
+                onChange={e => handleVisionMissionChange(e, 'vision', 'content')}
+                className="form-textarea"
+              />
+            </FormItem>
+          </div>
+          <div className="form-column">
+            <FormItem label="Mission Title">
+              <input
+                type="text"
+                value={overviewData?.visionMission?.mission.title || ''}
+                onChange={e => handleVisionMissionChange(e, 'mission', 'title')}
+                className="form-input"
+              />
+            </FormItem>
+            <FormItem label="Mission Content">
+              <textarea
+                value={overviewData?.visionMission?.mission.content || ''}
+                onChange={e => handleVisionMissionChange(e, 'mission', 'content')}
+                className="form-textarea"
+              />
+            </FormItem>
+          </div>
+        </div>
+      </AdminSectionCard>
+
+      {/* Core Values Section */}
+      <AdminSectionCard
+        title="Core Values"
+        onSave={() => handleSave('coreValues')}
+        isSaving={saving === 'coreValues'}
+        hasChanges={hasChanges('coreValues')}
+      >
+        {overviewData?.coreValues.map((value, idx) => (
+          <div key={value._id || idx} className="subsection-card">
+            <FormItem label="Title">
+              <input
+                type="text"
+                value={value.title}
+                onChange={e => handleCoreValueChange(e, idx, 'title')}
+                className="form-input"
+              />
+            </FormItem>
+            <FormItem label="Content">
+              <textarea
+                value={value.content}
+                onChange={e => handleCoreValueChange(e, idx, 'content')}
+                className="form-textarea"
+              />
+            </FormItem>
+            <FormItem label="Order">
+              <input
+                type="number"
+                value={value.order}
+                onChange={e => handleCoreValueChange(e, idx, 'order')}
+                className="form-input"
+              />
+            </FormItem>
+            <button className="btn-delete" onClick={() => handleDeleteCoreValue(idx)}>Xóa</button>
+          </div>
+        ))}
+        <button className="btn-add" onClick={handleAddCoreValue}>Thêm Core Value</button>
+      </AdminSectionCard>
+
+      {/* CEO Message Section */}
+      <AdminSectionCard
+        title="CEO Message"
+        onSave={() => handleSave('message')}
+        isSaving={saving === 'message'}
+        hasChanges={hasChanges('message')}
+      >
+        <div className="message-admin-list">
+          {overviewData?.message.content.map((item, idx) => (
+            <div key={idx} className="message-admin-item">
+              <select
+                value={item.type}
+                onChange={e => handleMessageTypeChange(e, idx)}
+                className="message-type-select"
+              >
+                <option value="header">Dòng đầu (đậm)</option>
+                <option value="normal">Đoạn thường</option>
+                <option value="highlight">Dòng nổi bật (xanh)</option>
+              </select>
+              <textarea
+                value={item.paragraph}
+                onChange={e => handleMessageContentChange(e, idx)}
+                className="message-content-input"
+              />
+              <button onClick={() => handleDeleteMessageItem(idx)} className="btn-delete"><FiTrash2 /></button>
+              <button onClick={() => handleMoveMessageItem(idx, -1)} disabled={idx === 0}>↑</button>
+              <button onClick={() => handleMoveMessageItem(idx, 1)} disabled={idx === overviewData.message.content.length - 1}>↓</button>
+            </div>
+          ))}
+          <button className="btn-add" onClick={handleAddMessageItem}><FiPlusCircle /> Thêm đoạn</button>
+        </div>
+        <FormItem label="Tên CEO">
+          <input
+            type="text"
+            value={overviewData?.message.ceoName || ''}
+            onChange={e => handleInputChange(e, 'message')}
+            name="ceoName"
+            className="form-input"
+          />
+        </FormItem>
+        <FormItem label="Ảnh CEO">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileChange(e, 'message-ceoImage')}
+            className="form-file-input"
+          />
+          {overviewData?.message.ceoImage && (
+            <Image
+              src={imagePreview['message-ceoImage'] || `${BACKEND_DOMAIN}${overviewData.message.ceoImage}`}
+              alt="CEO"
+              width={200}
+              height={200}
+              className="image-preview"
+            />
+          )}
+        </FormItem>
+        <FormItem label="Ảnh background MESSAGE">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileChange(e, 'message-backgroundImage')}
+            className="form-file-input"
+          />
+          {overviewData?.message.backgroundImage && (
+            <Image
+              src={imagePreview['message-backgroundImage'] || `${BACKEND_DOMAIN}${overviewData.message.backgroundImage}`}
+              alt="BG"
+              width={200}
+              height={120}
+              className="image-preview"
+            />
+          )}
+        </FormItem>
       </AdminSectionCard>
 
       <style jsx>{`
@@ -843,6 +1171,55 @@ export default function AdminOverviewPage() {
           height: 200px;
           font-size: 16px;
           color: #666;
+        }
+
+        .message-admin-list {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+
+        .message-admin-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: #f0f2f5;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 15px;
+          position: relative;
+        }
+
+        .message-type-select {
+          padding: 8px 12px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          font-size: 14px;
+          background-color: #fff;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+
+        .message-type-select:focus {
+          outline: none;
+          border-color: #007bff;
+        }
+
+        .message-content-input {
+          flex-grow: 1;
+          padding: 8px 12px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          font-size: 14px;
+          min-height: 50px;
+          resize: vertical;
+          transition: border-color 0.2s;
+        }
+
+        .message-content-input:focus {
+          outline: none;
+          border-color: #007bff;
         }
 
         @media (max-width: 768px) {

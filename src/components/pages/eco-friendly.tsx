@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import React, { useEffect } from "react";
+import { getOptimizedImageUrls } from "../../shared/imageUtils";
+import Image from "next/image";
 import { BACKEND_DOMAIN } from '@/api/config';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -44,6 +45,105 @@ interface EcoFriendlyData {
   mainImageAlt: string;
   features: Feature[];
   sections: Section[];
+}
+
+interface ResponsiveImgProps {
+  srcs: {
+    origin?: string;
+    webp?: string;
+    medium?: string;
+    thumbnail?: string;
+    low?: string;
+  };
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  style?: React.CSSProperties;
+}
+
+function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: ResponsiveImgProps) {
+  // Kiểm tra nếu không có srcs
+  if (!srcs) {
+    console.warn(`No image sources provided for: ${alt}`);
+    return null;
+  }
+  
+  try {
+    // Chọn ảnh phù hợp nhất dựa trên kích thước và độ phân giải
+    const getBestImageUrl = () => {
+      // Nếu có kích thước cụ thể, chọn ảnh phù hợp
+      if (width && width <= 300) {
+        // Ưu tiên thumbnail cho kích thước nhỏ
+        return srcs.thumbnail || srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 800) {
+        // Ưu tiên medium cho kích thước trung bình
+        return srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 1200) {
+        // Ưu tiên low cho kích thước lớn (nhưng không quá lớn)
+        return srcs.low || srcs.webp || srcs.origin;
+      } else {
+        // Ưu tiên webp cho kích thước rất lớn
+        return srcs.webp || srcs.origin;
+      }
+    };
+    
+    // Lấy URL ảnh tốt nhất
+    const imgSrc = getBestImageUrl() || '';
+    
+    // Kiểm tra xem URL có hợp lệ không
+    const isValidUrl = imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('/'));
+    
+    if (!isValidUrl) {
+      console.error(`Invalid image URL for ${alt}:`, imgSrc);
+      return null;
+    }
+    
+    // Tạo srcSet chỉ khi có đủ các phiên bản
+    const srcSet = (() => {
+      // Nếu có đủ các phiên bản, tạo srcSet
+      if (srcs.thumbnail && srcs.medium && srcs.low && srcs.webp) {
+        return `${srcs.thumbnail} 300w, ${srcs.medium} 800w, ${srcs.low} 1200w, ${srcs.webp} 1920w`;
+      }
+      // Nếu chỉ có một số phiên bản
+      const sets = [];
+      if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
+      if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.low) sets.push(`${srcs.low} 1200w`);
+      if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
+      
+      return sets.length > 0 ? sets.join(', ') : undefined;
+    })();
+    
+    // Chuẩn bị sizes attribute nếu không được cung cấp
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px";
+    
+    return (
+      <img
+        src={imgSrc}
+        srcSet={srcSet}
+        sizes={sizes || defaultSizes}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading="lazy"
+        style={style}
+        onError={(e) => {
+          console.error(`Failed to load image: ${imgSrc}`);
+          // Fallback to origin if available and different from current src
+          if (srcs.origin && srcs.origin !== imgSrc) {
+            console.log(`Falling back to origin: ${srcs.origin}`);
+            (e.target as HTMLImageElement).src = srcs.origin;
+          }
+        }}
+      />
+    );
+  } catch (error) {
+    console.error(`Error rendering image ${alt}:`, error);
+    return null;
+  }
 }
 
 interface EcoFriendlyProps {
@@ -122,7 +222,7 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
   }
 
   return (
-    <>
+    <div className="eco-friendly-zoom">
       <main id="eco-friendly">
 
         <section className="features">
@@ -134,13 +234,13 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
                 ))}
               </div>
               <div className="left-item">
-                <Image
-                  // src={`${BACKEND_DOMAIN}${ecoFriendlyData!.mainImage}`}
-                  src="/images/eco-friendly/globe.png"
+                <ResponsiveImg
+                  srcs={getOptimizedImageUrls(data!.mainImage)}
                   alt={data!.mainImageAlt}
                   width={500}
                   height={500}
-                  objectFit="cover"
+                  className="eco-friendly-image"
+                  style={{ objectFit: "cover" }}
                 />
               </div>
             </div>
@@ -166,12 +266,13 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
             // Section đầu tiên - Solar System với stats
             return (
               <section key={section.id || idx} className="eco-section solar-system">
-                <Image
-                  src={`${BACKEND_DOMAIN}${section.image}`}
+                <ResponsiveImg
+                  srcs={getOptimizedImageUrls(section.image)}
                   alt={section.imageAlt}
                   width={1200}
                   height={800}
-                  objectFit="cover"
+                  className="eco-section-image"
+                  style={{ objectFit: "cover" }}
                 />
                 <h2>{section.title}</h2>
                 <p>{section.description}</p>
@@ -215,12 +316,13 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
             // Section thứ hai - AI Revolution với water stats
             return (
               <section key={section.id || idx} className="eco-section ai-revolution content-animate">
-                <Image
-                  src={`${BACKEND_DOMAIN}${section.image}`}
+                <ResponsiveImg
+                  srcs={getOptimizedImageUrls(section.image)}
                   alt={section.imageAlt}
                   width={1200}
                   height={800}
-                  objectFit="cover"
+                  className="eco-section-image"
+                  style={{ objectFit: "cover" }}
                 />
                 <h2>{section.title}</h2>
                 <p>{section.description}</p>
@@ -253,12 +355,13 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
             // Luôn luôn hardcode 2 box cho Biomass Boiler
             return (
               <section key={section.id || idx} className="eco-section biomass-boiler content-animate" id="biomass-section">
-                <Image
-                  src={`${BACKEND_DOMAIN}${section.image}`}
+                <ResponsiveImg
+                  srcs={getOptimizedImageUrls(section.image)}
                   alt={section.imageAlt}
                   width={1200}
                   height={800}
-                  objectFit="cover"
+                  className="eco-section-image"
+                  style={{ objectFit: "cover" }}
                 />
                 <h2>{section.title}</h2>
                 <p>{section.description}</p>
@@ -291,12 +394,13 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           console.log("Rendering other section:", section.title);
           return (
             <section key={section.id || idx} className="eco-section content-animate">
-              <Image
-                src={`${BACKEND_DOMAIN}${section.image}`}
+              <ResponsiveImg
+                srcs={getOptimizedImageUrls(section.image)}
                 alt={section.imageAlt}
                 width={1200}
                 height={800}
-                objectFit="cover"
+                className="eco-section-image"
+                style={{ objectFit: "cover" }}
               />
               <h2>{section.title}</h2>
               <p>{section.description}</p>
@@ -304,6 +408,6 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
           );
         })}
       </main>
-    </>
+    </div>
   );
 }

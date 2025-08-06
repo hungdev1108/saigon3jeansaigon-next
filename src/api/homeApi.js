@@ -83,3 +83,17 @@ export const getNews = async () => {
     throw error;
   }
 };
+
+/**
+ * Lấy dữ liệu contact section trên trang home
+ * @returns {Promise} Promise chứa dữ liệu contact section
+ */
+export const getHomeContact = async () => {
+  try {
+    const response = await apiClient.get("/api/home/contact-section");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching home contact section:", error);
+    throw error;
+  }
+};

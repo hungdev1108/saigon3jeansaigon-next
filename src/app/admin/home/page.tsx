@@ -29,6 +29,7 @@ interface HeroData {
   videoUrl: string;
   isActive: boolean;
   aiBannerImage?: string;
+  aiBannerTitle?: string;
 }
 interface SectionData {
   title: string;
@@ -68,11 +69,34 @@ interface NewsData {
   onHome: boolean; // Thêm field onHome
   views: number; // Thêm field views
 }
+interface HomeContactData {
+  contact: {
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink: string;
+  };
+  workWithUs: {
+    title: string;
+    description: string;
+    buttonText: string;
+    buttonLink: string;
+  };
+  isActive: boolean;
+}
+
 interface HomeData {
   hero: HeroData;
   sections: SectionData[];
+  factoryVideo?: string;
   customers: CustomersData;
   featuredNews: NewsData[];
+  homeContact?: HomeContactData;
+  certifications?: {
+    _id: string;
+    description: string;
+    image: string;
+  }[];
 }
 
 // Preview states
@@ -382,12 +406,54 @@ export default function AdminHomePage() {
   const loadHomepageData = async () => {
     try {
       setLoading(true);
-      const [homeDataResult, homepageNewsResult] = await Promise.all([
-          homeService.getCompleteHomeData(),
-          homeService.getHomepageNews()
-      ]);
-      setHomeData(homeDataResult as HomeData);
-      setInitialHomeData(JSON.parse(JSON.stringify(homeDataResult)) as HomeData);
+      console.log("Loading homepage data...");
+      
+      let homeDataResult, homepageNewsResult;
+      
+      try {
+        homeDataResult = await homeService.getCompleteHomeData();
+        console.log("Home data loaded:", homeDataResult);
+      } catch (error) {
+        console.error("Error loading home data:", error);
+        homeDataResult = homeService.getDefaultHomeData();
+      }
+      
+      try {
+        homepageNewsResult = await homeService.getHomepageNews();
+        console.log("News data loaded:", homepageNewsResult);
+      } catch (error) {
+        console.error("Error loading news data:", error);
+        homepageNewsResult = [];
+      }
+      
+      // Đảm bảo dữ liệu có cấu trúc đúng
+      // Đảm bảo dữ liệu có cấu trúc đúng và có dữ liệu mặc định cho homeContact
+      const processedHomeData = {
+        ...homeDataResult,
+        sections: Array.isArray(homeDataResult.sections) ? homeDataResult.sections : [],
+        factoryVideo: homeDataResult.factoryVideo || "",
+        homeContact: homeDataResult.homeContact || {
+          contact: {
+            title: 'CONTACT',
+            description: 'Seeking us and you\'ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint',
+            buttonText: 'CONTACT US',
+            buttonLink: '/contact'
+          },
+          workWithUs: {
+            title: 'WORK WITH US',
+            description: 'We are looking for intelligent, passionate individuals who are ready to join us in building and growing the company',
+            buttonText: 'LEARN MORE',
+            buttonLink: '/recruitment'
+          },
+          isActive: true
+        },
+        certifications: Array.isArray(homeDataResult.certifications) ? homeDataResult.certifications : []
+      };
+      
+      console.log("Loaded home data:", processedHomeData);
+      
+      setHomeData(processedHomeData as HomeData);
+      setInitialHomeData(JSON.parse(JSON.stringify(processedHomeData)) as HomeData);
       setHomepageNews(homepageNewsResult as NewsData[]);
     } catch (error) {
       handleError(error, "tải dữ liệu trang");
@@ -396,8 +462,21 @@ export default function AdminHomePage() {
     }
   };
 
-  const hasChanges = (section: keyof Omit<HomeData, 'featuredNews'>) => {
+  const hasChanges = (section: keyof Omit<HomeData, 'featuredNews'> | 'factoryVideo' | 'certifications') => {
     if (!initialHomeData || !homeData) return false;
+    
+    if (section === 'factoryVideo') {
+      return initialHomeData?.factoryVideo !== homeData?.factoryVideo || 
+        Object.keys(files).some(key => key === 'factoryVideo');
+    }
+    
+    if (section === 'certifications') {
+      return (
+        JSON.stringify(initialHomeData.certifications) !== JSON.stringify(homeData.certifications) ||
+        Object.keys(files).some(key => key.startsWith('cert_'))
+      );
+    }
+
     return JSON.stringify(initialHomeData[section]) !== JSON.stringify(homeData[section]) ||
       Object.keys(files).some(key => key.startsWith(section.toString()));
   };
@@ -417,7 +496,50 @@ export default function AdminHomePage() {
     setHomeData(prevData => {
       if (!prevData) return null;
       const newData = JSON.parse(JSON.stringify(prevData));
-      if (subSection && index === undefined) {
+      
+      if (section === 'homeContact') {
+        // Đặc biệt xử lý cho homeContact
+        console.log(`Updating homeContact${subSection ? '.' + subSection : ''}.${name} to:`, inputValue);
+        
+        // Đảm bảo homeContact tồn tại
+        if (!newData.homeContact) {
+          newData.homeContact = {
+            contact: {
+              title: 'CONTACT',
+              description: 'Seeking us and you\'ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint',
+              buttonText: 'CONTACT US',
+              buttonLink: '/contact'
+            },
+            workWithUs: {
+              title: 'WORK WITH US',
+              description: 'We are looking for intelligent, passionate individuals who are ready to join us in building and growing the company',
+              buttonText: 'LEARN MORE',
+              buttonLink: '/recruitment'
+            },
+            isActive: true
+          };
+        }
+        
+        // Xử lý cho subSection (contact hoặc workWithUs)
+        if (subSection) {
+          // Đảm bảo subSection tồn tại
+          if (!newData.homeContact[subSection]) {
+            newData.homeContact[subSection] = {
+              title: '',
+              description: '',
+              buttonText: '',
+              buttonLink: subSection === 'contact' ? '/contact' : '/recruitment'
+            };
+          }
+          
+          // Cập nhật giá trị
+          newData.homeContact[subSection][name] = inputValue;
+        } else {
+          // Cập nhật trực tiếp vào homeContact
+          newData.homeContact[name] = inputValue;
+        }
+        
+      } else if (subSection && index === undefined) {
         const nameParts = name.split('_');
         if (nameParts.length >= 2) {
           const fieldName = nameParts[0];
@@ -436,6 +558,7 @@ export default function AdminHomePage() {
       } else {
         newData[section][name] = inputValue;
       }
+      
       return newData;
     });
   };
@@ -531,16 +654,24 @@ export default function AdminHomePage() {
     });
   };
 
-  const handleSave = async (section: "hero" | "sections" | "customers") => {
+  const handleSave = async (section: "hero" | "sections" | "customers" | "factoryVideo" | "homeContact" | "certifications") => {
     if (!homeData || !hasChanges(section)) return;
     setSaving(section);
 
     try {
         let result: ApiResponse;
-        const dataToSave = homeData[section];
+        const dataToSave = section === 'factoryVideo' ? { factoryVideo: homeData.factoryVideo } : homeData[section];
         // Chỉ gửi file (không gửi base64)
         const filesToSave = Object.keys(files)
-          .filter(key => key.startsWith(section))
+          .filter(key => {
+            if (section === 'factoryVideo') {
+              return key === 'factoryVideo';
+            }
+            if (section === 'certifications') {
+              return key.startsWith('certifications');
+            }
+            return key.startsWith(section) && key !== 'factoryVideo';
+          })
           .reduce((obj, key) => {
             if (section === 'customers') {
               const parts = key.split('-');
@@ -556,6 +687,13 @@ export default function AdminHomePage() {
                 }
               }
             }
+            
+            // Special case for factoryVideo
+            if (key === 'factoryVideo') {
+              obj['factoryVideo'] = files[key];
+              return obj;
+            }
+            
             const fileKey = key.substring(section.length + 1);
             obj[fileKey] = files[key];
             return obj;
@@ -578,12 +716,65 @@ export default function AdminHomePage() {
           case 'hero':
               result = await homeService.updateHero(dataToSave as HeroData, filesToSave);
               break;
+          case 'factoryVideo':
+              // Xử lý riêng cho factory video
+              result = await homeService.updateHomeSections({ 
+                sections: homeData.sections || [],
+                factoryVideo: homeData.factoryVideo || "" 
+              }, filesToSave);
+              break;
           case 'sections':
-              result = await homeService.updateHomeSections(dataToSave as SectionData[], filesToSave);
+              // For sections, vẫn giữ cấu trúc cũ để đảm bảo tương thích
+              const sectionsToSave = {
+                sections: Array.isArray(dataToSave) ? dataToSave : [],
+                factoryVideo: homeData.factoryVideo || ""
+              };
+              result = await homeService.updateHomeSections(sectionsToSave, filesToSave);
               break;
           case 'customers':
               result = await homeService.updateCustomers(dataToSave as CustomersData, filesToSave);
               break;
+          case 'homeContact':
+              try {
+                console.log("Saving homeContact data:", JSON.stringify(dataToSave, null, 2));
+                result = await homeService.updateHomeContact(dataToSave as HomeContactData);
+                console.log("HomeContact save result:", result);
+              } catch (error) {
+                console.error("Error saving HomeContact:", error);
+                throw error;
+              }
+              break;
+          case 'certifications':
+              // Gọi API update certifications, truyền files nếu có
+              // Sau khi lưu thành công, load lại data
+              setSaving('certifications');
+              try {
+                const filesToSave = Object.keys(files)
+                  .filter(key => key.startsWith('cert_'))
+                  .reduce((obj, key) => {
+                    obj[key] = files[key];
+                    return obj;
+                  }, {} as Record<string, File>);
+                const result = await homeService.updateCertifications(homeData.certifications, filesToSave);
+                console.log('Save certifications result:', result);
+                if (!result || typeof result !== 'object' || !('success' in result)) {
+                  toast.error("Lỗi: Không nhận được phản hồi hợp lệ từ server!", toastOptions);
+                  setSaving(false);
+                  return;
+                }
+                if (result.success) {
+                  toast.success("Đã lưu chứng chỉ nhỏ thành công!", { ...toastOptions, icon: <FiCheck /> });
+                  setFiles({});
+                  await loadHomepageData();
+                } else {
+                  toast.error("Lỗi khi lưu chứng chỉ nhỏ: " + (result.message || "Lưu thất bại"), toastOptions);
+                }
+              } catch (error) {
+                toast.error("Lỗi khi lưu chứng chỉ nhỏ: " + (error?.message || "Lưu thất bại"), toastOptions);
+              } finally {
+                setSaving(false);
+              }
+              return;
           default:
               throw new Error("Section chưa được hỗ trợ lưu.");
         }
@@ -632,6 +823,57 @@ export default function AdminHomePage() {
               setSaving(false);
           }
       }
+  };
+
+  const handleAddSection = () => {
+    const newSection: SectionData = {
+        title: 'Tiêu đề section mới',
+        content: 'Nội dung mô tả của section',
+        mediaType: 'image',
+        mediaUrl: "/images/home_banner-section2.jpg",
+        buttonText: "LEARN MORE",
+        buttonLink: "#",
+        backgroundColor: "#1e40af",
+        order: homeData?.sections?.length || 0
+    };
+    
+    setHomeData(prevData => {
+        if (!prevData) return null;
+        const newData = JSON.parse(JSON.stringify(prevData));
+        newData.sections = Array.isArray(newData.sections) ? [...newData.sections, newSection] : [newSection];
+        return newData;
+    });
+    
+    toast.info("Đã thêm section mới. Vui lòng cập nhật thông tin và lưu lại.", { ...toastOptions, icon: <FiInfo /> });
+  };
+  
+  const handleDeleteSection = (index: number) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa section này?")) {
+      setHomeData(prevData => {
+        if (!prevData) return null;
+        const newData = JSON.parse(JSON.stringify(prevData));
+        if (Array.isArray(newData.sections)) {
+          newData.sections.splice(index, 1);
+          // Cập nhật lại order cho các section còn lại
+          newData.sections.forEach((section, idx) => {
+            section.order = idx;
+          });
+        }
+        return newData;
+      });
+      toast.success("Đã xóa section thành công!", { ...toastOptions, icon: <FiCheck /> });
+    }
+  };
+  
+  const handleMediaTypeChange = (index: number, mediaType: 'image' | 'video') => {
+    setHomeData(prevData => {
+      if (!prevData) return null;
+      const newData = JSON.parse(JSON.stringify(prevData));
+      if (Array.isArray(newData.sections) && newData.sections[index]) {
+        newData.sections[index].mediaType = mediaType;
+      }
+      return newData;
+    });
   };
 
   const handleAddCustomer = (subSection: 'denimWoven' | 'knit') => {
@@ -768,6 +1010,27 @@ export default function AdminHomePage() {
     }
   };
 
+  const handleCertificationChange = (e: ChangeEvent<HTMLInputElement>, index: number, field: 'description' | 'image') => {
+    const { value } = e.target;
+    setHomeData(prev => {
+      if (!prev) return null;
+      const updated = [...prev.certifications];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, certifications: updated };
+    });
+  };
+
+  const handleCertificationFileChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFiles(prev => ({ ...prev, [`cert_${index}`]: file }));
+      setLogoPreview(prev => ({
+        ...prev,
+        [`cert_${index}`]: URL.createObjectURL(file)
+      }));
+    }
+  };
+
   // --- Render Functions ---
   const renderLoading = () => <div className="admin-loading">Đang tải dữ liệu...</div>;
 
@@ -790,6 +1053,21 @@ export default function AdminHomePage() {
                 </FormItem>
                  <FormItem label="Phụ đề" icon={<FiFileText />}>
                     <textarea value={homeData.hero.subtitle || ''} name="subtitle" onChange={(e) => handleInputChange(e, 'hero')} className="form-textarea" />
+                </FormItem>
+                 <FormItem label="Tiêu đề chính AI Banner" icon={<FiType />}>
+                    <input
+                      type="text"
+                      value={homeData?.hero?.aiBannerTitle || ''}
+                      onChange={e => setHomeData(prev => prev ? ({
+                        ...prev,
+                        hero: {
+                          ...prev.hero,
+                          aiBannerTitle: e.target.value
+                        }
+                      }) : prev)}
+                      placeholder="Nhập tiêu đề AI Banner"
+                      className="form-control"
+                    />
                 </FormItem>
                  <FormItem label="Video URL" icon={<FiLink />}>
                     <input type="text" placeholder="Dán link Youtube vào đây" value={homeData.hero.videoUrl || ''} name="videoUrl" onChange={(e) => handleInputChange(e, 'hero')} className="form-input" />
@@ -843,11 +1121,65 @@ export default function AdminHomePage() {
         </div>
       </AdminSectionCard>
 
+      {/* Factory Video Section */}
+      <AdminSectionCard title="Factory Video" onSave={() => handleSave('factoryVideo')} isSaving={saving === 'factoryVideo'} hasChanges={hasChanges('factoryVideo')}>
+        <div className="subsection-card">
+          <h4>Video Section Factory</h4>
+          <div className="grid-2-col">
+            <div className="form-column">
+              <FormItem label="Factory Video" icon={<FiVideo />}>
+                <div className="image-preview-container">
+                  {homeData.factoryVideo ? (
+                    <video 
+                      src={homeData.factoryVideo.startsWith('http') 
+                        ? homeData.factoryVideo 
+                        : `${BACKEND_DOMAIN}${homeData.factoryVideo}`} 
+                      width="300" 
+                      height="150" 
+                      controls 
+                      className="image-preview" 
+                    />
+                  ) : (
+                    <div className="no-video-placeholder">No factory video uploaded yet</div>
+                  )}
+                </div>
+                <input 
+                  type="file" 
+                  onChange={(e) => handleFileChange(e, 'factoryVideo')} 
+                  accept="video/*" 
+                  className="form-file-input"
+                />
+                {homeData.factoryVideo && (
+                  <div className="video-path">
+                    <small>{homeData.factoryVideo}</small>
+                  </div>
+                )}
+              </FormItem>
+            </div>
+          </div>
+        </div>
+      </AdminSectionCard>
+      
       {/* Content Sections */}
       <AdminSectionCard title="Content Sections" onSave={() => handleSave('sections')} isSaving={saving === 'sections'} hasChanges={hasChanges('sections')}>
-        {homeData.sections.map((section, index) => (
+        <div className="subsection-header">
+          <h4>Quản lý các section trên trang chủ</h4>
+          <button className="btn-add" onClick={handleAddSection}><FiPlusCircle /> Thêm section mới</button>
+        </div>
+
+        {console.log("Rendering sections:", homeData.sections)}
+        {Array.isArray(homeData.sections) && homeData.sections.map((section, index) => (
           <div key={index} className="subsection-card">
-              <h4>Section {index + 1}: {section.title}</h4>
+              <div className="subsection-header">
+                <h4>Section {index + 1}: {section.title}</h4>
+                <button 
+                  className="btn-delete" 
+                  onClick={() => handleDeleteSection(index)}
+                  title="Xóa section này"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
               <div className="grid-2-col">
                   <div className="form-column">
                       <FormItem label="Tiêu đề Section" icon={<FiType />}>
@@ -862,6 +1194,7 @@ export default function AdminHomePage() {
                       <FormItem label="Link cho nút" icon={<FiLink />}>
                         <input type="text" value={section.buttonLink} name="buttonLink" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
                       </FormItem>
+                      {/* Màu nền được cố định theo thiết kế */}
                   </div>
                   <div className="form-column">
                     <FormItem label="Media (Ảnh/Video)" icon={<FiImage />}>
@@ -873,7 +1206,9 @@ export default function AdminHomePage() {
                                     ? mediaPreview[`sections-${index}-mediaUrl`]
                                     : (files[`sections-${index}-mediaUrl`]
                                       ? URL.createObjectURL(files[`sections-${index}-mediaUrl`])
-                                      : `${BACKEND_DOMAIN}${section.mediaUrl}`)
+                                      : section.mediaUrl.startsWith('http') || section.mediaUrl.startsWith('/images')
+                                        ? section.mediaUrl
+                                        : `${BACKEND_DOMAIN}${section.mediaUrl}`)
                                 }
                                 alt={section.title} width={300} height={150} className="image-preview" 
                             />
@@ -884,7 +1219,9 @@ export default function AdminHomePage() {
                                   ? mediaPreview[`sections-${index}-mediaUrl`]
                                   : (files[`sections-${index}-mediaUrl`]
                                     ? URL.createObjectURL(files[`sections-${index}-mediaUrl`])
-                                    : `${BACKEND_DOMAIN}${section.mediaUrl}`)
+                                    : section.mediaUrl.startsWith('http') || section.mediaUrl.startsWith('/images')
+                                      ? section.mediaUrl
+                                      : `${BACKEND_DOMAIN}${section.mediaUrl}`)
                               }
                               width="300" height="150" controls className="image-preview" />
                         )}
@@ -895,6 +1232,28 @@ export default function AdminHomePage() {
                           accept="image/*,video/*" 
                           className="form-file-input"
                        />
+                       <div className="media-type-selector">
+                         <label className="media-type-label">
+                           <input
+                             type="radio"
+                             name={`mediaType-${index}`}
+                             value="image"
+                             checked={section.mediaType === 'image'}
+                             onChange={() => handleMediaTypeChange(index, 'image')}
+                           />
+                           <span>Ảnh</span>
+                         </label>
+                         <label className="media-type-label">
+                           <input
+                             type="radio"
+                             name={`mediaType-${index}`}
+                             value="video"
+                             checked={section.mediaType === 'video'}
+                             onChange={() => handleMediaTypeChange(index, 'video')}
+                           />
+                           <span>Video</span>
+                         </label>
+                       </div>
                     </FormItem>
                   </div>
               </div>
@@ -961,6 +1320,85 @@ export default function AdminHomePage() {
          ))}
       </AdminSectionCard>
 
+      {/* Contact Section */}
+      <AdminSectionCard title="Contact & Work With Us Section" onSave={() => handleSave('homeContact')} isSaving={saving === 'homeContact'} hasChanges={hasChanges('homeContact')}>
+        <div className="subsection-card">
+          <h4>Contact Section</h4>
+          <div className="grid-2-col">
+            <div className="form-column">
+              <FormItem label="Title" icon={<FiType />}>
+                <input 
+                  type="text" 
+                  value={homeData.homeContact?.contact?.title || ''} 
+                  name="title" 
+                  onChange={(e) => handleInputChange(e, 'homeContact', undefined, 'contact')} 
+                  className="form-input"
+                />
+              </FormItem>
+              <FormItem label="Description" icon={<FiFileText />}>
+                <textarea 
+                  value={homeData.homeContact?.contact?.description || ''} 
+                  name="description" 
+                  onChange={(e) => handleInputChange(e, 'homeContact', undefined, 'contact')} 
+                  className="form-textarea"
+                />
+              </FormItem>
+            </div>
+            <div className="form-column">
+              <FormItem label="Button Text" icon={<FiLink />}>
+                <input 
+                  type="text" 
+                  value={homeData.homeContact?.contact?.buttonText || ''} 
+                  name="buttonText" 
+                  onChange={(e) => handleInputChange(e, 'homeContact', undefined, 'contact')} 
+                  className="form-input"
+                />
+              </FormItem>
+
+            </div>
+          </div>
+        </div>
+
+        <div className="subsection-card">
+          <h4>Work With Us Section</h4>
+          <div className="grid-2-col">
+            <div className="form-column">
+              <FormItem label="Title" icon={<FiType />}>
+                <input 
+                  type="text" 
+                  value={homeData.homeContact?.workWithUs?.title || ''} 
+                  name="title" 
+                  onChange={(e) => handleInputChange(e, 'homeContact', undefined, 'workWithUs')} 
+                  className="form-input"
+                />
+              </FormItem>
+              <FormItem label="Description" icon={<FiFileText />}>
+                <textarea 
+                  value={homeData.homeContact?.workWithUs?.description || ''} 
+                  name="description" 
+                  onChange={(e) => handleInputChange(e, 'homeContact', undefined, 'workWithUs')} 
+                  className="form-textarea"
+                />
+              </FormItem>
+            </div>
+            <div className="form-column">
+              <FormItem label="Button Text" icon={<FiLink />}>
+                <input 
+                  type="text" 
+                  value={homeData.homeContact?.workWithUs?.buttonText || ''} 
+                  name="buttonText" 
+                  onChange={(e) => handleInputChange(e, 'homeContact', undefined, 'workWithUs')} 
+                  className="form-input"
+                />
+              </FormItem>
+
+            </div>
+          </div>
+        </div>
+
+
+      </AdminSectionCard>
+
       {/* Featured News Section */}
       <AdminSectionCard title="Tin tức hiển thị trên trang chủ">
           <div className="card-content">
@@ -1024,6 +1462,44 @@ export default function AdminHomePage() {
                 </div>
               )}
           </div>
+      </AdminSectionCard>
+      
+      {/* Certifications Small Cards Section */}
+      <AdminSectionCard
+        title="Chứng chỉ nhỏ (Certifications - Small Cards)"
+        onSave={() => handleSave('certifications')}
+        isSaving={saving === 'certifications'}
+        hasChanges={hasChanges('certifications')}
+      >
+        {homeData?.certifications?.slice(2, 7).map((cert, idx) => {
+          const realIndex = idx + 2; // index thực tế trong mảng certifications
+          return (
+            <div key={cert._id || realIndex} className="subsection-card">
+              <FormItem label="Mô tả (Description)">
+                <input
+                  type="text"
+                  value={cert.description}
+                  onChange={e => handleCertificationChange(e, realIndex, 'description')}
+                  className="form-input"
+                />
+              </FormItem>
+              <FormItem label="Hình ảnh (Image)">
+                <div className="image-preview-container">
+                  {logoPreview[`cert_${realIndex}`]
+                    ? <Image src={logoPreview[`cert_${realIndex}`]} alt="Certification" width={120} height={60} className="image-preview" />
+                    : cert.image && <Image src={`${BACKEND_DOMAIN}${cert.image}`} alt="Certification" width={120} height={60} className="image-preview" />
+                  }
+                </div>
+                <input
+                  type="file"
+                  onChange={e => handleCertificationFileChange(e, realIndex)}
+                  accept="image/*"
+                  className="form-file-input"
+                />
+              </FormItem>
+            </div>
+          );
+        })}
       </AdminSectionCard>
       
       {/* Modal chỉnh sửa tin tức */}

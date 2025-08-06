@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { BACKEND_DOMAIN } from '@/api/config';
+import { getOptimizedImageUrls } from "../../shared/imageUtils";
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails';
@@ -85,6 +86,105 @@ interface ProductDetails {
   updatedAt: string | null;
 }
 
+interface ResponsiveImgProps {
+  srcs: {
+    origin?: string;
+    webp?: string;
+    medium?: string;
+    thumbnail?: string;
+    low?: string;
+  };
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  style?: React.CSSProperties;
+}
+
+function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: ResponsiveImgProps) {
+  // Kiểm tra nếu không có srcs
+  if (!srcs) {
+    console.warn(`No image sources provided for: ${alt}`);
+    return null;
+  }
+  
+  try {
+    // Chọn ảnh phù hợp nhất dựa trên kích thước và độ phân giải
+    const getBestImageUrl = () => {
+      // Nếu có kích thước cụ thể, chọn ảnh phù hợp
+      if (width && width <= 300) {
+        // Ưu tiên thumbnail cho kích thước nhỏ
+        return srcs.thumbnail || srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 800) {
+        // Ưu tiên medium cho kích thước trung bình
+        return srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 1200) {
+        // Ưu tiên low cho kích thước lớn (nhưng không quá lớn)
+        return srcs.low || srcs.webp || srcs.origin;
+      } else {
+        // Ưu tiên webp cho kích thước rất lớn
+        return srcs.webp || srcs.origin;
+      }
+    };
+    
+    // Lấy URL ảnh tốt nhất
+    const imgSrc = getBestImageUrl() || '';
+    
+    // Kiểm tra xem URL có hợp lệ không
+    const isValidUrl = imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('/'));
+    
+    if (!isValidUrl) {
+      console.error(`Invalid image URL for ${alt}:`, imgSrc);
+      return null;
+    }
+    
+    // Tạo srcSet chỉ khi có đủ các phiên bản
+    const srcSet = (() => {
+      // Nếu có đủ các phiên bản, tạo srcSet
+      if (srcs.thumbnail && srcs.medium && srcs.low && srcs.webp) {
+        return `${srcs.thumbnail} 300w, ${srcs.medium} 800w, ${srcs.low} 1200w, ${srcs.webp} 1920w`;
+      }
+      // Nếu chỉ có một số phiên bản
+      const sets = [];
+      if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
+      if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.low) sets.push(`${srcs.low} 1200w`);
+      if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
+      
+      return sets.length > 0 ? sets.join(', ') : undefined;
+    })();
+    
+    // Chuẩn bị sizes attribute nếu không được cung cấp
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px";
+    
+    return (
+      <img
+        src={imgSrc}
+        srcSet={srcSet}
+        sizes={sizes || defaultSizes}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading="lazy"
+        style={style}
+        onError={(e) => {
+          console.error(`Failed to load image: ${imgSrc}`);
+          // Fallback to origin if available and different from current src
+          if (srcs.origin && srcs.origin !== imgSrc) {
+            console.log(`Falling back to origin: ${srcs.origin}`);
+            (e.target as HTMLImageElement).src = srcs.origin;
+          }
+        }}
+      />
+    );
+  } catch (error) {
+    console.error(`Error rendering image ${alt}:`, error);
+    return null;
+  }
+}
+
 interface ProductDetailsProps {
   product: ProductDetails | null;
   error: string | null;
@@ -112,13 +212,16 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
         .map((img, index) => {
           // Đảm bảo URL ảnh hợp lệ
           const imgUrl = img.url || '';
+          // Sử dụng getOptimizedImageUrls để tạo các phiên bản tối ưu của ảnh
+          const optimizedSrcs = getOptimizedImageUrls(imgUrl);
           
           return {
-            src: `${BACKEND_DOMAIN}${imgUrl}?v=${index}`,
+            src: optimizedSrcs.origin || `${BACKEND_DOMAIN}${imgUrl}?v=${index}`,
             width: 4,
             height: 3,
             alt: img.alt || `Image ${index + 1}`,
             key: `${applicationId}-${imgUrl}-${index}`,
+            optimizedSrcs: optimizedSrcs, // Lưu các phiên bản tối ưu để sử dụng sau này
           };
         });
     } catch (error) {
@@ -323,22 +426,31 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
                                         // 2 ảnh trên, 1 ảnh lớn dưới
                                         return (
                                           <div style={{ display: 'grid', gridTemplateRows: '160px 200px', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                            <img
-                                              src={galleryImages[0].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[0].optimizedSrcs || getOptimizedImageUrls(galleryImages[0].src)}
                                               alt={galleryImages[0].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 1, gridColumn: 1 }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={400}
+                                              height={300}
                                               onClick={() => { openLightbox(application.id, galleryImages, 0); }}
                                             />
-                                            <img
-                                              src={galleryImages[1].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[1].optimizedSrcs || getOptimizedImageUrls(galleryImages[1].src)}
                                               alt={galleryImages[1].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 1, gridColumn: 2 }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={400}
+                                              height={300}
                                               onClick={() => { openLightbox(application.id, galleryImages, 1); }}
                                             />
-                                            <img
-                                              src={galleryImages[2].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[2].optimizedSrcs || getOptimizedImageUrls(galleryImages[2].src)}
                                               alt={galleryImages[2].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 2, gridColumn: '1 / span 2' }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={800}
+                                              height={400}
                                               onClick={() => { openLightbox(application.id, galleryImages, 2); }}
                                             />
                                           </div>
@@ -348,11 +460,14 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
                                         return (
                                           <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                             {galleryImages.map((img, idx) => (
-                                              <img
+                                              <ResponsiveImg
                                                 key={idx}
-                                                src={img.src}
+                                                srcs={img.optimizedSrcs || getOptimizedImageUrls(img.src)}
                                                 alt={img.alt}
                                                 style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8 }}
+                                                className="cursor-pointer"
+                                                width={400}
+                                                height={300}
                                                 onClick={() => { openLightbox(application.id, galleryImages, idx); }}
                                               />
                                             ))}
@@ -362,34 +477,49 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
                                         // 2 trên, 3 dưới
                                         return (
                                           <div style={{ display: 'grid', gridTemplateRows: '120px 120px', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                                            <img
-                                              src={galleryImages[0].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[0].optimizedSrcs || getOptimizedImageUrls(galleryImages[0].src)}
                                               alt={galleryImages[0].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 1, gridColumn: '1 / span 2' }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={800}
+                                              height={400}
                                               onClick={() => { openLightbox(application.id, galleryImages, 0); }}
                                             />
-                                            <img
-                                              src={galleryImages[1].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[1].optimizedSrcs || getOptimizedImageUrls(galleryImages[1].src)}
                                               alt={galleryImages[1].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 1, gridColumn: 3 }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={400}
+                                              height={300}
                                               onClick={() => { openLightbox(application.id, galleryImages, 1); }}
                                             />
-                                            <img
-                                              src={galleryImages[2].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[2].optimizedSrcs || getOptimizedImageUrls(galleryImages[2].src)}
                                               alt={galleryImages[2].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 2, gridColumn: 1 }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={400}
+                                              height={300}
                                               onClick={() => { openLightbox(application.id, galleryImages, 2); }}
                                             />
-                                            <img
-                                              src={galleryImages[3].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[3].optimizedSrcs || getOptimizedImageUrls(galleryImages[3].src)}
                                               alt={galleryImages[3].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 2, gridColumn: 2 }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={400}
+                                              height={300}
                                               onClick={() => { openLightbox(application.id, galleryImages, 3); }}
                                             />
-                                            <img
-                                              src={galleryImages[4].src}
+                                            <ResponsiveImg
+                                              srcs={galleryImages[4].optimizedSrcs || getOptimizedImageUrls(galleryImages[4].src)}
                                               alt={galleryImages[4].alt}
-                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, gridRow: 2, gridColumn: 3 }}
+                                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }}
+                                              className="cursor-pointer"
+                                              width={400}
+                                              height={300}
                                               onClick={() => { openLightbox(application.id, galleryImages, 4); }}
                                             />
                                           </div>
@@ -399,9 +529,9 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
                                         return (
                                           <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
                                             {galleryImages.map((img, idx) => (
-                                              <img
+                                              <ResponsiveImg
                                                 key={idx}
-                                                src={img.src}
+                                                srcs={img.optimizedSrcs || getOptimizedImageUrls(img.src)}
                                                 alt={img.alt}
                                                 style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8 }}
                                                 onClick={() => { openLightbox(application.id, galleryImages, idx); }}
@@ -420,9 +550,9 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
                                             overflowY: 'auto',
                                           }}>
                                             {galleryImages.map((img, idx) => (
-                                              <img
+                                              <ResponsiveImg
                                                 key={idx}
-                                                src={img.src}
+                                                srcs={img.optimizedSrcs || getOptimizedImageUrls(img.src)}
                                                 alt={img.alt}
                                                 style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8 }}
                                                 onClick={() => { openLightbox(application.id, galleryImages, idx); }}
@@ -447,9 +577,9 @@ export default function ProductDetails({ product, error, id }: ProductDetailsPro
                                         return (
                                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                             {galleryImages.map((img, idx) => (
-                                              <img
+                                              <ResponsiveImg
                                                 key={idx}
-                                                src={img.src}
+                                                srcs={img.optimizedSrcs || getOptimizedImageUrls(img.src)}
                                                 alt={img.alt}
                                                 style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 8 }}
                                                 onClick={() => { openLightbox(application.id, galleryImages, idx); }}

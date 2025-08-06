@@ -10,6 +10,8 @@ import Toast from "@/components/admin/Toast";
 import AdminSectionCard from "@/components/admin/AdminSectionCard";
 import { FiTrash2, FiEdit, FiPlusCircle } from 'react-icons/fi';
 import { BACKEND_DOMAIN } from '@/api/config';
+import { getOptimizedImageUrls } from '@/shared/imageUtils';
+import ResponsiveImg from '@/components/pages/facilities';
 
 interface KeyMetric {
   id: string;
@@ -394,22 +396,32 @@ export default function AdminFacilitiesPage() {
           <FiPlusCircle /> Thêm Feature
               </button>
         <div className="features-grid">
-            {facilitiesData?.facilityFeatures?.map((feature, index) => (
-            <div key={feature.id || index} className="feature-card">
-              <div className="feature-card-actions">
-                <button className="edit-btn" onClick={() => openModal('facilityFeature','edit',index,feature)}><FiEdit /></button>
-                <button className="delete-btn" onClick={() => handleDeleteFacilityFeature(index)} disabled={saving} style={{ color: '#ff4444' }}><FiTrash2 /></button>
-              </div>
-              <div className="feature-image-preview">
-                <Image src={getFeatureImageUrl(feature.image)} alt={feature.imageAlt} width={220} height={140} className="preview-image" />
-              </div>
-              <div className="feature-content">
-                <h4>{feature.title}</h4>
-                <p>{feature.description}</p>
-                <div className="feature-layout">Layout: {feature.layout}</div>
-              </div>
-              </div>
-            ))}
+            {facilitiesData?.facilityFeatures?.map((feature, index) => {
+  const firstImageUrl = feature.images && feature.images.length > 0 ? feature.images[0].url : (feature.image || '/images/placeholder-facility.jpg');
+  const firstImageAlt = feature.images && feature.images.length > 0 ? feature.images[0].alt : feature.imageAlt;
+  return (
+    <div key={feature.id || index} className="feature-card">
+      <div className="feature-card-actions">
+        <button className="edit-btn" onClick={() => openModal('facilityFeature','edit',index,feature)}><FiEdit /></button>
+        <button className="delete-btn" onClick={() => handleDeleteFacilityFeature(index)} disabled={saving} style={{ color: '#ff4444' }}><FiTrash2 /></button>
+      </div>
+      <div className="feature-image-preview">
+        <Image
+          src={getFeatureImageUrl(firstImageUrl)}
+          alt={firstImageAlt}
+          width={220}
+          height={140}
+          className="preview-image"
+        />
+      </div>
+      <div className="feature-content">
+        <h4>{feature.title}</h4>
+        <p>{feature.description}</p>
+        <div className="feature-layout">Layout: {feature.layout}</div>
+      </div>
+    </div>
+  );
+})}
         </div>
       </AdminSectionCard>
       {/* Modal popup cho Add/Edit */}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Slider from "react-slick";
 import { BACKEND_DOMAIN } from '@/api/config';
+import { getOptimizedImageUrls } from "../../shared/imageUtils";
 import { useIntersectionObserver } from "../../app/hooks/useCounterAnimation";
 import AnimatedMetric from "../AnimatedMetric";
 
@@ -56,6 +57,105 @@ interface FacilitiesData {
 }
 
 // Image Slider Component for facilities
+interface ResponsiveImgProps {
+  srcs: {
+    origin?: string;
+    webp?: string;
+    medium?: string;
+    thumbnail?: string;
+    low?: string;
+  };
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  style?: React.CSSProperties;
+}
+
+function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: ResponsiveImgProps) {
+  // Kiểm tra nếu không có srcs
+  if (!srcs) {
+    console.warn(`No image sources provided for: ${alt}`);
+    return null;
+  }
+  
+  try {
+    // Chọn ảnh phù hợp nhất dựa trên kích thước và độ phân giải
+    const getBestImageUrl = () => {
+      // Nếu có kích thước cụ thể, chọn ảnh phù hợp
+      if (width && width <= 300) {
+        // Ưu tiên thumbnail cho kích thước nhỏ
+        return srcs.thumbnail || srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 800) {
+        // Ưu tiên medium cho kích thước trung bình
+        return srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 1200) {
+        // Ưu tiên low cho kích thước lớn (nhưng không quá lớn)
+        return srcs.low || srcs.webp || srcs.origin;
+      } else {
+        // Ưu tiên webp cho kích thước rất lớn
+        return srcs.webp || srcs.origin;
+      }
+    };
+    
+    // Lấy URL ảnh tốt nhất
+    const imgSrc = getBestImageUrl() || '';
+    
+    // Kiểm tra xem URL có hợp lệ không
+    const isValidUrl = imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('/'));
+    
+    if (!isValidUrl) {
+      console.error(`Invalid image URL for ${alt}:`, imgSrc);
+      return null;
+    }
+    
+    // Tạo srcSet chỉ khi có đủ các phiên bản
+    const srcSet = (() => {
+      // Nếu có đủ các phiên bản, tạo srcSet
+      if (srcs.thumbnail && srcs.medium && srcs.low && srcs.webp) {
+        return `${srcs.thumbnail} 300w, ${srcs.medium} 800w, ${srcs.low} 1200w, ${srcs.webp} 1920w`;
+      }
+      // Nếu chỉ có một số phiên bản
+      const sets = [];
+      if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
+      if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.low) sets.push(`${srcs.low} 1200w`);
+      if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
+      
+      return sets.length > 0 ? sets.join(', ') : undefined;
+    })();
+    
+    // Chuẩn bị sizes attribute nếu không được cung cấp
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px";
+    
+    return (
+      <img
+        src={imgSrc}
+        srcSet={srcSet}
+        sizes={sizes || defaultSizes}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading="lazy"
+        style={style}
+        onError={(e) => {
+          console.error(`Failed to load image: ${imgSrc}`);
+          // Fallback to origin if available and different from current src
+          if (srcs.origin && srcs.origin !== imgSrc) {
+            console.log(`Falling back to origin: ${srcs.origin}`);
+            (e.target as HTMLImageElement).src = srcs.origin;
+          }
+        }}
+      />
+    );
+  } catch (error) {
+    console.error(`Error rendering image ${alt}:`, error);
+    return null;
+  }
+}
+
 interface FacilityImageSliderProps {
   images: ImageData[];
   fallbackAlt: string;
@@ -102,12 +202,12 @@ function FacilityImageSlider({
     const image = sortedImages[0];
     return (
       <div className="facility-image-slider single-image">
-        <Image
-          src={`${BACKEND_DOMAIN}${image.url}`}
+        <ResponsiveImg
+          srcs={getOptimizedImageUrls(image.url)}
           alt={image.alt || fallbackAlt}
           width={600}
           height={400}
-          className="img-fluid rounded"
+          className="img-fluid rounded facility-image"
           style={{ objectFit: "cover" }}
         />
       </div>
@@ -125,12 +225,12 @@ function FacilityImageSlider({
       <Slider {...sliderSettings}>
         {sortedImages.map((image, index) => (
           <div key={image._id || index} className="slider-item">
-            <Image
-              src={`${BACKEND_DOMAIN}${image.url}`}
+            <ResponsiveImg
+              srcs={getOptimizedImageUrls(image.url)}
               alt={image.alt || `${fallbackAlt} - ${index + 1}`}
               width={600}
               height={400}
-              className="img-fluid"
+              className="img-fluid facility-image"
               style={{ objectFit: "cover" }}
             />
           </div>

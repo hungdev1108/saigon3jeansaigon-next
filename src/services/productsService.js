@@ -1,4 +1,5 @@
 import productsApi from "../api/productsApi";
+import { getOptimizedImageUrls } from "../shared/imageUtils";
 
 /**
  * Service để xử lý dữ liệu products
@@ -64,16 +65,28 @@ class ProductsService {
   processGalleryImages(imagesData) {
     if (!Array.isArray(imagesData)) return [];
 
+    // Sử dụng getOptimizedImageUrls đã import ở đầu file
+
     return imagesData
       .filter((image) => image.isActive !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((image) => ({
-        id: image._id || "",
-        url: image.url || "/uploads/images/placeholder-product.jpg", // Direct path từ BE
-        alt: image.alt || "Product Image",
-        order: image.order || 0,
-        isActive: image.isActive !== false,
-      }));
+      .map((image) => {
+        // Lấy URL ảnh hoặc dùng ảnh mặc định
+        const imageUrl = image.url || "/uploads/images/placeholder-product.jpg";
+        
+        // Tạo các phiên bản tối ưu của ảnh
+        const optimizedUrls = getOptimizedImageUrls(imageUrl);
+        
+        return {
+          id: image._id || "",
+          url: imageUrl, // Giữ lại URL gốc để tương thích ngược
+          alt: image.alt || "Product Image",
+          order: image.order || 0,
+          isActive: image.isActive !== false,
+          // Thêm các phiên bản tối ưu của ảnh
+          optimizedUrls: optimizedUrls
+        };
+      });
   }
 
   /**

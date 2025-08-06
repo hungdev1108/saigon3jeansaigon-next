@@ -42,14 +42,34 @@ class HomeService {
       }
 
       const { data } = result;
-      // Không gộp nữa, trả về riêng biệt
+      
+      // Xử lý dữ liệu sections để đảm bảo cấu trúc đúng
+      let sectionsData = [];
+      let factoryVideo = "";
+      
+      if (data.sections) {
+        if (data.sections.sections && Array.isArray(data.sections.sections)) {
+          sectionsData = data.sections.sections;
+          factoryVideo = data.sections.factoryVideo || "";
+        } else if (Array.isArray(data.sections)) {
+          sectionsData = data.sections;
+        }
+      }
+      
+      console.log("API data:", data);
+      console.log("Processed sections:", sectionsData);
+      console.log("Factory video:", factoryVideo);
+      
+      // Sử dụng dữ liệu trực tiếp từ API
       return {
-        hero: this.processHeroData(data.hero),
-        sections: this.processSectionsData(data.sections),
-        customers: this.processCustomersData(data.customers),
-        certifications: this.processCertificationsData(data.certifications),
-        featuredNews: this.processNewsData(data.featuredNews),
-        regularNews: this.processNewsData(data.regularNews),
+        hero: data.hero || this.getDefaultHeroData(),
+        sections: sectionsData || [],
+        factoryVideo: data.factoryVideo || factoryVideo || "",
+        customers: data.customers || this.getDefaultCustomersData(),
+        certifications: data.certifications || this.getDefaultCertificationsData(),
+        featuredNews: data.featuredNews || [],
+        regularNews: data.regularNews || [],
+        homeContact: data.homeContact || this.getDefaultHomeContactData(),
       };
     } catch (error) {
       console.error("❌ HomeService - Error getting home data:", error.message);
@@ -65,36 +85,38 @@ class HomeService {
   processHeroData(heroData) {
     if (!heroData) return this.getDefaultHeroData();
 
-    return {
-      title: heroData.title || "WELCOME TO SAIGON 3 JEAN",
-      subtitle: heroData.subtitle || "Leading garment manufacturer in Vietnam",
-      backgroundImage:
-        heroData.backgroundImage || "/images/home_banner-section2.jpg",
-      videoUrl: heroData.videoUrl || "",
-      isActive: heroData.isActive !== false,
-    };
+    // Sử dụng dữ liệu trực tiếp từ API
+    return heroData;
   }
 
   /**
    * Xử lý dữ liệu sections (3 cards)
-   * @param {Array} sectionsData - Dữ liệu sections từ API
-   * @returns {Array} Dữ liệu sections đã xử lý
+   * @param {Object} sectionsData - Dữ liệu sections từ API
+   * @returns {Object} Dữ liệu sections đã xử lý
    */
   processSectionsData(sectionsData) {
-    if (!Array.isArray(sectionsData)) return this.getDefaultSectionsData();
-
-    return sectionsData
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((section) => ({
-        title: section.title || "",
-        content: section.content || "",
-        mediaType: section.mediaType || "image",
-        mediaUrl: section.mediaUrl || "/images/home_banner-section2.jpg",
-        buttonText: section.buttonText || "LEARN MORE",
-        buttonLink: section.buttonLink || "#",
-        backgroundColor: section.backgroundColor || "#007bff",
-        order: section.order || 0,
-      }));
+    // Sử dụng dữ liệu trực tiếp từ API
+    // Check if we have the new format with sections and factoryVideo
+    if (sectionsData && sectionsData.sections && Array.isArray(sectionsData.sections)) {
+      return {
+        sections: sectionsData.sections.sort((a, b) => (a.order || 0) - (b.order || 0)),
+        factoryVideo: sectionsData.factoryVideo || ""
+      };
+    }
+    
+    // For backward compatibility with old format
+    if (Array.isArray(sectionsData)) {
+      return {
+        sections: sectionsData.sort((a, b) => (a.order || 0) - (b.order || 0)),
+        factoryVideo: ""
+      };
+    }
+    
+    // Default case
+    return {
+      sections: this.getDefaultSectionsData(),
+      factoryVideo: ""
+    };
   }
 
   /**
@@ -105,10 +127,8 @@ class HomeService {
   processCustomersData(customersData) {
     if (!customersData) return this.getDefaultCustomersData();
 
-    return {
-      denimWoven: this.processCustomerList(customersData.denimWoven),
-      knit: this.processCustomerList(customersData.knit),
-    };
+    // Sử dụng dữ liệu trực tiếp từ API
+    return customersData;
   }
 
   /**
@@ -119,15 +139,8 @@ class HomeService {
   processCustomerList(customerList) {
     if (!Array.isArray(customerList)) return [];
 
-    return customerList
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((customer) => ({
-        _id: customer._id || "",
-        name: customer.name || "",
-        logo: customer.logo || "/images/placeholder-logo.png",
-        website: customer.website || "",
-        order: customer.order || 0,
-      }));
+    // Sử dụng dữ liệu trực tiếp từ API, chỉ sắp xếp theo thứ tự
+    return customerList.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 
   /**
@@ -139,16 +152,8 @@ class HomeService {
     if (!Array.isArray(certificationsData))
       return this.getDefaultCertificationsData();
 
-    return certificationsData
-      .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((cert) => ({
-        name: cert.name || "",
-        description: cert.description || "",
-        image: cert.image || "/images/placeholder-cert.png",
-        category: cert.category || "general",
-        order: cert.order || 0,
-        issuedDate: cert.issuedDate || null,
-      }));
+    // Sử dụng dữ liệu trực tiếp từ API, chỉ sắp xếp theo thứ tự
+    return certificationsData.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 
   /**
@@ -159,29 +164,43 @@ class HomeService {
   processNewsData(newsData) {
     if (!Array.isArray(newsData)) return [];
 
-    return newsData.map((news) => ({
-      id: news._id || "",
-      title: news.title || "",
-      excerpt: news.excerpt || "",
-      content: news.content || "",
-      image: news.image || "/images/placeholder-news.jpg",
-      publishDate: news.publishDate || new Date().toISOString(),
-      slug: news.slug || "",
-      tags: news.tags || [],
-      author: news.author || "Saigon 3 Jean",
-      _id: news._id,
-    }));
+    // Sử dụng dữ liệu trực tiếp từ API
+    return newsData;
   }
 
   // Dữ liệu mặc định khi API fail
   getDefaultHomeData() {
+    console.log("Getting default home data including homeContact");
     return {
       hero: this.getDefaultHeroData(),
-      sections: this.getDefaultSectionsData(),
+      sections: this.getDefaultSectionsData().sections,
+      factoryVideo: "",
       customers: this.getDefaultCustomersData(),
       certifications: this.getDefaultCertificationsData(),
       featuredNews: this.getDefaultNewsData(),
+      homeContact: this.getDefaultHomeContactData(),
     };
+  }
+  
+  getDefaultHomeContactData() {
+    console.log("Creating default HomeContact data");
+    const defaultData = {
+      contact: {
+        title: "CONTACT",
+        description: "Seeking us and you'll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint",
+        buttonText: "CONTACT US",
+        buttonLink: "/contact"
+      },
+      workWithUs: {
+        title: "WORK WITH US",
+        description: "We are looking for intelligent, passionate individuals who are ready to join us in building and growing the company",
+        buttonText: "LEARN MORE",
+        buttonLink: "/recruitment"
+      },
+      isActive: true
+    };
+    console.log("Default HomeContact data:", defaultData);
+    return defaultData;
   }
 
   getDefaultHeroData() {
@@ -364,24 +383,44 @@ class HomeService {
    */
   async updateHomeSections(sectionsData, files = {}) {
     const formData = new FormData();
-    formData.append('sections', JSON.stringify(sectionsData));
     
+    // Check if sectionsData is an object with sections property (new format)
+    if (sectionsData && sectionsData.sections) {
+      formData.append('sections', JSON.stringify(sectionsData.sections));
+      
+      // Xử lý factoryVideo nếu có
+      if (sectionsData.factoryVideo !== undefined) {
+        formData.append('factoryVideoUrl', sectionsData.factoryVideo);
+      }
+    } else {
+      // Backward compatibility
+      formData.append('sections', JSON.stringify(sectionsData));
+    }
+    
+    console.log('Sections data to save:', sectionsData);
     console.log('Files to upload:', Object.keys(files));
     
     // Xử lý files theo đúng định dạng mà backend mong đợi
     Object.keys(files).forEach(key => {
       if (files[key]) {
+        // Handle factory video upload
+        if (key === 'factoryVideo') {
+          formData.append('factoryVideo', files[key]);
+          console.log('Appending factory video file');
+        }
         // Kiểm tra nếu key có định dạng 'sections-{index}-mediaUrl'
-        const match = key.match(/sections-(\d+)-mediaUrl/);
-        if (match && match[1]) {
-          const index = match[1];
-          // Gửi file với tên trường đúng định dạng của backend
-          formData.append(`card_${index}`, files[key]);
-          console.log(`Appending file with field name: card_${index}`);
-        } else {
-          // Fallback cho các trường hợp khác (nếu có)
-          formData.append(key, files[key]);
-          console.log(`Appending file with original field name: ${key}`);
+        else {
+          const match = key.match(/sections-(\d+)-mediaUrl/);
+          if (match && match[1]) {
+            const index = match[1];
+            // Gửi file với tên trường đúng định dạng của backend
+            formData.append(`card_${index}`, files[key]);
+            console.log(`Appending file with field name: card_${index}`);
+          } else {
+            // Fallback cho các trường hợp khác (nếu có)
+            formData.append(key, files[key]);
+            console.log(`Appending file with original field name: ${key}`);
+          }
         }
       }
     });
@@ -522,6 +561,74 @@ class HomeService {
       return response.json();
     } catch (error) {
       console.error(`❌ HomeService - Error deleting news ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get home contact section
+   * @returns {Promise<Object>} Home contact data
+   */
+  async getHomeContact() {
+    try {
+      console.log("HomeService - Getting home contact data");
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/contact-section`, {
+        cache: 'no-store',
+      });
+      
+      if (!response.ok) {
+        console.error(`❌ HomeService - Failed to fetch home contact data: ${response.statusText}`);
+        throw new Error(`Failed to fetch home contact data: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log("HomeService - Home contact data received:", result);
+      return result;
+    } catch (error) {
+      console.error("❌ HomeService - Error getting home contact data:", error.message);
+      return { 
+        success: false, 
+        data: this.getDefaultHomeContactData(),
+        error: error.message
+      };
+    }
+  }
+  
+  /**
+   * Update home contact section
+   * @param {Object} contactData - Contact section data to update
+   * @returns {Promise<Object>} Update result
+   */
+  async updateHomeContact(contactData) {
+    try {
+      console.log("HomeService - Updating home contact with data:", contactData);
+      
+      // Ensure contactData has the correct structure
+      const dataToSend = {
+        contact: contactData.contact || {},
+        workWithUs: contactData.workWithUs || {},
+        isActive: contactData.isActive !== undefined ? contactData.isActive : true
+      };
+      
+      console.log("HomeService - Sending data to API:", dataToSend);
+      
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/contact-section`, {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(dataToSend)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ HomeService - API error response:", errorText);
+        throw new Error(`Failed to update home contact: ${response.statusText}. ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log("HomeService - API success response:", result);
+      return result;
+    } catch (error) {
+      console.error("❌ HomeService - Error updating home contact:", error.message);
       throw error;
     }
   }
@@ -676,6 +783,26 @@ class HomeService {
     } catch (error) {
       console.error("❌ HomeService - Error getting news:", error.message);
       return [];
+    }
+  }
+
+  async updateCertifications(certifications, files = {}) {
+    try {
+      const formData = new FormData();
+      formData.append('certifications', JSON.stringify(certifications));
+      Object.keys(files).forEach(key => {
+        formData.append(key, files[key]);
+      });
+      const response = await fetch(`${BACKEND_DOMAIN}/api/home/certifications`, {
+        method: 'PUT',
+        headers: getAuthHeaders(true),
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to update certifications');
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating certifications:', error);
+      throw error;
     }
   }
 }

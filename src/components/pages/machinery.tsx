@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import Slider from "react-slick";
-import { BACKEND_DOMAIN } from '@/api/config';
+import { getOptimizedImageUrls } from '../../shared/imageUtils';
 
 interface Machine {
   id: string;
@@ -75,52 +74,44 @@ function MachineImageSlider({ images, alt, containerHeight }: MachineImageSlider
     ],
   };
 
-  // Format image URL correctly
-  const getImageUrl = (url: string) => {
-    if (!url) return '/images/placeholder.jpg';
-    if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return `${BACKEND_DOMAIN}${url}`;
-    return `${BACKEND_DOMAIN}/${url}`;
-  };
-
-  // If only one image, display without slider
+  // Nếu chỉ có 1 ảnh, hiển thị không slider
   if (images.length === 1) {
     return (
-      <Image
-        src={getImageUrl(images[0].url)}
+      <ResponsiveImg
+        srcs={getOptimizedImageUrls(String(images[0].url)) as OptimizedImageUrls}
         alt={images[0].alt || alt}
-        className="img-fluid"
         width={1500}
         height={900}
-        style={{ 
-          width: '100%', 
-          height: containerHeight > 0 ? `${containerHeight}px` : '100%', 
+        className="img-fluid"
+        style={{
+          width: '100%',
+          height: containerHeight > 0 ? `${containerHeight}px` : '100%',
           objectFit: 'cover',
           objectPosition: 'center',
-          borderRadius: 16
+          borderRadius: 16,
         }}
       />
     );
   }
 
-  // Multiple images - use slider
+  // Nhiều ảnh - dùng slider
   return (
     <div className="machine-image-slider" style={{ height: containerHeight > 0 ? `${containerHeight}px` : 'auto' }}>
       <Slider {...sliderSettings}>
         {images.map((image, index) => (
           <div key={index} className="slider-item">
-            <Image
-              src={`${BACKEND_DOMAIN}${image.url}`}
+            <ResponsiveImg
+              srcs={getOptimizedImageUrls(String(image.url)) as OptimizedImageUrls}
               alt={image.alt || `${alt} - ${index + 1}`}
-              className="slider-img-full"
               width={1200}
               height={900}
-              style={{ 
-                width: '100%', 
-                height: containerHeight > 0 ? `${containerHeight}px` : '100%', 
-                objectFit: 'cover', 
+              className="slider-img-full"
+              style={{
+                width: '100%',
+                height: containerHeight > 0 ? `${containerHeight}px` : '100%',
+                objectFit: 'cover',
                 objectPosition: 'center',
-                borderRadius: 16 
+                borderRadius: 16,
               }}
             />
           </div>
@@ -488,4 +479,78 @@ export default function Machinery({ machineryData }: MachineryProps) {
       </section>
     </>
   );
+}
+
+interface OptimizedImageUrls {
+  origin: string;
+  webp: string;
+  medium: string;
+  thumbnail: string;
+  low: string;
+}
+
+interface ResponsiveImgProps {
+  srcs: OptimizedImageUrls;
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  sizes?: string;
+  style?: React.CSSProperties;
+}
+
+function ResponsiveImg({ srcs, alt, className, width, height, sizes, style }: ResponsiveImgProps) {
+  if (!srcs) {
+    console.warn(`No image sources provided for: ${alt}`);
+    return null;
+  }
+  try {
+    const getBestImageUrl = () => {
+      if (width && width <= 300) {
+        return srcs.thumbnail || srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 800) {
+        return srcs.medium || srcs.low || srcs.webp || srcs.origin;
+      } else if (width && width <= 1200) {
+        return srcs.low || srcs.webp || srcs.origin;
+      } else {
+        return srcs.webp || srcs.origin;
+      }
+    };
+    const imgSrc = getBestImageUrl() || '';
+    const isValidUrl = imgSrc && (imgSrc.startsWith('http') || imgSrc.startsWith('/'));
+    if (!isValidUrl) {
+      console.error(`Invalid image URL for ${alt}:`, imgSrc);
+      return null;
+    }
+    const srcSet = (() => {
+      const sets = [];
+      if (srcs.thumbnail) sets.push(`${srcs.thumbnail} 300w`);
+      if (srcs.medium) sets.push(`${srcs.medium} 800w`);
+      if (srcs.low) sets.push(`${srcs.low} 1200w`);
+      if (srcs.webp) sets.push(`${srcs.webp} 1920w`);
+      return sets.length > 0 ? sets.join(', ') : undefined;
+    })();
+    const defaultSizes = "(max-width: 300px) 300px, (max-width: 800px) 800px, (max-width: 1200px) 1200px, 1920px";
+    return (
+      <img
+        src={imgSrc}
+        srcSet={srcSet}
+        sizes={sizes || defaultSizes}
+        alt={alt}
+        className={className}
+        width={width}
+        height={height}
+        loading="lazy"
+        style={style}
+        onError={(e) => {
+          if (srcs.origin && srcs.origin !== imgSrc) {
+            (e.target as HTMLImageElement).src = srcs.origin;
+          }
+        }}
+      />
+    );
+  } catch (error) {
+    console.error(`Error rendering image ${alt}:`, error);
+    return null;
+  }
 }
