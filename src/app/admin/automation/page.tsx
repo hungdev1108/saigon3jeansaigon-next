@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ChangeEvent } from "react";
 import Image from "next/image";
-import { FiEdit, FiTrash2, FiPlusCircle, FiX } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlusCircle, FiX, FiUpload, FiEdit2 } from 'react-icons/fi';
 import automationService from '@/services/automationService';
 import { toast } from 'react-toastify';
 import { BACKEND_DOMAIN } from '@/api/config';
@@ -248,44 +248,66 @@ export default function AdminAutomationPage() {
               <h3>{editingItem ? 'Chỉnh sửa Quy trình' : 'Thêm Quy trình mới'}</h3>
               <button className="btn-close" onClick={handleCloseModal}><FiX /></button>
             </div>
-            <div className="modal-info-banner">
-              <div className="info-icon">ℹ️</div>
-              <div className="info-text">
-                <strong>Lưu ý quan trọng:</strong> Mỗi hình ảnh phải có nội dung tương ứng. Khi người dùng xem trang Automation, 
-                nội dung sẽ hiển thị khớp với hình ảnh đang được chọn.
-              </div>
-            </div>
-            <style jsx>{`
-              .modal-info-banner {
-                display: flex;
-                align-items: center;
-                background-color: #e8f4fd;
-                border: 1px solid #bce0fd;
-                border-radius: 4px;
-                padding: 10px 15px;
-                margin: 0 20px 15px;
-              }
-              .info-icon {
-                font-size: 20px;
-                margin-right: 10px;
-              }
-              .info-text {
-                font-size: 0.9rem;
-                color: #0c5460;
-              }
-            `}</style>
+
             <div className="modal-body">
               <div className="form-row">
                 <div className="form-column image-column">
                   <div className="form-group">
                     <label className="label-highlight">Ảnh đại diện</label>
                     <p className="form-help-text">Hình ảnh này sẽ hiển thị trong slider và phải tương ứng với nội dung bên phải.</p>
-                    {imagePreview && (
-                      <div className="image-preview-container">
-                        <Image src={imagePreview} alt="Preview" width={300} height={200} />
-                      </div>
-                    )}
-                    <input type="file" accept="image/*" onChange={handleImageChange} className="file-input" />
+                    
+                    <div className="image-upload-area">
+                      {imagePreview ? (
+                        <div className="image-preview-container">
+                          <Image src={imagePreview} alt="Preview" width={300} height={200} className="preview-image" />
+                          <div className="image-actions">
+                            <button 
+                              type="button" 
+                              className="btn-change-image"
+                              onClick={() => document.getElementById('image-file-input')?.click()}
+                            >
+                              <FiEdit2 /> Thay đổi ảnh
+                            </button>
+                            <button 
+                              type="button" 
+                              className="btn-remove-image"
+                              onClick={() => {
+                                setImagePreview(null);
+                                setImageFile(null);
+                                if (editingItem) {
+                                  setEditingItem({ ...editingItem, image: '' });
+                                }
+                              }}
+                            >
+                              <FiTrash2 /> Xóa ảnh
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div 
+                          className="upload-placeholder"
+                          onClick={() => document.getElementById('image-file-input')?.click()}
+                        >
+                          <div className="upload-icon">
+                            <FiUpload />
+                          </div>
+                          <div className="upload-text">
+                            <strong>Chọn ảnh để upload</strong>
+                            <p>Kéo thả hoặc click để chọn file</p>
+                            <small>JPG, PNG, GIF (Max: 5MB)</small>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <input 
+                        id="image-file-input"
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                        className="file-input-hidden" 
+                        style={{ display: 'none' }}
+                      />
+                    </div>
                   </div>
                   
                   <div className="form-group">
@@ -376,6 +398,107 @@ export default function AdminAutomationPage() {
               }
               .file-input {
                 margin-top: 10px;
+              }
+              
+              /* Image Upload Styling */
+              .image-upload-area {
+                margin-top: 10px;
+              }
+              
+              .upload-placeholder {
+                border: 2px dashed #d1d5db;
+                border-radius: 8px;
+                padding: 40px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background-color: #f9fafb;
+              }
+              
+              .upload-placeholder:hover {
+                border-color: #6366f1;
+                background-color: #f0f9ff;
+              }
+              
+              .upload-icon {
+                font-size: 48px;
+                color: #9ca3af;
+                margin-bottom: 15px;
+              }
+              
+              .upload-placeholder:hover .upload-icon {
+                color: #6366f1;
+              }
+              
+              .upload-text strong {
+                display: block;
+                font-size: 16px;
+                color: #374151;
+                margin-bottom: 5px;
+              }
+              
+              .upload-text p {
+                color: #6b7280;
+                margin: 5px 0;
+                font-size: 14px;
+              }
+              
+              .upload-text small {
+                color: #9ca3af;
+                font-size: 12px;
+              }
+              
+              .image-preview-container {
+                position: relative;
+                display: inline-block;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+              }
+              
+              .preview-image {
+                display: block;
+                border-radius: 8px;
+              }
+              
+              .image-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 15px;
+              }
+              
+              .btn-change-image, .btn-remove-image {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+              }
+              
+              .btn-change-image {
+                background-color: #6366f1;
+                color: white;
+              }
+              
+              .btn-change-image:hover {
+                background-color: #5855eb;
+              }
+              
+              .btn-remove-image {
+                background-color: #ef4444;
+                color: white;
+              }
+              
+              .btn-remove-image:hover {
+                background-color: #dc2626;
+              }
+              
+              .file-input-hidden {
+                display: none;
               }
             `}</style>
             <div className="modal-footer">
