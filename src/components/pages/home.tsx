@@ -934,36 +934,6 @@ export default function Home({ homeData }: HomeProps) {
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section className="contact-section py-5">
-        <div className="container">
-          <div className="row">
-            <div className="col-md-4 mb-4">
-              <div className="contact-box">
-                <h4>{homeData?.homeContact?.contact?.title || 'CONTACT'}</h4>
-                <p className="contact-description">
-                {homeData?.homeContact?.contact?.description || 'Seeking us and you\'ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint'}
-                </p>
-                <Link href={homeData?.homeContact?.contact?.buttonLink || '/contact'} className="btn btn-dark">
-                  {homeData?.homeContact?.contact?.buttonText || 'CONTACT US'}
-                </Link>
-              </div>
-            </div>
-            <div className="col-md-4 mb-4">
-              <div className="work-with-us-box">
-                <h4>{homeData?.homeContact?.workWithUs?.title || 'WORK WITH US'}</h4>
-                <p className="work-description">
-                  {homeData?.homeContact?.workWithUs?.description || 'We are looking for intelligent, passionate individuals who are ready to join us in building and growing the company'}
-                </p>
-                <Link href={homeData?.homeContact?.workWithUs?.buttonLink || '/recruitment'} className="btn btn-dark">
-                  {homeData?.homeContact?.workWithUs?.buttonText || 'LEARN MORE'}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* News Section */}
       <section className="news py-5">
         <div className="container">
@@ -1164,31 +1134,31 @@ export default function Home({ homeData }: HomeProps) {
           .watch-video-btn:hover { background: #0d2c4a; }
         `}</style>
       </section>
-      {/* Contact Section */}
+      
+      {/* Contact Section - Dynamic (can be updated from dashboard) */}
       <section className="contact-section py-5">
         <div className="container">
           <div className="row">
             <div className="col-md-4 mb-4">
               <div className="contact-box">
-                <h4>CONTACT</h4>
+                <h4>{homeData?.homeContact?.contact?.title || 'CONTACT'}</h4>
                 <p className="contact-description">
-                Seeking us and you&apos;ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint
+                {homeData?.homeContact?.contact?.description || 'Seeking us and you\'ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint'}
                 </p>
-                <a href="/contact" className="btn btn-dark">
-                  CONTACT US
-                </a>
+                <Link href={homeData?.homeContact?.contact?.buttonLink || '/contact'} className="btn btn-dark">
+                  {homeData?.homeContact?.contact?.buttonText || 'CONTACT US'}
+                </Link>
               </div>
             </div>
             <div className="col-md-4 mb-4">
               <div className="work-with-us-box">
-                <h4>WORK WITH US</h4>
+                <h4>{homeData?.homeContact?.workWithUs?.title || 'WORK WITH US'}</h4>
                 <p className="work-description">
-                  We are looking for intelligent, passionate individuals who are
-                  ready to join us in building and growing the company
+                  {homeData?.homeContact?.workWithUs?.description || 'We are looking for intelligent, passionate individuals who are ready to join us in building and growing the company'}
                 </p>
-                <a href="/recruitment" className="btn btn-dark">
-                  LEARN MORE
-                </a>
+                <Link href={homeData?.homeContact?.workWithUs?.buttonLink || '/recruitment'} className="btn btn-dark">
+                  {homeData?.homeContact?.workWithUs?.buttonText || 'LEARN MORE'}
+                </Link>
               </div>
             </div>
           </div>
