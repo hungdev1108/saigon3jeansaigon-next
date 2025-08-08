@@ -212,6 +212,7 @@ export default function Home({ homeData }: HomeProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeRefs = useRef<{ [key: number]: HTMLIFrameElement | null }>({});
   
   // Fetch dữ liệu từ API nếu không có homeData từ props
   useEffect(() => {
@@ -222,7 +223,7 @@ export default function Home({ homeData }: HomeProps) {
       const fetchData = async () => {
         try {
           // Gọi API để lấy dữ liệu trang chủ
-          const response = await fetch(`${BACKEND_DOMAIN}/api/home/data`);
+          const response = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { cache: 'no-store' });
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -285,25 +286,53 @@ export default function Home({ homeData }: HomeProps) {
   console.log("Factory Video URL:", factoryVideo);
   console.log("Hero Video URL:", hero?.videoUrl);
   
+  // Hàm kiểm tra YouTube URL
+  const isYouTubeUrl = (url: string) => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
+  };
+
+  // Hàm lấy YouTube video ID
+  const getYouTubeVideoId = (url: string) => {
+    try {
+      let videoId = '';
+      
+      if (url.includes('youtube.com/watch?v=')) {
+        videoId = url.split('v=')[1].split('&')[0];
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+      }
+      
+      return videoId;
+    } catch (error) {
+      console.error("Error processing YouTube URL:", error);
+      return '';
+    }
+  };
+
   // Hàm xử lý URL video
   const getVideoUrl = (url: string | undefined) => {
     if (!url) return "/videos/STORY_SG3J.mp4";
     
     try {
+      let processedUrl;
+      
       // Nếu URL đã là đường dẫn đầy đủ (bắt đầu bằng http hoặc https)
       if (url.startsWith('http')) {
-        return url;
+        processedUrl = url;
       }
-      
       // Nếu URL là đường dẫn tương đối (bắt đầu bằng /)
-      if (url.startsWith('/')) {
+      else if (url.startsWith('/')) {
         // Đảm bảo không có // kép trong URL
         const baseUrl = BACKEND_DOMAIN.endsWith('/') ? BACKEND_DOMAIN.slice(0, -1) : BACKEND_DOMAIN;
-        return `${baseUrl}${url}`;
+        processedUrl = `${baseUrl}${url}`;
+      }
+      // Trường hợp khác
+      else {
+        processedUrl = `${BACKEND_DOMAIN}/${url}`;
       }
       
-      // Trường hợp khác
-      return `${BACKEND_DOMAIN}/${url}`;
+      // Thêm cache busting cho local video
+      return `${processedUrl}?v=${Date.now()}`;
     } catch (error) {
       console.error("Error processing video URL:", error);
       return "/videos/STORY_SG3J.mp4"; // Fallback về video mặc định
@@ -404,7 +433,6 @@ export default function Home({ homeData }: HomeProps) {
               className="img-fluid w-100"
               width={1920}
               height={1080}
-              sizes="100vw"
             />
           )}
           <div className="overlay"></div>
@@ -432,20 +460,82 @@ export default function Home({ homeData }: HomeProps) {
                 >
                   <div className="card h-100">
                     <div className="card-img-top video-container">
-                      {section.mediaType === "video" ? (
-                        <video 
-                          ref={videoRef}
-                          src={homeData?.hero?.videoUrl
-                            ? homeData.hero.videoUrl.startsWith('/uploads')
-                              ? `${BACKEND_DOMAIN}${homeData.hero.videoUrl}`
-                              : homeData.hero.videoUrl
-                            : ''}
-                          controls
-                          style={{ width: '100%', maxHeight: '300px', background: '#000' }}
-                        >
-                          <source src={getVideoUrl(section.mediaUrl)} type="video/mp4" />
-                          Your browser does not support the video tag.
-                        </video>
+                                            {section.mediaType === "video" ? (
+                        section.mediaUrl && isYouTubeUrl(section.mediaUrl) ? (
+                          // YouTube embed
+                          <iframe
+                            ref={(el) => { iframeRefs.current[index] = el; }}
+                            src={`https://www.youtube.com/embed/${getYouTubeVideoId(section.mediaUrl)}?autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(section.mediaUrl)}&controls=1&rel=0`}
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            style={{ 
+                              width: '100%', 
+                              height: '100%',
+                              borderRadius: '8px',
+                              display: 'block' // Đảm bảo iframe hiển thị block
+                            }}
+                            title={section.title}
+                            onLoad={(e) => {
+                              // Điều chỉnh container để match tỷ lệ YouTube
+                              const iframe = e.target as HTMLIFrameElement;
+                              const container = iframe.parentElement;
+                              if (container) {
+                                // YouTube chuẩn là 16:9
+                                container.style.aspectRatio = '16/9';
+                              }
+                            }}
+                          />
+                        ) : (
+                          // Local video file
+                          <video 
+                            ref={videoRef}
+                            src={section.mediaUrl
+                              ? `${section.mediaUrl.startsWith('/uploads')
+                                ? `${BACKEND_DOMAIN}${section.mediaUrl}`
+                                : section.mediaUrl}?v=${Date.now()}`
+                              : ''}
+                            autoPlay
+                            muted
+                            loop
+                            controls
+                            onLoadedMetadata={(e) => {
+                              const video = e.target as HTMLVideoElement;
+                              const container = video.parentElement;
+                              if (container) {
+                                // Tính toán aspect ratio của video
+                                const aspectRatio = video.videoWidth / video.videoHeight;
+                                
+                                // DEBUG: Hiển thị thông tin video
+                                console.log(`Video dimensions: ${video.videoWidth}x${video.videoHeight}`);
+                                console.log(`Video aspect ratio: ${aspectRatio.toFixed(3)} (${aspectRatio > 1.7 ? '16:9-ish' : aspectRatio > 1.3 ? '4:3-ish' : 'other'})`);
+                                
+                                // Dùng tỷ lệ chính xác của video để tránh crop
+                                container.style.aspectRatio = aspectRatio.toString();
+                                video.style.objectFit = 'contain';
+                                
+                                // Remove height limits 
+                                container.style.minHeight = 'auto';
+                                container.style.maxHeight = 'none';
+                                
+                                // Nếu có viền đen, làm mờ background để ít chói mắt hơn
+                                container.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
+                              }
+                            }}
+                            onClick={(e) => {
+                              const video = e.target as HTMLVideoElement;
+                              if (video.muted) {
+                                video.muted = false;
+                              }
+                            }}
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                          >
+                            <source src={getVideoUrl(section.mediaUrl)} type="video/mp4" />
+                            Your browser does not support the video tag.
+                          </video>
+                        )
                       ) : (
                         (() => {
                           const img = getOptimizedImageUrls(section.mediaUrl || "");
@@ -456,7 +546,6 @@ export default function Home({ homeData }: HomeProps) {
                               className="img-fluid w-100"
                               width={800}
                               height={600}
-                              sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 800px"
                               style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                             />
                           );
@@ -489,7 +578,21 @@ export default function Home({ homeData }: HomeProps) {
                         onClick={(e) => {
                           if (section.buttonText === "WATCH VIDEO") {
                             e.preventDefault();
-                            if (videoRef.current && videoRef.current.requestFullscreen) {
+                            if (section.mediaUrl && isYouTubeUrl(section.mediaUrl)) {
+                              // Nếu là YouTube, dùng iframe ref để fullscreen
+                              const iframe = iframeRefs.current[index];
+                              if (iframe && iframe.requestFullscreen) {
+                                iframe.requestFullscreen().catch((err) => {
+                                  console.log('Fullscreen failed:', err);
+                                  // Fallback: mở YouTube trong tab mới
+                                  window.open(section.mediaUrl, '_blank');
+                                });
+                              } else {
+                                // Fallback: mở YouTube trong tab mới
+                                window.open(section.mediaUrl, '_blank');
+                              }
+                            } else if (videoRef.current && videoRef.current.requestFullscreen) {
+                              // Nếu là local video, fullscreen
                               videoRef.current.requestFullscreen();
                             }
                           }
@@ -527,7 +630,6 @@ export default function Home({ homeData }: HomeProps) {
                     className="img-fluid w-100"
                     width={1920}
                     height={1080}
-                    sizes="(max-width: 600px) 100vw, 1920px"
                   />
                 );
               })()}
@@ -637,7 +739,6 @@ export default function Home({ homeData }: HomeProps) {
                 className="world-map-bg"
                 width={1920}
                 height={1080}
-                sizes="100vw"
               />
             </div>
 
@@ -668,7 +769,7 @@ export default function Home({ homeData }: HomeProps) {
                                     className="img-fluid customer-logo"
                                     width={200}
                                     height={120}
-                                    sizes="(max-width: 600px) 100vw, 200px"
+
                                   />
                                 </div>
                               </div>
@@ -705,7 +806,7 @@ export default function Home({ homeData }: HomeProps) {
                                     className="img-fluid customer-logo"
                                     width={200}
                                     height={120}
-                                    sizes="(max-width: 600px) 100vw, 200px"
+
                                   />
                                 </div>
                               </div>
@@ -745,7 +846,7 @@ export default function Home({ homeData }: HomeProps) {
                           className="cert-image"
                           width={800}
                           height={600}
-                          sizes="(max-width: 600px) 100vw, 800px"
+
                         />
                         <div className="leed-text-container">
                           <div className="leed-text-row">
@@ -774,7 +875,7 @@ export default function Home({ homeData }: HomeProps) {
                           className="cert-image"
                           width={800}
                           height={600}
-                          sizes="(max-width: 600px) 100vw, 800px"
+
                         />
                         <div className="iso-text-container">
                           <div className="iso-text-item">
@@ -816,7 +917,7 @@ export default function Home({ homeData }: HomeProps) {
                                   className="cert-small-image"
                                   width={800}
                                   height={600}
-                                  sizes="(max-width: 600px) 100vw, 800px"
+        
                                 />
                               </div>
                               <div className="cert-text">
@@ -883,7 +984,7 @@ export default function Home({ homeData }: HomeProps) {
                             className="img-fluid w-100"
                             width={800}
                             height={600}
-                            sizes="(max-width: 600px) 100vw, 800px"
+                            style={{ objectFit: 'cover', height: '100%', objectPosition: 'center center' }}
                           />
                         );
                       })()}
@@ -915,9 +1016,9 @@ export default function Home({ homeData }: HomeProps) {
                               srcs={newsImg}
                               alt={news.title}
                               className="img-fluid"
-                              width={800}
-                              height={600}
-                              sizes="(max-width: 600px) 100vw, 800px"
+                              width={120}
+                              height={80}
+                              style={{ objectFit: 'cover', height: '100%', minHeight: '80px' }}
                             />
                           </div>
                           <div className="news-info">

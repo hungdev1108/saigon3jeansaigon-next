@@ -3,9 +3,37 @@
 import Image from "next/image";
 import Link from "next/link";
 import ClientOnly from "./ClientOnly";
+import { useEffect, useState } from "react";
+import { BACKEND_DOMAIN } from "@/api/config";
 
+interface SocialLinks {
+  facebook: string;
+  instagram: string;
+  youtube: string;
+}
 
 export default function Footer() {
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({
+    facebook: "https://facebook.com/saigon3jeans",
+    instagram: "https://instagram.com/saigon3jeans", 
+    youtube: "https://youtube.com/@saigon3jeans"
+  });
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        const response = await fetch(`${BACKEND_DOMAIN}/api/contact/info`, { cache: 'no-store' });
+        const data = await response.json();
+        if (data.success && data.data?.socialLinks) {
+          setSocialLinks(data.data.socialLinks);
+        }
+      } catch (error) {
+        console.error('Error fetching contact info:', error);
+      }
+    };
+
+    fetchContactInfo();
+  }, []);
   return (
     <ClientOnly>
     <footer className="bg-white footer-mobile-responsive py-4">
@@ -21,13 +49,13 @@ export default function Footer() {
               style={{ height: "50px", width: "auto" }}
             />
             <div className="social-icons footer-mobile-social">
-              <Link href="#" className="me-2">
+              <Link href={socialLinks.facebook || "https://facebook.com/saigon3jeans"} target="_blank" rel="noopener noreferrer" className="me-2">
                 <i className="fab fa-facebook-f"></i>
               </Link>
-              <Link href="#" className="me-2">
+              <Link href={socialLinks.instagram || "https://instagram.com/saigon3jeans"} target="_blank" rel="noopener noreferrer" className="me-2">
                 <i className="fab fa-instagram"></i>
               </Link>
-              <Link href="#" className="me-2">
+              <Link href={socialLinks.youtube || "https://youtube.com/@saigon3jeans"} target="_blank" rel="noopener noreferrer" className="me-2">
                 <i className="fab fa-youtube"></i>
               </Link>
             </div>

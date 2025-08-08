@@ -918,6 +918,7 @@ export default function AdminOverviewPage() {
           padding: 24px;
           max-width: 1200px;
           margin: 0 auto;
+          font-family: "Inter", sans-serif;
         }
 
         .admin-page-header {
@@ -930,6 +931,7 @@ export default function AdminOverviewPage() {
           font-weight: 700;
           color: #1a1a1a;
           margin: 0 0 8px 0;
+          font-family: "Inter", sans-serif;
         }
 
         .admin-page-description {
@@ -960,6 +962,7 @@ export default function AdminOverviewPage() {
           font-weight: 600;
           color: #1a1a1a;
           margin: 0;
+          font-family: "Inter", sans-serif;
         }
 
         .btn-save {
@@ -1015,6 +1018,7 @@ export default function AdminOverviewPage() {
           font-size: 14px;
           font-weight: 500;
           color: #333;
+          font-family: "Inter", sans-serif;
         }
 
         .form-input {
@@ -1023,6 +1027,7 @@ export default function AdminOverviewPage() {
           border-radius: 6px;
           font-size: 14px;
           transition: border-color 0.2s;
+          font-family: "Inter", sans-serif;
         }
 
         .form-input:focus {
@@ -1038,6 +1043,7 @@ export default function AdminOverviewPage() {
           min-height: 80px;
           resize: vertical;
           transition: border-color 0.2s;
+          font-family: "Inter", sans-serif;
         }
 
         .form-textarea:focus {

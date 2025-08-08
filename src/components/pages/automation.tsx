@@ -264,6 +264,31 @@ export default function Automation({ automationItems }: AutomationProps) {
 
   return (
     <>
+      {/* Font consistency override for automation page */}
+      <style jsx global>{`
+        /* Apply Inter font family consistently */
+        .automation-title,
+        .content-item p,
+        .content-counter {
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        /* Normalize font weights */
+        .automation-title {
+          font-weight: 700 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .content-item p {
+          font-weight: 400 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .content-counter {
+          font-weight: 400 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+      `}</style>
       <section id="automation" className="page-content">
         {/* ĐÃ XÓA TIÊU ĐỀ AUTOMATION */}
         <div className="slider-wrapper">

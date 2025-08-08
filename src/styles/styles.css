@@ -85,14 +85,38 @@ p {
 
 /* CSS cho phần video */
 .card .card-img-top.video-container {
-  height: 300px;
-  overflow: hidden;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9; /* Chuẩn cho YouTube, override bởi JS cho local video */
+  min-height: 200px;
+  max-height: 350px; /* Giới hạn chiều cao để không che thanh điều khiển */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  overflow: hidden; /* Giữ nội dung trong container */
 }
 
 .card .card-img-top.video-container video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.card .card-img-top.video-container iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: fill; /* Fill toàn bộ container cho YouTube */
+  border-radius: 8px;
+}
+
+/* Đảm bảo video fullscreen hiển thị đầy đủ */
+.card .card-img-top.video-container video:fullscreen,
+.card .card-img-top.video-container video:-webkit-full-screen,
+.card .card-img-top.video-container video:-moz-full-screen {
+  object-fit: contain;
+  background: #000;
 }
 
 .card:hover .card-img-top.video-container video {
@@ -593,16 +617,46 @@ body.loaded .text-overlay {
 }
 
 .info-cards .card-img-top.video-container {
-  height: 300px;
-  overflow: hidden;
   position: relative;
+  width: 100%;
+  aspect-ratio: 16/9; /* Chuẩn cho YouTube, override bởi JS cho local video */
   border-radius: 10px 10px 0 0;
+  max-height: 350px; /* Giới hạn chiều cao để không che thanh điều khiển */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  overflow: hidden; /* Giữ nội dung trong container */
 }
 
 .info-cards .card-img-top.video-container video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain; /* Hiển thị đầy đủ nội dung, không crop */
+  border-radius: 8px;
+}
+
+.info-cards .card-img-top.video-container iframe {
+  width: 100%;
+  height: 100%;
+  object-fit: fill; /* Fill toàn bộ container cho YouTube */
+  border-radius: 8px;
+}
+
+/* Đảm bảo video fullscreen cũng hiển thị đầy đủ */
+.info-cards .card-img-top.video-container video:fullscreen {
+  object-fit: contain;
+  background: #000;
+}
+
+.info-cards .card-img-top.video-container video:-webkit-full-screen {
+  object-fit: contain;
+  background: #000;
+}
+
+.info-cards .card-img-top.video-container video:-moz-full-screen {
+  object-fit: contain;
+  background: #000;
 }
 
 .info-cards .card:hover .card-img-top img {
@@ -1743,7 +1797,7 @@ footer a:hover {
 }
 
 #contactPage .contact-item:first-child {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 #contactPage .contact-banner {
@@ -1999,7 +2053,7 @@ footer a:hover {
 }
 
 #contactPage .contact-item:first-child {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 #contactPage .contact-banner {
@@ -7424,6 +7478,36 @@ footer a:hover {
   left: 0;
 }
 
+/* Featured News Image Styling */
+.news-item {
+  min-height: 350px; /* Giảm chiều cao để ít crop hơn */
+  max-height: 450px; /* Giới hạn chiều cao tối đa */
+  overflow: hidden;
+  border-radius: 8px;
+  position: relative;
+}
+
+.news-item img {
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-position: center center; /* Crop từ giữa, ít mất thông tin hơn */
+}
+
+.news-thumbnail {
+  width: 120px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.news-thumbnail img {
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* Mobile feature navigation */
 #eco-friendly .mobile-feature-nav {
   display: none;
@@ -7477,6 +7561,46 @@ footer a:hover {
 .news-page-title {
  padding-top: 80px;
 }
+
+/* ===== CONTACT PAGE SPACING FIX ===== */
+/* Force equal spacing between contact info items */
+html body div#contactPage .contact-info-container .contact-item,
+html body div#contactPage .contact-info-container .contact-item:first-child,
+html body div#contactPage .contact-info-container .contact-item:nth-child(1),
+html body div#contactPage .contact-info-container .contact-item:nth-child(2),
+html body div#contactPage .contact-info-container .contact-item:nth-child(3) {
+  display: flex !important;
+  align-items: center !important; /* Center alignment for better icon-text balance */
+  margin: 0 !important;
+  margin-bottom: 25px !important; /* Desktop spacing */
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 50px !important;
+}
+
+/* Last item has no bottom margin */
+html body div#contactPage .contact-info-container .contact-item:last-child,
+html body div#contactPage .contact-info-container .contact-item:nth-child(3) {
+  margin-bottom: 0 !important;
+}
+
+/* Mobile responsive - smaller spacing */
+@media (max-width: 768px) {
+  html body div#contactPage .contact-info-container .contact-item,
+  html body div#contactPage .contact-info-container .contact-item:first-child,
+  html body div#contactPage .contact-info-container .contact-item:nth-child(1),
+  html body div#contactPage .contact-info-container .contact-item:nth-child(2),
+  html body div#contactPage .contact-info-container .contact-item:nth-child(3) {
+    margin-bottom: 18px !important; /* Smaller spacing on mobile */
+    min-height: 45px !important;
+  }
+  
+  html body div#contactPage .contact-info-container .contact-item:last-child,
+  html body div#contactPage .contact-info-container .contact-item:nth-child(3) {
+    margin-bottom: 0 !important;
+  }
+}
+
 .news-card-title {
   font-size: 22px;
   font-weight: 700;

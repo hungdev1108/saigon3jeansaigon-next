@@ -19,12 +19,12 @@ const contactApi = {
   },
 
   /**
-   * Lấy thông tin contact
+   * Lấy thông tin contact (Admin dashboard)
    * @returns {Promise} Promise object với thông tin contact
    */
   getContactInfo: async () => {
     try {
-      const response = await apiClient.get("/api/contact/info");
+      const response = await apiClient.get("/api/contact/data");
       return response.data;
     } catch (error) {
       console.error("Error fetching contact info:", error);

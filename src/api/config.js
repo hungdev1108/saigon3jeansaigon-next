@@ -13,15 +13,13 @@ return process.env.NEXT_PUBLIC_BACKEND_DOMAIN.replace('/api', '');
 if (process.env.NODE_ENV === 'production') {
 return 'https://saigon3jean.com';
 } else {
-return 'http://localhost:5001';
+return 'http://localhost:3007'; // 🔥 Sửa từ 5001 thành 3007 (port backend thực tế)
 }
 };
 
 const BACKEND_URL = getBackendURL();
 
-console.log('🔧 Backend URL:', BACKEND_URL);
-console.log('🔧 Environment:', process.env.NODE_ENV);
-console.log('🔧 Env variable:', process.env.NEXT_PUBLIC_BACKEND_DOMAIN);
+// Backend URL: BACKEND_URL (debug removed)
 
 const config = {
 development: {
@@ -50,42 +48,12 @@ headers: {
 },
 });
 
-// Debug logging
-apiClient.interceptors.request.use(
-(config) => {
-console.log(`🔄 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-return config;
-},
-(error) => {
-return Promise.reject(error);
-}
-);
-
-// Response interceptor
+// Request/Response interceptors (debug removed)
 apiClient.interceptors.response.use(
-(response) => {
-console.log(`✅ API Response: ${response.status} ${response.config.url}`);
-return config;
-},
+(response) => response,
 (error) => {
-return Promise.reject(error);
-}
-);
-
-// Response interceptor
-apiClient.interceptors.response.use(
-(response) => {
-console.log(`✅ API Response: ${response.status} ${response.config.url}`);
-return response;
-},
-(error) => {
-console.error("❌ API Error:", {
-url: error.config?.url,
-baseURL: error.config?.baseURL,
-status: error.response?.status,
-message: error.message
-});
-return Promise.reject(error);
+  console.error("API Error:", error.message);
+  return Promise.reject(error);
 }
 );
 

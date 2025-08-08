@@ -215,11 +215,12 @@ export default function Overview({ overviewData }: OverviewProps) {
               marginLeft: 40,
               marginTop: 8,
               marginBottom: 8,
-              fontFamily: "'DejaVu Serif', serif"
+              fontFamily: '"Inter", sans-serif',
+              fontWeight: '500 !important'
             }}
           >
             {lines.map((line, i) => (
-              <li key={i} style={{ fontFamily: "'DejaVu Serif', serif" }}>
+              <li key={i} style={{ fontFamily: '"Inter", sans-serif', fontSize: 24, fontWeight: '500 !important', color: '#333 !important', marginBottom: 8, letterSpacing: '0.3px', lineHeight: 1.4 }}>
                 {line.replace(/^(\s*)-/, '$1')}
               </li>
             ))}
@@ -228,7 +229,7 @@ export default function Overview({ overviewData }: OverviewProps) {
       }
       // Đoạn văn thường
       return (
-        <p key={idx} style={{ marginBottom: 8, whiteSpace: 'pre-line' }}>{block}</p>
+        <p key={idx} style={{ marginBottom: 12, whiteSpace: 'pre-line', fontSize: 24, fontWeight: '500 !important', color: '#333 !important', lineHeight: 1.5, letterSpacing: '0.3px' }}>{block}</p>
       );
     });
   }
@@ -289,9 +290,9 @@ export default function Overview({ overviewData }: OverviewProps) {
               opacity: 0.85
             }}
           />
-          <div className="hero-content" style={{ position: 'relative', zIndex: 2, color: '#222', textShadow: 'none', textAlign: 'left', fontWeight: 400, width: '100%', maxWidth: 1200, margin: '0 auto', marginTop: 80, paddingBottom: 0, paddingTop: 0, background: 'rgba(255,255,255,0.02)' }}>
-            <h2 style={{ color: '#111', textShadow: 'none', textAlign: 'left', fontWeight: 700, fontSize: 28, marginBottom: 18, fontFamily: 'DejaVu Serif' }}>{overviewData.banner.title}</h2>
-            <div style={{ fontFamily: 'DejaVu Serif, serif', fontSize: 17, lineHeight: 1.6, color: '#222', textAlign: 'justify', fontWeight: 400, margin: 0 }}>
+          <div className="hero-content" style={{ position: 'relative', zIndex: 2, color: '#333', textShadow: 'none', textAlign: 'left', fontWeight: 500, width: '100%', maxWidth: 1600, margin: '0 auto', marginTop: 120, paddingBottom: 0, paddingTop: 0, paddingLeft: 60, paddingRight: 60, background: 'rgba(255,255,255,0.02)' }}>
+            <h2 style={{ color: '#333 !important', textShadow: 'none', textAlign: 'left', fontWeight: '500 !important', fontSize: 48, marginBottom: 24, fontFamily: '"Inter", sans-serif', letterSpacing: '0.5px' }}>{overviewData.banner.title}</h2>
+            <div style={{ fontFamily: '"Inter", sans-serif', fontSize: 26, lineHeight: 1.5, color: '#333 !important', textAlign: 'justify', fontWeight: '500 !important', margin: 0, letterSpacing: '0.3px' }}>
               {renderBannerDescription(overviewData.banner.description)}
             </div>
           </div>
@@ -410,12 +411,13 @@ export default function Overview({ overviewData }: OverviewProps) {
           .section-title {
             text-decoration: none !important;
             border-bottom: none !important;
-            font-size: 1.8rem;
-            margin-bottom: 1.2rem;
-            padding-bottom: 0.8rem;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
             position: relative;
             color: #1e4e7d;
-            font-weight: 600;
+            font-weight: 500;
+            font-family: "Inter", sans-serif;
           }
           
           .section-title::after,
@@ -446,6 +448,7 @@ export default function Overview({ overviewData }: OverviewProps) {
             padding: 40px 0;
             overflow: hidden;
             width: 100%;
+            box-sizing: border-box;
           }
           .message-section.bg-dynamic {
             background-image: var(--bg-url) !important;
@@ -459,9 +462,9 @@ export default function Overview({ overviewData }: OverviewProps) {
             -webkit-backdrop-filter: blur(8px) saturate(150%);
             border: 1px solid rgba(255,255,255,0.08);
             padding: 22px 24px;
-            max-width: 60%; /* Tăng chiều rộng */
+            max-width: 60%;
             width: 100%;
-            margin-left: 2vw; /* Sát trái hơn */
+            margin-left: 2vw;
             font-size: 0.85rem;
             line-height: 1.4;
             text-align: justify;
@@ -474,6 +477,8 @@ export default function Overview({ overviewData }: OverviewProps) {
             display: flex;
             flex-direction: column;
             justify-content: center;
+            box-sizing: border-box;
+            min-height: 400px;
           }
           
           .message-gradient-overlay {
@@ -510,8 +515,8 @@ export default function Overview({ overviewData }: OverviewProps) {
           }
           
           .message-text blockquote {
-            font-weight: 700;
-            font-size: 1rem; /* Giảm font size */
+            font-weight: 500;
+            font-size: 1.1rem; /* Tăng size bằng với message content */
             color: #0d6efd;
             margin: 10px 0;
             padding: 10px 16px;
@@ -522,7 +527,7 @@ export default function Overview({ overviewData }: OverviewProps) {
           }
           
           .ceo-signature .ceo-name {
-            font-weight: 600;
+            font-weight: 500;
             color: #1e4e7d;
             font-size: 1.1rem;
           }
@@ -589,70 +594,49 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
           }
           
-          @media (max-width: 992px) {
+          @media (max-width: 1024px) {
             .message-section {
-              flex-direction: column;
-              align-items: center;
-              min-height: auto;
+              min-height: 600px;
               padding: 40px 20px;
             }
             
             .message-content {
-              max-width: 95%; /* Tăng từ 85% */
-              margin: 0 auto 390px;
-              order: 1;
+              max-width: 70%;
+              margin-left: 3vw;
+              padding: 20px;
+              font-size: 0.9rem;
             }
             
             .ceo-image-container {
-              position: relative;
-              right: auto;
-              bottom: auto;
-              height: auto;
-              order: 2;
-              margin-top: -370px;
-              align-self: flex-end;
-              margin-right: 5vw;
-              transform: none;
+              right: 3vw;
+              height: 90%;
             }
             
             .ceo-image {
-              max-height: 550px;
+              max-height: 500px;
             }
           }
           
           @media (max-width: 768px) {
             .message-section {
-              flex-direction: row;
-              justify-content: flex-start;
+              min-height: 500px;
+              padding: 30px 15px;
+              display: flex;
               align-items: center;
-              min-height: auto;
-              height: auto;
-              max-height: 400px;
-              padding: 0;
-              background-position: center;
-              background-size: cover;
-              position: relative;
+              justify-content: flex-start;
             }
             
             .message-content {
-              position: relative;
-              top: 0;
-              left: 0;
-              max-width: 80%; /* Tăng chiều rộng */
-              width: 80%; /* Tăng chiều rộng */
-              height: auto;
-              max-height: 320px; /* Giảm chiều cao */
-              margin: 0;
-              padding: 18px 15px;
-              font-size: 0.65rem;
-              order: 1;
-              border-radius: 12px;
-              overflow: hidden;
-              background: rgba(255,255,255,0.08);
-              backdrop-filter: blur(10px) saturate(180%);
-              -webkit-backdrop-filter: blur(10px) saturate(180%);
-              border: 1px solid rgba(255,255,255,0.12);
-              z-index: 2;
+              max-width: 65%;
+              width: 65%;
+              margin-left: 2vw;
+              padding: 20px 18px;
+              font-size: 0.75rem;
+              background: rgba(255,255,255,0.1);
+              backdrop-filter: blur(12px) saturate(160%);
+              -webkit-backdrop-filter: blur(12px) saturate(160%);
+              border: 1px solid rgba(255,255,255,0.15);
+              border-radius: 15px;
               box-sizing: border-box;
             }
             
@@ -697,14 +681,13 @@ export default function Overview({ overviewData }: OverviewProps) {
             
             .ceo-image-container {
               position: absolute;
-              right: 0;
-              top: 0;
-              bottom: 0;
-              margin: 0;
-              height: 100%;
-              width: 45%;
+              right: 2vw;
+              top: 50%;
+              transform: translateY(-50%);
+              height: 80%;
+              width: 35%;
               display: flex;
-              justify-content: flex-end;
+              justify-content: center;
               align-items: center;
               z-index: 1;
             }
@@ -714,7 +697,7 @@ export default function Overview({ overviewData }: OverviewProps) {
               max-width: 100%;
               width: auto;
               object-fit: contain;
-              object-position: right center;
+              object-position: center;
             }
             
             .section-title {
@@ -754,45 +737,44 @@ export default function Overview({ overviewData }: OverviewProps) {
           
           @media (max-width: 576px) {
             .message-section {
-              min-height: auto;
-              max-height: 360px;
-              padding: 10px 0;
-              overflow: hidden;
+              min-height: 450px;
+              padding: 20px 10px;
+              display: flex;
               align-items: center;
             }
             
             .message-content {
-              width: 62%;
-              max-width: 62%;
-              height: auto;
-              max-height: 320px;
-              padding: 15px;
-              margin: 0;
-              font-size: 0.6rem;
-              background: rgba(255,255,255,0.05);
-              backdrop-filter: blur(8px) saturate(150%);
-              -webkit-backdrop-filter: blur(8px) saturate(150%);
-              border: 1px solid rgba(255,255,255,0.08);
+              width: 60%;
+              max-width: 60%;
+              margin-left: 3vw;
+              padding: 16px 14px;
+              font-size: 0.65rem;
+              background: rgba(255,255,255,0.08);
+              backdrop-filter: blur(10px) saturate(150%);
+              -webkit-backdrop-filter: blur(10px) saturate(150%);
+              border: 1px solid rgba(255,255,255,0.12);
               border-radius: 12px;
-              box-shadow: 0 4px 15px rgba(31,38,135,0.15);
+              box-sizing: border-box;
             }
             
             .message-text {
-              max-height: 240px;
+              max-height: 280px;
               overflow-y: auto;
-              line-height: 1.2;
+              line-height: 1.3;
               text-align: justify;
-              font-size: 0.55rem;
+              font-size: 0.6rem;
             }
             
             .ceo-image-container {
-              width: 45%;
+              right: 1vw;
+              width: 38%;
+              height: 75%;
             }
             
             .ceo-image {
               max-height: 100%;
               object-fit: contain;
-              object-position: right center;
+              object-position: center;
             }
             
             .section-title {
@@ -832,26 +814,286 @@ export default function Overview({ overviewData }: OverviewProps) {
           }
         `}</style>
         <style jsx global>{`
+          /* Ensure header stays fixed on top */
+          header {
+            position: fixed !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+          }
+          
+          /* Fix mobile menu position */
+          .navbar-toggler {
+            position: relative !important;
+            z-index: 1001 !important;
+          }
+          
+          .mobile-menu-drawer {
+            position: fixed !important;
+            top: 0 !important;
+            right: -100% !important;
+            z-index: 1002 !important;
+          }
+          
+          .mobile-menu-drawer.active {
+            right: 0 !important;
+          }
+          
+          /* Ensure body has proper top padding */
+          body {
+            padding-top: 80px !important;
+          }
+          
+          @media (max-width: 768px) {
+            body {
+              padding-top: 70px !important;
+            }
+          }
+          
+          /* Force uniform font weight for hero content */
+          .hero-section .hero-content * {
+            font-weight: 500 !important;
+            color: #333 !important;
+          }
+          .hero-section .hero-content h2,
+          .hero-section .hero-content p,
+          .hero-section .hero-content li,
+          .hero-section .hero-content ul,
+          .hero-section .hero-content div {
+            font-weight: 500 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* Fix milestones section font consistency */
+          .milestones-section .milestone-description h5,
+          .milestones-section .milestone-description p,
+          .timeline-year {
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .milestone-description h5 {
+            font-weight: 500 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .slick-center .milestone-description h5 {
+            font-weight: 500 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .milestone-description p {
+            font-weight: 400 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .slick-center .milestone-description p {
+            font-weight: 500 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .timeline-year {
+            font-weight: 500 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* Fix message section font consistency */
+          .message-section .message-text p,
+          .message-section .message-text blockquote {
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .message-text p {
+            font-weight: 400 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .message-text blockquote {
+            font-weight: 500 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* Keep CEO name and position as original styling */
+          .ceo-signature .ceo-name {
+            /* Keep original font-weight and styling */
+          }
+          
+          .ceo-signature .ceo-position {
+            /* Keep original font-weight and styling */
+          }
+
+          @media (max-width: 1024px) {
+            .hero-section .hero-content {
+              max-width: 1200px !important;
+              margin-top: 80px !important;
+              padding-left: 30px !important;
+              padding-right: 30px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 42px !important;
+              margin-bottom: 20px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content div {
+              font-size: 24px !important;
+              line-height: 1.5 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 24px !important;
+              line-height: 1.4 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 24px !important;
+              line-height: 1.5 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .hero-section .hero-content {
+              max-width: 100% !important;
+              margin-top: 180px !important;
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 26px !important;
+              margin-bottom: 12px !important;
+              letter-spacing: 0.2px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              line-height: 1.3 !important;
+            }
+            .hero-section .hero-content div {
+              font-size: 18px !important;
+              line-height: 1.4 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              letter-spacing: 0.1px !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 18px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              margin-bottom: 5px !important;
+              letter-spacing: 0.1px !important;
+              line-height: 1.3 !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 18px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              line-height: 1.4 !important;
+              margin-bottom: 8px !important;
+              letter-spacing: 0.1px !important;
+            }
+            .section-title {
+              font-size: 2rem !important;
+            }
+          }
+          
           @media (max-width: 600px) {
+            .hero-section .hero-content {
+              max-width: 100% !important;
+              margin-top: 200px !important;
+              padding-left: 15px !important;
+              padding-right: 15px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 22px !important;
+              margin-bottom: 10px !important;
+              letter-spacing: 0.1px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              line-height: 1.2 !important;
+            }
+            .hero-section .hero-content div {
+              font-size: 16px !important;
+              line-height: 1.3 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              letter-spacing: 0.1px !important;
+            }
             .hero-section .hero-content ul,
             .hero-section .hero-content li {
               margin-left: 10px !important;
-              font-size: 15px !important;
+              font-size: 16px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
               line-height: 1.3 !important;
               word-spacing: 0 !important;
-              letter-spacing: 0 !important;
-              font-family: Arial, Helvetica, sans-serif !important;
-              margin-bottom: 1px !important;
+              letter-spacing: 0.1px !important;
+              font-family: "Inter", sans-serif !important;
+              margin-bottom: 6px !important;
               white-space: normal !important;
               overflow: visible !important;
               text-overflow: unset !important;
               word-break: break-word !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 16px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              line-height: 1.3 !important;
+              margin-bottom: 8px !important;
+              letter-spacing: 0.1px !important;
+            }
+            .section-title {
+              font-size: 1.7rem !important;
             }
             .hero-section .hero-content ul {
               margin-bottom: 10px !important;
             }
             .hero-section .hero-content ul li:last-child {
               margin-bottom: 10px !important;
+            }
+          }
+
+          /* Mobile nhỏ 481px-600px */
+          @media (max-width: 480px) {
+            .hero-section .hero-content {
+              margin-top: 220px !important;
+              padding-left: 12px !important;
+              padding-right: 12px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 20px !important;
+              margin-bottom: 8px !important;
+              line-height: 1.2 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              letter-spacing: 0.1px !important;
+            }
+            .hero-section .hero-content div {
+              font-size: 15px !important;
+              line-height: 1.3 !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              letter-spacing: 0.1px !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 15px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 5px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              letter-spacing: 0.1px !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 15px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 6px !important;
+              font-weight: 500 !important;
+              color: #333 !important;
+              letter-spacing: 0.1px !important;
+            }
+            .section-title {
+              font-size: 1.5rem !important;
             }
           }
         `}</style>
@@ -937,7 +1179,7 @@ export default function Overview({ overviewData }: OverviewProps) {
           
           .news-card .card-title {
             font-size: 1.25rem;
-            font-weight: 600;
+            font-weight: 500;
             margin-bottom: 0.75rem;
           }
           
@@ -969,7 +1211,7 @@ export default function Overview({ overviewData }: OverviewProps) {
             padding: 5px 10px;
             border-radius: 3px;
             font-size: 0.8rem;
-            font-weight: 600;
+            font-weight: 500;
           }
           
           @media (max-width: 768px) {

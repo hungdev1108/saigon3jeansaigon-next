@@ -8,17 +8,16 @@ import contactService from "@/services/contactService";
 interface ContactInfo {
   id: string;
   bannerImage: string;
-  address: string;
+  address1: string;
+  address2: string;
   email: string;
   phone: string;
   workingHours: string;
   mapEmbedUrl: string;
   socialLinks: {
     facebook: string;
-    linkedin: string;
-    twitter: string;
-    instagram?: string;
-    youtube?: string;
+    instagram: string;
+    youtube: string;
   };
   isActive: boolean;
   createdAt?: string;
@@ -152,13 +151,13 @@ export default function Contact({ contactInfo }: ContactProps) {
                 {/* Contact info - Moved to top */}
               
                 
-                {/* Banner image - Moved below contact info */}
-                {data?.bannerImage && (
+                {/* Google Maps - Sử dụng mapEmbedUrl từ database */}
+                {data?.mapEmbedUrl && (
                   <div className="contact-banner-wrapper">
                     {/* BACKEND_DOMAIN được sử dụng để hiển thị URL API */}
                     <div className="api-url" style={{display: 'none'}}>{`${BACKEND_DOMAIN}/api/contact/data`}</div>
                     <iframe
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3920.3933362245784!2d106.92286539678953!3d10.704114100000002!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31751974e66285bb%3A0xb82adb6375242b08!2zU8OgaSBHw7JuIDM!5e0!3m2!1svi!2s!4v1751858584832!5m2!1svi!2s"
+                      src={data.mapEmbedUrl}
                       width="100%"
                       height="100%"
                       style={{ border: 0, borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', marginBottom: 12 }}
@@ -169,13 +168,26 @@ export default function Contact({ contactInfo }: ContactProps) {
                     ></iframe>
                   </div>
                 )}
+                
+                {/* Fallback nếu không có mapEmbedUrl */}
+                {!data?.mapEmbedUrl && (
+                  <div className="contact-banner-wrapper" style={{ background: '#f5f5f5', padding: '40px', textAlign: 'center', borderRadius: '12px', marginBottom: '12px' }}>
+                    <p style={{ color: '#666', margin: 0 }}>📍 Google Maps chưa được cấu hình</p>
+                  </div>
+                )}
 
-<div className="contact-info-container">
+                <div className="contact-info-container">
                   <div className="contact-item">
                     <div className="contact-icon small">
                       <i className="fas fa-map-marker-alt"></i>
                     </div>
-                    <div className="contact-text">{data?.address}</div>
+                    <div className="contact-text">{data?.address1}</div>
+                  </div>
+                  <div className="contact-item">
+                    <div className="contact-icon small">
+                      <i className="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div className="contact-text">{data?.address2}</div>
                   </div>
                   <div className="contact-item">
                     <div className="contact-icon small">

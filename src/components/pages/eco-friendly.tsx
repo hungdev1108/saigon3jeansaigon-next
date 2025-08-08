@@ -223,6 +223,55 @@ export default function EcoFriendly({ ecoFriendlyData }: EcoFriendlyProps) {
 
   return (
     <div className="eco-friendly-zoom">
+      {/* Font consistency override for eco-friendly page */}
+      <style jsx global>{`
+        /* Apply Inter font family consistently */
+        .eco-section h2,
+        .eco-section p,
+        .features-right .right-item p,
+        .features-right .right-item ul li,
+        .stat-title,
+        .stat-value strong,
+        .stat-value span {
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        /* Normalize font weights */
+        .eco-section h2 {
+          font-weight: 500 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .eco-section p {
+          font-weight: 400 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .features-right .right-item p {
+          font-weight: 700 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .features-right .right-item ul li {
+          font-weight: 400 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .stat-title {
+          font-weight: 400 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .stat-value strong {
+          font-weight: 500 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+        
+        .stat-value span {
+          font-weight: 400 !important;
+          font-family: "Inter", sans-serif !important;
+        }
+      `}</style>
       <main id="eco-friendly">
 
         <section className="features">

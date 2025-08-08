@@ -356,17 +356,21 @@ class HomeService {
    */
   async updateHero(heroData, files = {}) {
     const formData = new FormData();
-    Object.keys(heroData).forEach(key => formData.append(key, heroData[key]));
-    
-    // Xử lý files
+    Object.keys(heroData).forEach(key => {
+      // KHÔNG append aiBannerImage nếu có file upload
+      if (key === 'aiBannerImage' && files['aiBannerImage']) return;
+      formData.append(key, heroData[key]);
+    });
+    // Append file nếu có
+    if (files['aiBannerImage']) {
+      formData.append('aiBannerImage', files['aiBannerImage']);
+    }
     if (files['backgroundImage']) {
       formData.append('heroImage', files['backgroundImage']);
     }
-    
     if (files['videoUrl']) {
       formData.append('heroVideo', files['videoUrl']);
     }
-
     const response = await fetch(`${BACKEND_DOMAIN}/api/home/hero`, {
       method: 'PUT',
       headers: getAuthHeaders(true),

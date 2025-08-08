@@ -331,41 +331,7 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
                 accept="image/*" 
               />
             </div>
-            <div className="form-group form-inline">
-              <div className="form-check">
-                <input 
-                  type="checkbox" 
-                  id="isPublished" 
-                  name="isPublished" 
-                  checked={formData.isPublished} 
-                  onChange={handleInputChange} 
-                  className="form-checkbox" 
-                />
-                <label htmlFor="isPublished">Đăng ngay</label>
-              </div>
-              <div className="form-check">
-                <input 
-                  type="checkbox" 
-                  id="isFeatured" 
-                  name="isFeatured" 
-                  checked={formData.isFeatured} 
-                  onChange={handleInputChange} 
-                  className="form-checkbox" 
-                />
-                <label htmlFor="isFeatured">Tin nổi bật</label>
-              </div>
-              <div className="form-check">
-                <input 
-                  type="checkbox" 
-                  id="onHome" 
-                  name="onHome" 
-                  checked={formData.onHome} 
-                  onChange={handleInputChange} 
-                  className="form-checkbox" 
-                />
-                <label htmlFor="onHome">Trang chủ</label>
-              </div>
-            </div>
+
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isSaving}>
@@ -388,12 +354,18 @@ export default function AdminHomePage() {
   const [homepageNews, setHomepageNews] = useState<NewsData[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | boolean>(false);
+  // 1. Thêm state error nếu chưa có
+  type SectionError = string | null;
+  const [error, setError] = useState<SectionError>(null);
 
   // Files for upload, preview for UI
   const [files, setFiles] = useState<{ [key: string]: File }>({});
   const [logoPreview, setLogoPreview] = useState<PreviewMap>({});
   const [mediaPreview, setMediaPreview] = useState<PreviewMap>({});
   const [heroPreview, setHeroPreview] = useState<PreviewMap>({});
+  
+  // Media type selection for sections (file upload vs YouTube URL)
+  const [sectionMediaTypes, setSectionMediaTypes] = useState<{ [key: string]: 'file' | 'youtube' }>({});
 
   // Modal news
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -408,7 +380,7 @@ export default function AdminHomePage() {
       setLoading(true);
       console.log("Loading homepage data...");
       
-      let homeDataResult, homepageNewsResult;
+      let homeDataResult: any, homepageNewsResult: any;
       
       try {
         homeDataResult = await homeService.getCompleteHomeData();
@@ -430,9 +402,9 @@ export default function AdminHomePage() {
       // Đảm bảo dữ liệu có cấu trúc đúng và có dữ liệu mặc định cho homeContact
       const processedHomeData = {
         ...homeDataResult,
-        sections: Array.isArray(homeDataResult.sections) ? homeDataResult.sections : [],
-        factoryVideo: homeDataResult.factoryVideo || "",
-        homeContact: homeDataResult.homeContact || {
+        sections: Array.isArray((homeDataResult as any).sections) ? (homeDataResult as any).sections : [],
+        factoryVideo: (homeDataResult as any).factoryVideo || "",
+        homeContact: (homeDataResult as any).homeContact || {
           contact: {
             title: 'CONTACT',
             description: 'Seeking us and you\'ll get someone who can deliver consistent, high-quality products while minimizing their ecological footprint',
@@ -447,7 +419,7 @@ export default function AdminHomePage() {
           },
           isActive: true
         },
-        certifications: Array.isArray(homeDataResult.certifications) ? homeDataResult.certifications : []
+        certifications: Array.isArray((homeDataResult as any).certifications) ? (homeDataResult as any).certifications : []
       };
       
       console.log("Loaded home data:", processedHomeData);
@@ -464,19 +436,23 @@ export default function AdminHomePage() {
 
   const hasChanges = (section: keyof Omit<HomeData, 'featuredNews'> | 'factoryVideo' | 'certifications') => {
     if (!initialHomeData || !homeData) return false;
-    
+    if (section === 'hero') {
+      // So sánh dữ liệu text
+      const textChanged = JSON.stringify(initialHomeData.hero) !== JSON.stringify(homeData.hero);
+      // So sánh file mới
+      const fileChanged = !!files['hero-aiBannerImage'];
+      return textChanged || fileChanged;
+    }
     if (section === 'factoryVideo') {
       return initialHomeData?.factoryVideo !== homeData?.factoryVideo || 
         Object.keys(files).some(key => key === 'factoryVideo');
     }
-    
     if (section === 'certifications') {
       return (
         JSON.stringify(initialHomeData.certifications) !== JSON.stringify(homeData.certifications) ||
         Object.keys(files).some(key => key.startsWith('cert_'))
       );
     }
-
     return JSON.stringify(initialHomeData[section]) !== JSON.stringify(homeData[section]) ||
       Object.keys(files).some(key => key.startsWith(section.toString()));
   };
@@ -554,7 +530,12 @@ export default function AdminHomePage() {
           }
         }
       } else if (index !== undefined) {
-        newData[section][index][name] = inputValue;
+        if (subSection) {
+          // Handle subSection for sections (e.g., mediaUrl)
+          newData[section][index][subSection] = inputValue;
+        } else {
+          newData[section][index][name] = inputValue;
+        }
       } else {
         newData[section][name] = inputValue;
       }
@@ -566,6 +547,86 @@ export default function AdminHomePage() {
   const handleCheckboxChange = async (newsId: string, field: 'isFeatured' | 'isPublished' | 'onHome', checked: boolean) => {
       const newsItem = homepageNews.find(n => n._id === newsId);
       if (!newsItem) return;
+      
+      // Kiểm tra tin nổi bật - chỉ cho phép 1 tin featured
+      if (field === 'isFeatured' && checked) {
+        const currentFeatured = homepageNews.find(n => n.isFeatured && n._id !== newsId);
+        if (currentFeatured) {
+          const confirmResult = window.confirm(
+            `Tin "${currentFeatured.title}" đang là tin nổi bật.\n\nBạn có muốn chuyển sang tin "${newsItem.title}" không?\n\n(Tin cũ sẽ tự động bỏ nổi bật)`
+          );
+          
+          if (!confirmResult) {
+            return; // User hủy
+          }
+          
+          // Tự động bỏ featured của tin cũ
+          try {
+            setSaving(currentFeatured._id);
+            const oldNewsUpdated = { ...currentFeatured, isFeatured: false };
+            await homeService.updateNews(currentFeatured._id, oldNewsUpdated, undefined);
+            
+            // Cập nhật state local
+            setHomepageNews(prevNews =>
+              prevNews.map(n => (n._id === currentFeatured._id ? oldNewsUpdated : n))
+            );
+            
+            toast.info(`Đã bỏ tin nổi bật: "${currentFeatured.title}"`, { ...toastOptions });
+          } catch (error) {
+            console.error('Error removing old featured news:', error);
+            toast.error('Lỗi khi bỏ tin nổi bật cũ');
+            return;
+          } finally {
+            setSaving(false);
+          }
+        }
+      }
+      
+      // Kiểm tra tin trang chủ - chỉ cho phép tối đa 4 tin onHome (1 featured + 3 tin nhỏ)
+      if (field === 'onHome' && checked) {
+        const currentOnHome = homepageNews.filter(n => n.onHome && n._id !== newsId);
+        if (currentOnHome.length >= 4) {
+          // Tìm tin không phải featured để thay thế (ưu tiên bỏ tin nhỏ trước)
+          const nonFeaturedOnHome = currentOnHome.filter(n => !n.isFeatured);
+          let oldestOnHome;
+          
+          if (nonFeaturedOnHome.length > 0) {
+            // Ưu tiên bỏ tin nhỏ cũ nhất
+            oldestOnHome = nonFeaturedOnHome.sort((a, b) => new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime())[0];
+          } else {
+            // Nếu tất cả đều featured (trường hợp hiếm), bỏ tin cũ nhất
+            oldestOnHome = currentOnHome.sort((a, b) => new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime())[0];
+          }
+          
+          const confirmResult = window.confirm(
+            `Đã có 4 tin trên trang chủ (tối đa: 1 nổi bật + 3 tin nhỏ).\n\nTin cũ nhất: "${oldestOnHome.title}"\n\nBạn có muốn thay thế bằng tin "${newsItem.title}" không?\n\n(Tin cũ nhất sẽ tự động bỏ khỏi trang chủ)`
+          );
+          
+          if (!confirmResult) {
+            return; // User hủy
+          }
+          
+          // Tự động bỏ onHome của tin cũ nhất
+          try {
+            setSaving(oldestOnHome._id);
+            const oldNewsUpdated = { ...oldestOnHome, onHome: false };
+            await homeService.updateNews(oldestOnHome._id, oldNewsUpdated, undefined);
+            
+            // Cập nhật state local
+            setHomepageNews(prevNews =>
+              prevNews.map(n => (n._id === oldestOnHome._id ? oldNewsUpdated : n))
+            );
+            
+            toast.info(`Đã bỏ khỏi trang chủ: "${oldestOnHome.title}"`, { ...toastOptions });
+          } catch (error) {
+            console.error('Error removing old onHome news:', error);
+            toast.error('Lỗi khi bỏ tin trang chủ cũ');
+            return;
+          } finally {
+            setSaving(false);
+          }
+        }
+      }
       
       // Log trạng thái trước khi thay đổi
       console.log(`Changing ${field} for news "${newsItem.title}" from ${newsItem[field]} to ${checked}`);
@@ -654,50 +715,54 @@ export default function AdminHomePage() {
     });
   };
 
+  // Function to handle YouTube URL validation and conversion
+  const isYouTubeUrl = (url: string): boolean => {
+    return url.includes('youtube.com/watch?v=') || url.includes('youtu.be/');
+  };
+
+  const getYouTubeVideoId = (url: string): string | null => {
+    try {
+      if (url.includes('youtube.com/watch?v=')) {
+        return url.split('v=')[1].split('&')[0];
+      } else if (url.includes('youtu.be/')) {
+        return url.split('youtu.be/')[1].split('?')[0];
+      }
+    } catch (error) {
+      console.error('Error parsing YouTube URL:', error);
+    }
+    return null;
+  };
+
+  const handleSectionMediaTypeChange = (sectionIndex: number, mediaType: 'file' | 'youtube') => {
+    setSectionMediaTypes(prev => ({
+      ...prev,
+      [`section-${sectionIndex}`]: mediaType
+    }));
+  };
+
   const handleSave = async (section: "hero" | "sections" | "customers" | "factoryVideo" | "homeContact" | "certifications") => {
     if (!homeData || !hasChanges(section)) return;
     setSaving(section);
 
     try {
-        let result: ApiResponse;
+        let result: any;
         const dataToSave = section === 'factoryVideo' ? { factoryVideo: homeData.factoryVideo } : homeData[section];
         // Chỉ gửi file (không gửi base64)
-        const filesToSave = Object.keys(files)
-          .filter(key => {
-            if (section === 'factoryVideo') {
-              return key === 'factoryVideo';
-            }
-            if (section === 'certifications') {
-              return key.startsWith('certifications');
-            }
-            return key.startsWith(section) && key !== 'factoryVideo';
-          })
-          .reduce((obj, key) => {
-            if (section === 'customers') {
-              const parts = key.split('-');
-              if (parts.length >= 2) {
-                const categoryAndId = parts[1];
-                const underscoreIndex = categoryAndId.indexOf('_');
-                if (underscoreIndex !== -1) {
-                  const category = categoryAndId.substring(0, underscoreIndex);
-                  const id = categoryAndId.substring(underscoreIndex + 1);
-                  const newKey = `${category}_${id}_logo`;
-                  obj[newKey] = files[key];
-                  return obj;
-                }
-              }
-            }
-            
-            // Special case for factoryVideo
-            if (key === 'factoryVideo') {
-              obj['factoryVideo'] = files[key];
-              return obj;
-            }
-            
-            const fileKey = key.substring(section.length + 1);
-            obj[fileKey] = files[key];
-            return obj;
-          }, {} as Record<string, File>);
+        const filesToSave: Record<string, File> = {};
+        if (section === 'hero') {
+          // Đảm bảo truyền đúng key cho AI Banner
+          if (files['hero-aiBannerImage']) {
+            filesToSave['aiBannerImage'] = files['hero-aiBannerImage'];
+          }
+          // Nếu có các file khác cho hero (ví dụ: backgroundImage, videoUrl), thêm vào đây nếu cần
+          result = await homeService.updateHero(dataToSave as HeroData, filesToSave);
+        } else if (section === 'factoryVideo' && files['factoryVideo']) {
+          filesToSave['factoryVideo'] = files['factoryVideo'];
+          result = await homeService.updateHomeSections({
+            sections: homeData.sections || [],
+            factoryVideo: homeData.factoryVideo || ""
+          }, filesToSave);
+        }
         
         // Đảm bảo truyền đúng key cho AI Banner
         if (files['hero-aiBannerImage']) {
@@ -724,14 +789,31 @@ export default function AdminHomePage() {
               }, filesToSave);
               break;
           case 'sections':
+              // Chuẩn bị files cho sections
+              homeData.sections.forEach((sec, idx) => {
+                if (files[`sections-${idx}-mediaUrl`]) {
+                  filesToSave[`sections-${idx}-mediaUrl`] = files[`sections-${idx}-mediaUrl`];
+                }
+              });
+              
+              console.log('Sections files to save:', Object.keys(filesToSave));
+              
               // For sections, vẫn giữ cấu trúc cũ để đảm bảo tương thích
               const sectionsToSave = {
-                sections: Array.isArray(dataToSave) ? dataToSave : [],
+                sections: Array.isArray(dataToSave) ? dataToSave : homeData.sections,
                 factoryVideo: homeData.factoryVideo || ""
               };
               result = await homeService.updateHomeSections(sectionsToSave, filesToSave);
               break;
           case 'customers':
+              // Chuẩn bị files cho customers
+              Object.keys(files).forEach(key => {
+                if (key.startsWith('customers-')) {
+                  filesToSave[key] = files[key];
+                }
+              });
+              console.log('Customers dataToSave:', dataToSave);
+              console.log('Customers filesToSave:', Object.keys(filesToSave));
               result = await homeService.updateCustomers(dataToSave as CustomersData, filesToSave);
               break;
           case 'homeContact':
@@ -781,17 +863,26 @@ export default function AdminHomePage() {
         
         console.log(`Save ${section} result:`, result);
         
-        if (result.success) {
-          toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
+        if (result && result.success) {
+          // Thêm delay nhỏ để đảm bảo backend đã cập nhật xong
+          await new Promise(resolve => setTimeout(resolve, 700));
+          
+          // Reload data to get updated values
+          const newData = await homeService.getCompleteHomeData();
+          setHomeData(newData as HomeData);
+          setInitialHomeData(newData as HomeData); // Reset initial data for hasChanges
+          
+          // Clear all file states
           setFiles({});
           setLogoPreview({});
           setMediaPreview({});
           setHeroPreview({});
-          await loadHomepageData();
+          
+          toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
         } else {
-          throw new Error(result.message || "Lưu thất bại");
+          throw new Error(result?.message || "Lưu thất bại");
         }
-    } catch (error) {
+    } catch (error: any) {
       handleError(error, `lưu ${section}`);
     } finally {
       setSaving(false);
@@ -1048,13 +1139,10 @@ export default function AdminHomePage() {
       <AdminSectionCard title="Hero Section" onSave={() => handleSave('hero')} isSaving={saving === 'hero'} hasChanges={hasChanges('hero')}>
         <div className="grid-2-col">
             <div className="form-column">
-                <FormItem label="Tiêu đề chính" icon={<FiType />}>
+                <FormItem label="Tiêu Hero Banner" icon={<FiType />}>
                     <input type="text" value={homeData.hero.title || ''} name="title" onChange={(e) => handleInputChange(e, 'hero')} className="form-input" />
                 </FormItem>
-                 <FormItem label="Phụ đề" icon={<FiFileText />}>
-                    <textarea value={homeData.hero.subtitle || ''} name="subtitle" onChange={(e) => handleInputChange(e, 'hero')} className="form-textarea" />
-                </FormItem>
-                 <FormItem label="Tiêu đề chính AI Banner" icon={<FiType />}>
+                 <FormItem label="Tiêu đề AI Banner" icon={<FiType />}>
                     <input
                       type="text"
                       value={homeData?.hero?.aiBannerTitle || ''}
@@ -1077,30 +1165,21 @@ export default function AdminHomePage() {
                  </FormItem>
             </div>
             <div className="form-column">
-                <FormItem label="Ảnh nền" icon={<FiImage />}>
+                <FormItem label="Video Hero Banner" icon={<FiVideo />}>
                     <div className="image-preview-container">
-                       {homeData.hero.videoUrl ? (
-                           <video 
-                               src={`${BACKEND_DOMAIN}${homeData.hero.videoUrl}`} 
-                               width="300" 
-                               height="150" 
-                               controls 
-                               className="image-preview" 
-                           />
-                       ) : (
-                           <Image 
-                               src={
-                                  heroPreview['hero-backgroundImage']
-                                  ? heroPreview['hero-backgroundImage']
-                                  : (files['hero-backgroundImage']
-                                    ? URL.createObjectURL(files['hero-backgroundImage'])
-                                    : `${BACKEND_DOMAIN}${homeData.hero.backgroundImage}`)
-                               }
-                               alt="Ảnh nền" width={300} height={150} className="image-preview" 
-                           />
-                       )}
+                      {homeData.hero.videoUrl ? (
+                        <video 
+                          src={`${BACKEND_DOMAIN}${homeData.hero.videoUrl}`} 
+                          width="300" 
+                          height="150" 
+                          controls 
+                          className="image-preview" 
+                        />
+                      ) : (
+                        <div className="no-video-placeholder">No hero video uploaded yet</div>
+                      )}
                     </div>
-                    <input type="file" onChange={(e) => handleFileChange(e, 'hero-backgroundImage')} accept="image/*" className="form-file-input"/>
+                    {/* BỎ input chọn file ảnh nền */}
                 </FormItem>
                 <FormItem label="Ảnh AI Banner" icon={<FiImage />}>
                   <div className="image-preview-container">
@@ -1129,27 +1208,35 @@ export default function AdminHomePage() {
             <div className="form-column">
               <FormItem label="Factory Video" icon={<FiVideo />}>
                 <div className="image-preview-container">
-                  {homeData.factoryVideo ? (
-                    <video 
-                      src={homeData.factoryVideo.startsWith('http') 
-                        ? homeData.factoryVideo 
-                        : `${BACKEND_DOMAIN}${homeData.factoryVideo}`} 
-                      width="300" 
-                      height="150" 
-                      controls 
-                      className="image-preview" 
+                  {files['factoryVideo'] ? (
+                    <video
+                      src={URL.createObjectURL(files['factoryVideo'])}
+                      width="300"
+                      height="150"
+                      controls
+                      className="image-preview"
+                    />
+                  ) : homeData.factoryVideo ? (
+                    <video
+                      src={homeData.factoryVideo.startsWith('http')
+                        ? homeData.factoryVideo
+                        : `${BACKEND_DOMAIN}${homeData.factoryVideo}`}
+                      width="300"
+                      height="150"
+                      controls
+                      className="image-preview"
                     />
                   ) : (
                     <div className="no-video-placeholder">No factory video uploaded yet</div>
                   )}
                 </div>
-                <input 
-                  type="file" 
-                  onChange={(e) => handleFileChange(e, 'factoryVideo')} 
-                  accept="video/*" 
+                <input
+                  type="file"
+                  onChange={(e) => handleFileChange(e, 'factoryVideo')}
+                  accept="video/*"
                   className="form-file-input"
                 />
-                {homeData.factoryVideo && (
+                {homeData.factoryVideo && !files['factoryVideo'] && (
                   <div className="video-path">
                     <small>{homeData.factoryVideo}</small>
                   </div>
@@ -1170,93 +1257,154 @@ export default function AdminHomePage() {
         {console.log("Rendering sections:", homeData.sections)}
         {Array.isArray(homeData.sections) && homeData.sections.map((section, index) => (
           <div key={index} className="subsection-card">
-              <div className="subsection-header">
-                <h4>Section {index + 1}: {section.title}</h4>
-                <button 
-                  className="btn-delete" 
-                  onClick={() => handleDeleteSection(index)}
-                  title="Xóa section này"
-                >
-                  <FiTrash2 />
-                </button>
+            <div className="subsection-header">
+              <h4>Section {index + 1}: {section.title}</h4>
+              <button className="btn-delete" onClick={() => handleDeleteSection(index)} title="Xóa section này">
+                <FiTrash2 />
+              </button>
+            </div>
+            <div className="grid-2-col">
+              <div className="form-column">
+                <FormItem label="Tiêu đề Section" icon={<FiType />}>
+                  <input type="text" value={section.title} name="title" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
+                </FormItem>
+                <FormItem label="Nội dung" icon={<FiFileText />}>
+                  <textarea value={section.content} name="content" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-textarea"/>
+                </FormItem>
+                <FormItem label="Chữ trên nút" icon={<FiLink />}>
+                  <input type="text" value={section.buttonText} name="buttonText" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
+                </FormItem>
+                <FormItem label="Link cho nút" icon={<FiLink />}>
+                  <input type="text" value={section.buttonLink} name="buttonLink" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
+                </FormItem>
               </div>
-              <div className="grid-2-col">
-                  <div className="form-column">
-                      <FormItem label="Tiêu đề Section" icon={<FiType />}>
-                        <input type="text" value={section.title} name="title" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
-                      </FormItem>
-                      <FormItem label="Nội dung" icon={<FiFileText />}>
-                        <textarea value={section.content} name="content" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-textarea"/>
-                      </FormItem>
-                      <FormItem label="Chữ trên nút" icon={<FiLink />}>
-                        <input type="text" value={section.buttonText} name="buttonText" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
-                      </FormItem>
-                      <FormItem label="Link cho nút" icon={<FiLink />}>
-                        <input type="text" value={section.buttonLink} name="buttonLink" onChange={(e) => handleInputChange(e, 'sections', index)} className="form-input"/>
-                      </FormItem>
-                      {/* Màu nền được cố định theo thiết kế */}
-                  </div>
-                  <div className="form-column">
-                    <FormItem label="Media (Ảnh/Video)" icon={<FiImage />}>
-                      <div className="image-preview-container">
-                        {section.mediaType === 'image' ? (
-                            <Image 
-                                src={
-                                  mediaPreview[`sections-${index}-mediaUrl`]
-                                    ? mediaPreview[`sections-${index}-mediaUrl`]
-                                    : (files[`sections-${index}-mediaUrl`]
-                                      ? URL.createObjectURL(files[`sections-${index}-mediaUrl`])
-                                      : section.mediaUrl.startsWith('http') || section.mediaUrl.startsWith('/images')
-                                        ? section.mediaUrl
-                                        : `${BACKEND_DOMAIN}${section.mediaUrl}`)
-                                }
-                                alt={section.title} width={300} height={150} className="image-preview" 
+              <div className="form-column">
+                <FormItem label={index === 0 ? "Video" : "Ảnh"} icon={index === 0 ? <FiVideo /> : <FiImage />}>
+                  {/* Media Type Selection - Only for Section 1 (Video) */}
+                  {index === 0 && (
+                    <div className="media-type-selection" style={{ marginBottom: '15px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+                        <input
+                          type="radio"
+                          name={`media-type-${index}`}
+                          value="file"
+                          checked={sectionMediaTypes[`section-${index}`] !== 'youtube'}
+                          onChange={() => handleSectionMediaTypeChange(index, 'file')}
+                          style={{ marginRight: '8px' }}
+                        />
+                        Upload File
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center' }}>
+                        <input
+                          type="radio"
+                          name={`media-type-${index}`}
+                          value="youtube"
+                          checked={sectionMediaTypes[`section-${index}`] === 'youtube'}
+                          onChange={() => handleSectionMediaTypeChange(index, 'youtube')}
+                          style={{ marginRight: '8px' }}
+                        />
+                        YouTube URL
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="image-preview-container">
+                    {index === 0 ? (
+                      // Video Section (Section 1)
+                      sectionMediaTypes[`section-${index}`] === 'youtube' ? (
+                        // YouTube URL Input
+                        <div>
+                          <input
+                            type="url"
+                            placeholder="Nhập YouTube URL (https://www.youtube.com/watch?v=...)"
+                            value={section.mediaUrl?.startsWith('http') ? section.mediaUrl : ''}
+                            onChange={(e) => handleInputChange(e, 'sections', index, 'mediaUrl')}
+                            className="form-input"
+                            style={{ marginBottom: '10px' }}
+                          />
+                          {section.mediaUrl && isYouTubeUrl(section.mediaUrl) && (
+                            <iframe
+                              src={`https://www.youtube.com/embed/${getYouTubeVideoId(section.mediaUrl)}?controls=1`}
+                              width="300"
+                              height="169"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              className="image-preview"
+                              title={section.title}
                             />
+                          )}
+                        </div>
+                      ) : (
+                        // File Upload for Video
+                        <div>
+                          {files[`sections-${index}-mediaUrl`] ? (
+                            <video
+                              src={URL.createObjectURL(files[`sections-${index}-mediaUrl`])}
+                              width="300"
+                              height="150"
+                              controls
+                              className="image-preview"
+                            />
+                          ) : section.mediaUrl && !isYouTubeUrl(section.mediaUrl) ? (
+                            <video
+                              src={`${section.mediaUrl.startsWith('http') || section.mediaUrl.startsWith('/videos')
+                                ? section.mediaUrl
+                                : `${BACKEND_DOMAIN}${section.mediaUrl}`}?v=${Date.now()}`}
+                              width="300"
+                              height="150"
+                              controls
+                              className="image-preview"
+                            />
+                          ) : (
+                            <div className="no-video-placeholder">No video uploaded yet</div>
+                          )}
+                          <input
+                            type="file"
+                            onChange={(e) => handleFileChange(e, `sections-${index}-mediaUrl`)}
+                            accept="video/*"
+                            className="form-file-input"
+                            style={{ marginTop: '10px' }}
+                          />
+                        </div>
+                      )
+                    ) : (
+                      // Image Sections (Section 2, 3, etc.)
+                      <div>
+                        {files[`sections-${index}-mediaUrl`] ? (
+                          <Image
+                            src={URL.createObjectURL(files[`sections-${index}-mediaUrl`])}
+                            alt={section.title}
+                            width={300}
+                            height={150}
+                            className="image-preview"
+                          />
+                        ) : section.mediaUrl ? (
+                          <Image
+                            src={`${section.mediaUrl.startsWith('http') || section.mediaUrl.startsWith('/images')
+                              ? section.mediaUrl
+                              : `${BACKEND_DOMAIN}${section.mediaUrl}`}?v=${Date.now()}`}
+                            alt={section.title}
+                            width={300}
+                            height={150}
+                            className="image-preview"
+                          />
                         ) : (
-                            <video 
-                              src={
-                                mediaPreview[`sections-${index}-mediaUrl`]
-                                  ? mediaPreview[`sections-${index}-mediaUrl`]
-                                  : (files[`sections-${index}-mediaUrl`]
-                                    ? URL.createObjectURL(files[`sections-${index}-mediaUrl`])
-                                    : section.mediaUrl.startsWith('http') || section.mediaUrl.startsWith('/images')
-                                      ? section.mediaUrl
-                                      : `${BACKEND_DOMAIN}${section.mediaUrl}`)
-                              }
-                              width="300" height="150" controls className="image-preview" />
+                          <div className="no-image-placeholder">No image uploaded yet</div>
                         )}
-                      </div>
-                       <input 
-                          type="file" 
-                          onChange={(e) => handleFileChange(e, `sections-${index}-mediaUrl`)} 
-                          accept="image/*,video/*" 
+                        <input
+                          type="file"
+                          onChange={(e) => handleFileChange(e, `sections-${index}-mediaUrl`)}
+                          accept="image/*"
                           className="form-file-input"
-                       />
-                       <div className="media-type-selector">
-                         <label className="media-type-label">
-                           <input
-                             type="radio"
-                             name={`mediaType-${index}`}
-                             value="image"
-                             checked={section.mediaType === 'image'}
-                             onChange={() => handleMediaTypeChange(index, 'image')}
-                           />
-                           <span>Ảnh</span>
-                         </label>
-                         <label className="media-type-label">
-                           <input
-                             type="radio"
-                             name={`mediaType-${index}`}
-                             value="video"
-                             checked={section.mediaType === 'video'}
-                             onChange={() => handleMediaTypeChange(index, 'video')}
-                           />
-                           <span>Video</span>
-                         </label>
-                       </div>
-                    </FormItem>
+                          style={{ marginTop: '10px' }}
+                        />
+                      </div>
+                    )}
                   </div>
+                </FormItem>
               </div>
+            </div>
           </div>
         ))}
       </AdminSectionCard>
@@ -1291,10 +1439,14 @@ export default function AdminHomePage() {
                             </div>
                              <input 
                                 type="file" 
-                                onChange={(e) => handleFileChange(e, `customers-${subSectionKey}_${customer._id}-logo`)} 
+                                onChange={(e) => {
+                                  console.log('Customer file change:', `customers-${subSectionKey}_${customer._id}-logo`, e.target.files?.[0]);
+                                  handleFileChange(e, `customers-${subSectionKey}_${customer._id}-logo`);
+                                }} 
                                 accept="image/*" 
                                 className="form-file-input small"
                                 id={`file-${subSectionKey}-${customer._id}`}
+                                style={{ marginTop: '10px' }}
                             />
                             <input 
                                 type="text" 
@@ -1449,6 +1601,41 @@ export default function AdminHomePage() {
                           {news.isPublished && <span className="status-badge published">Đã đăng</span>}
                           {news.isFeatured && <span className="status-badge featured">Nổi bật</span>}
                           {news.onHome && <span className="status-badge on-home">Trang chủ</span>}
+                        </div>
+                        <div className="news-toggles">
+                          <div className="form-check">
+                            <input 
+                              type="checkbox" 
+                              id={`isPublished-${news._id}`}
+                              checked={news.isPublished} 
+                              onChange={(e) => handleCheckboxChange(news._id, 'isPublished', e.target.checked)}
+                              className="form-checkbox" 
+                              disabled={saving === news._id}
+                            />
+                            <label htmlFor={`isPublished-${news._id}`}>Đăng</label>
+                          </div>
+                          <div className="form-check">
+                            <input 
+                              type="checkbox" 
+                              id={`isFeatured-${news._id}`}
+                              checked={news.isFeatured} 
+                              onChange={(e) => handleCheckboxChange(news._id, 'isFeatured', e.target.checked)}
+                              className="form-checkbox" 
+                              disabled={saving === news._id}
+                            />
+                            <label htmlFor={`isFeatured-${news._id}`}>Nổi bật</label>
+                          </div>
+                          <div className="form-check">
+                            <input 
+                              type="checkbox" 
+                              id={`onHome-${news._id}`}
+                              checked={news.onHome} 
+                              onChange={(e) => handleCheckboxChange(news._id, 'onHome', e.target.checked)}
+                              className="form-checkbox" 
+                              disabled={saving === news._id}
+                            />
+                            <label htmlFor={`onHome-${news._id}`}>Trang chủ</label>
+                          </div>
                         </div>
                       </div>
                   ))}

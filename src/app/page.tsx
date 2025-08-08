@@ -7,12 +7,12 @@ import HeaderScrollEffect from "@/components/HeaderScrollEffect";
 import { BACKEND_DOMAIN } from "@/api/config";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 0; // Disable cache for immediate updates
 
 // Hàm lấy dữ liệu trang chủ từ API
 async function getHomeData() {
   try {
-    const response = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { next: { revalidate } });
+    const response = await fetch(`${BACKEND_DOMAIN}/api/home/data`, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
