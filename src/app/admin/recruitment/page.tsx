@@ -84,6 +84,8 @@ export default function AdminRecruitmentPage() {
     isActive: true
   });
   const [jobFormError, setJobFormError] = useState('');
+  
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -271,6 +273,8 @@ export default function AdminRecruitmentPage() {
       alert('Có lỗi xảy ra: ' + (error.message || 'Không xác định'));
     }
   };
+
+
 
   if (loading) {
     return <div className="admin-page-container">Đang tải...</div>;
@@ -603,20 +607,83 @@ export default function AdminRecruitmentPage() {
       {activeTab === 'company' && companyInfo && (
         <div className="admin-content">
           <h2>Thông tin công ty</h2>
-          <div className="admin-form">
-            <div className="form-group">
-              <label>Mô tả</label>
-              <textarea 
-                value={companyInfo.description.join('\n')} 
-                onChange={(e) => setCompanyInfo({
-                  ...companyInfo, 
-                  description: e.target.value.split('\n').filter(line => line.trim())
-                })}
-                rows={4}
-              />
+          
+          {/* Company Description */}
+          <div className="admin-section-card">
+            <h3>Mô tả công ty</h3>
+            <div className="admin-form">
+              <div className="form-group">
+                <label>Mô tả</label>
+                <textarea 
+                  value={companyInfo.description.join('\n')} 
+                  onChange={(e) => setCompanyInfo({
+                    ...companyInfo, 
+                    description: e.target.value.split('\n').filter(line => line.trim())
+                  })}
+                  rows={4}
+                  placeholder="Nhập mô tả công ty (mỗi dòng một đoạn)"
+                />
+              </div>
             </div>
-            <button onClick={handleSaveCompanyInfo} className="admin-btn primary">Lưu thay đổi</button>
           </div>
+
+          {/* Company Stats Management */}
+          <div className="admin-section-card">
+            <h3>Quản lý thống kê công ty</h3>
+            <div className="stats-grid">
+              {Object.entries(companyInfo.stats || {}).map(([key, stat]) => (
+                <div key={key} className="stat-card">
+                  <div className="stat-card-header">
+                    <h5>Thống kê: {key}</h5>
+                  </div>
+                  <div className="form-group">
+                    <label>Label</label>
+                    <input
+                      type="text"
+                      value={stat.label || ''}
+                      onChange={(e) => setCompanyInfo({
+                        ...companyInfo,
+                        stats: {
+                          ...companyInfo.stats,
+                          [key]: {
+                            ...stat,
+                            label: e.target.value
+                          }
+                        }
+                      })}
+                      placeholder="Nhập nhãn hiển thị"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Số liệu</label>
+                    <input
+                      type="text"
+                      value={stat.number || ''}
+                      onChange={(e) => setCompanyInfo({
+                        ...companyInfo,
+                        stats: {
+                          ...companyInfo.stats,
+                          [key]: {
+                            ...stat,
+                            number: e.target.value
+                          }
+                        }
+                      })}
+                      placeholder="Nhập số liệu (vd: 1000+, 20+)"
+                    />
+                  </div>
+                  <div className="stat-preview">
+                    <div className="stat-number">{stat.number}</div>
+                    <div className="stat-label">{stat.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={handleSaveCompanyInfo} className="admin-btn primary save-btn">
+            Lưu tất cả thay đổi
+          </button>
         </div>
       )}
 
@@ -991,6 +1058,79 @@ export default function AdminRecruitmentPage() {
           justify-content: center;
           margin-top: 8px;
         }
+        /* Company Stats Management Styles */
+        .admin-section-card {
+          background: #f8f9fa;
+          border-radius: 8px;
+          padding: 24px;
+          margin-bottom: 24px;
+          border: 1px solid #e9ecef;
+        }
+        .admin-section-card h3 {
+          margin: 0 0 20px 0;
+          color: #1e4f7a;
+          font-size: 1.3rem;
+          font-weight: 600;
+        }
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+        .stat-card {
+          background: #fff;
+          border-radius: 8px;
+          padding: 20px;
+          border: 1px solid #dee2e6;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .stat-card-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #e9ecef;
+        }
+        .stat-card-header h5 {
+          margin: 0;
+          color: #495057;
+          font-size: 1rem;
+          font-weight: 500;
+        }
+        .stat-preview {
+          background: #f8f9fa;
+          border-radius: 6px;
+          padding: 16px;
+          text-align: center;
+          margin-top: 16px;
+          border: 1px solid #e9ecef;
+        }
+        .stat-number {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #1e4f7a;
+          margin-bottom: 4px;
+        }
+        .stat-label {
+          font-size: 0.9rem;
+          color: #6c757d;
+          font-weight: 500;
+        }
+
+        .save-btn {
+          margin-top: 30px;
+          padding: 12px 24px;
+          font-size: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+          .stats-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+        
         @media (max-width: 600px) {
           .modal-container {
             min-width: 95vw;

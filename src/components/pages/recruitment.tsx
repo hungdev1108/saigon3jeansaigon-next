@@ -5,7 +5,7 @@ import recruitmentService from "@/services/recruitmentService";
 import { FormatTime } from "@/shared/format_time";
 import { toast } from "react-toastify";
 import Image from "next/image";
-import { BACKEND_DOMAIN } from '@/api/config';
+
 
   interface Job {
     _id: string;
@@ -440,24 +440,18 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                       </div>
                       <div className="company-stats mt-4">
                         <div className="row">
-                          <div className="col-4">
-                            <div className="stat-item">
-                              <h5 className="stat-number">300+</h5>
-                              <small className="text-muted">Employees</small>
+                          {contactInfo?.stats && Object.entries(contactInfo.stats).slice(0, 6).map(([key, stat]) => {
+                            const statsCount = Object.keys(contactInfo.stats).length;
+                            const colSize = statsCount <= 3 ? 4 : statsCount <= 4 ? 3 : 2;
+                            return (
+                            <div key={key} className={`col-lg-${colSize} col-md-6 col-12 mb-3`}>
+                              <div className="stat-item">
+                                <h5 className="stat-number">{stat.number}</h5>
+                                <small className="text-muted">{stat.label}</small>
+                              </div>
                             </div>
-                          </div>
-                          <div className="col-4">
-                            <div className="stat-item">
-                              <h5 className="stat-number">120.000</h5>
-                              <small className="text-muted">pcs/year</small>
-                            </div>
-                          </div>
-                          <div className="col-4">
-                            <div className="stat-item">
-                              <h5 className="stat-number">30</h5>
-                              <small className="text-muted">Global Partners</small>
-                            </div>
-                          </div>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
