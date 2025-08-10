@@ -313,6 +313,19 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
             </div>
             <div className="form-group">
               <label>Hình ảnh</label>
+              <div className="image-size-notice">
+                <div className="notice-icon">⚠️</div>
+                <div className="notice-text">
+                  <strong>Lưu ý kích thước ảnh tin tức:</strong>
+                  <ul>
+                    <li>Kích thước tối ưu: <strong>1920x1440 pixels</strong> (tỷ lệ 4:3)</li>
+                    <li>Kích thước tối thiểu: <strong>800x600 pixels</strong></li>
+                    <li>Định dạng: JPG, PNG, WEBP</li>
+                    <li>Dung lượng tối đa: <strong>2MB</strong></li>
+                    <li>Tỷ lệ khung hình: <strong>4:3</strong> để hiển thị tốt nhất</li>
+                  </ul>
+                </div>
+              </div>
               {imagePreview && (
                 <div className="image-preview-container">
                   <Image 
@@ -1654,6 +1667,14 @@ export default function AdminHomePage() {
 
 
       </AdminSectionCard>
+
+      {/* Image Size Notice for News */}
+      <div className="global-news-notice">
+        <div className="notice-icon">📸</div>
+        <div className="notice-content">
+          <strong>Lưu ý kích thước ảnh tin tức:</strong> Để hiển thị tốt nhất, vui lòng sử dụng ảnh có tỷ lệ <strong>4:3</strong> với kích thước tối ưu <strong>1920x1440 pixels</strong> và dung lượng tối đa <strong>2MB</strong>.
+        </div>
+      </div>
 
       {/* Featured News Section */}
       <AdminSectionCard title="Tin tức hiển thị trên trang chủ">
