@@ -445,31 +445,31 @@ export default function Machinery({ machineryData }: MachineryProps) {
             }
           }
           
-          /* Mobile optimizations - Smart responsive for various image sizes */
+          /* Mobile optimizations - Consistent with desktop */
           @media (max-width: 768px) {
             .machine-image-container,
             .machine-image-slider {
               height: auto !important;
               min-height: 250px !important;
-              max-height: 400px !important;
+              max-height: 350px !important;
               display: flex !important;
               align-items: center !important;
               justify-content: center !important;
-              background: #f8f9fa;
+              background: transparent;
               border-radius: 16px;
-              padding: 15px;
+              padding: 0;
               overflow: hidden;
             }
             
             .machine-image-slider .slider-item img,
             .slider-img-full,
             .machinery-single-image {
-              aspect-ratio: auto !important;
-              object-fit: contain !important;
-              width: auto !important;
-              height: auto !important;
+              aspect-ratio: 16/9 !important;
+              object-fit: cover !important;
+              width: 100% !important;
+              height: 100% !important;
               max-width: 100% !important;
-              max-height: 370px !important;
+              max-height: 100% !important;
               background: transparent;
               border-radius: 12px;
               box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -478,52 +478,39 @@ export default function Machinery({ machineryData }: MachineryProps) {
             .machine-image-slider .slick-slider,
             .machine-image-slider .slick-list,
             .machine-image-slider .slick-track {
-              height: auto !important;
-              display: flex !important;
-              align-items: center !important;
+              height: 250px !important;
+              display: block !important;
+              align-items: stretch !important;
             }
             
             .machine-image-slider .slick-slide {
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
+              display: block !important;
+              height: 250px !important;
             }
             
             .machine-image-slider .slider-item {
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              height: 100% !important;
+              display: block !important;
+              height: 250px !important;
+              width: 100% !important;
             }
             
-            /* Handle very wide images (landscape) */
-            .machine-image-slider .slider-item img[style*="aspect-ratio"],
-            .slider-img-full[style*="aspect-ratio"],
-            .machinery-single-image[style*="aspect-ratio"] {
-              max-width: 95% !important;
-            }
-            
-            /* Handle very tall images (portrait) */
-            @media (max-width: 768px) and (orientation: portrait) {
-              .machine-image-slider .slider-item img,
-              .slider-img-full,
-              .machinery-single-image {
-                max-height: 350px !important;
-                max-width: 90% !important;
-              }
-            }
-            
-            /* Handle very wide images on mobile landscape */
+            /* Responsive landscape orientation */
             @media (max-width: 768px) and (orientation: landscape) {
               .machine-image-container,
               .machine-image-slider {
-                max-height: 300px !important;
+                max-height: 280px !important;
+                min-height: 200px !important;
               }
               
-              .machine-image-slider .slider-item img,
-              .slider-img-full,
-              .machinery-single-image {
-                max-height: 270px !important;
+              .machine-image-slider .slick-slider,
+              .machine-image-slider .slick-list,
+              .machine-image-slider .slick-track {
+                height: 200px !important;
+              }
+              
+              .machine-image-slider .slick-slide,
+              .machine-image-slider .slider-item {
+                height: 200px !important;
               }
             }
           }
@@ -532,17 +519,28 @@ export default function Machinery({ machineryData }: MachineryProps) {
             .machine-image-container,
             .machine-image-slider {
               min-height: 200px !important;
-              max-height: 350px !important;
-              padding: 12px;
+              max-height: 280px !important;
+              padding: 0;
+            }
+            
+            .machine-image-slider .slick-slider,
+            .machine-image-slider .slick-list,
+            .machine-image-slider .slick-track {
+              height: 200px !important;
+            }
+            
+            .machine-image-slider .slick-slide,
+            .machine-image-slider .slider-item {
+              height: 200px !important;
             }
             
             .machine-image-slider .slider-item img,
             .slider-img-full,
             .machinery-single-image {
-              max-height: 320px !important;
-              object-fit: contain !important;
-              width: auto !important;
-              height: auto !important;
+              aspect-ratio: 16/9 !important;
+              object-fit: cover !important;
+              width: 100% !important;
+              height: 100% !important;
             }
           }
           .stages-container {

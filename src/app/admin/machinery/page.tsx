@@ -304,6 +304,14 @@ export default function AdminMachineryPage() {
           )}
         </div>
       </AdminSectionCard>
+      {/* Image Size Notice for Machinery */}
+      <div className="global-machinery-notice">
+        <div className="notice-icon">🏭</div>
+        <div className="notice-content">
+          <strong>Lưu ý kích thước ảnh máy móc:</strong> Để hiển thị nhất quán trên cả desktop và mobile, vui lòng sử dụng ảnh có tỷ lệ <strong>16:9</strong> với kích thước tối ưu <strong>1920x1080 pixels</strong> và dung lượng tối đa <strong>2MB</strong>.
+        </div>
+      </div>
+
       {/* Machines of active stage */}
       {data?.stages?.[activeStageIndex] && (
         <AdminSectionCard title={`Machines of ${data.stages[activeStageIndex].title}`}> 
@@ -397,6 +405,19 @@ export default function AdminMachineryPage() {
                                 </div>
                     <div className="form-group">
                       <label>Hình ảnh</label>
+                      <div className="machinery-image-notice">
+                        <div className="notice-icon">🏭</div>
+                        <div className="notice-text">
+                          <strong>Lưu ý kích thước ảnh máy móc:</strong>
+                          <ul>
+                            <li>Tỷ lệ tối ưu: <strong>16:9</strong> (1920x1080 pixels)</li>
+                            <li>Kích thước tối thiểu: <strong>1280x720 pixels</strong></li>
+                            <li>Định dạng: JPG, PNG, WEBP</li>
+                            <li>Dung lượng tối đa: <strong>2MB</strong></li>
+                            <li>Ảnh sẽ hiển thị nhất quán trên desktop và mobile</li>
+                          </ul>
+                        </div>
+                      </div>
                       <div className="feature-images-grid">
                         {modalMode === 'edit' && Array.isArray(modalData.images) && modalData.images.length > 0 && (
                           modalData.images.map((imgObj: MachineImage, idx: number) => {
