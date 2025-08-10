@@ -82,7 +82,7 @@ function MachineImageSlider({ images, alt, containerHeight }: MachineImageSlider
         alt={images[0].alt || alt}
         width={1500}
         height={900}
-        className="img-fluid"
+        className="img-fluid machinery-single-image"
         style={{
           width: '100%',
           height: containerHeight > 0 ? `${containerHeight}px` : '100%',
@@ -112,6 +112,7 @@ function MachineImageSlider({ images, alt, containerHeight }: MachineImageSlider
                 objectFit: 'cover',
                 objectPosition: 'center',
                 borderRadius: 16,
+                maxWidth: '100%',
               }}
             />
           </div>
@@ -404,7 +405,8 @@ export default function Machinery({ machineryData }: MachineryProps) {
             box-sizing: border-box;
           }
           .machine-image-slider .slider-item img,
-          .slider-img-full {
+          .slider-img-full,
+          .machinery-single-image {
             width: 100% !important;
             height: auto !important;
             aspect-ratio: 16/9;
@@ -413,6 +415,135 @@ export default function Machinery({ machineryData }: MachineryProps) {
             border-radius: 16px;
             display: block;
             box-sizing: border-box;
+          }
+          
+          /* Desktop - restore original behavior with fixed height */
+          @media (min-width: 769px) {
+            .machine-image-container,
+            .machine-image-slider,
+            .machine-image-slider .slick-slider,
+            .machine-image-slider .slick-list,
+            .machine-image-slider .slick-track {
+              height: 100% !important;
+              max-width: 100% !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              border-radius: 16px;
+              overflow: hidden;
+              background: transparent;
+              box-sizing: border-box;
+            }
+            
+            .machine-image-slider .slider-item img,
+            .slider-img-full,
+            .machinery-single-image {
+              width: 100% !important;
+              height: 100% !important;
+              aspect-ratio: 16/9;
+              object-fit: cover !important;
+              object-position: center !important;
+            }
+          }
+          
+          /* Mobile optimizations - Smart responsive for various image sizes */
+          @media (max-width: 768px) {
+            .machine-image-container,
+            .machine-image-slider {
+              height: auto !important;
+              min-height: 250px !important;
+              max-height: 400px !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              background: #f8f9fa;
+              border-radius: 16px;
+              padding: 15px;
+              overflow: hidden;
+            }
+            
+            .machine-image-slider .slider-item img,
+            .slider-img-full,
+            .machinery-single-image {
+              aspect-ratio: auto !important;
+              object-fit: contain !important;
+              width: auto !important;
+              height: auto !important;
+              max-width: 100% !important;
+              max-height: 370px !important;
+              background: transparent;
+              border-radius: 12px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            
+            .machine-image-slider .slick-slider,
+            .machine-image-slider .slick-list,
+            .machine-image-slider .slick-track {
+              height: auto !important;
+              display: flex !important;
+              align-items: center !important;
+            }
+            
+            .machine-image-slider .slick-slide {
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+            }
+            
+            .machine-image-slider .slider-item {
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              height: 100% !important;
+            }
+            
+            /* Handle very wide images (landscape) */
+            .machine-image-slider .slider-item img[style*="aspect-ratio"],
+            .slider-img-full[style*="aspect-ratio"],
+            .machinery-single-image[style*="aspect-ratio"] {
+              max-width: 95% !important;
+            }
+            
+            /* Handle very tall images (portrait) */
+            @media (max-width: 768px) and (orientation: portrait) {
+              .machine-image-slider .slider-item img,
+              .slider-img-full,
+              .machinery-single-image {
+                max-height: 350px !important;
+                max-width: 90% !important;
+              }
+            }
+            
+            /* Handle very wide images on mobile landscape */
+            @media (max-width: 768px) and (orientation: landscape) {
+              .machine-image-container,
+              .machine-image-slider {
+                max-height: 300px !important;
+              }
+              
+              .machine-image-slider .slider-item img,
+              .slider-img-full,
+              .machinery-single-image {
+                max-height: 270px !important;
+              }
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .machine-image-container,
+            .machine-image-slider {
+              min-height: 200px !important;
+              max-height: 350px !important;
+              padding: 12px;
+            }
+            
+            .machine-image-slider .slider-item img,
+            .slider-img-full,
+            .machinery-single-image {
+              max-height: 320px !important;
+              object-fit: contain !important;
+              width: auto !important;
+              height: auto !important;
+            }
           }
           .stages-container {
             display: flex;

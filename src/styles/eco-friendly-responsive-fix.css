@@ -1,0 +1,518 @@
+/* ECO-FRIENDLY RESPONSIVE FIXES */
+/* Giữ nguyên thiết kế gốc, chỉ fix các vấn đề responsive */
+
+/* Khôi phục layout gốc và fix responsive issues */
+#eco-friendly .features {
+  margin-top: 0;
+  background-color: #f3f6f7;
+  width: 100%;
+  overflow: hidden;
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+
+#eco-friendly .circle-layout {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+  height: 700px;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+#eco-friendly .features-left {
+  position: absolute;
+  z-index: 5;
+  top: 48%;
+  left: 0%;
+  border-radius: 50%;
+  width: 843.411px;
+  transform: translate(-50%, -50%);
+}
+
+#eco-friendly .features-left .left-item {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+#eco-friendly .features-left .left-item img {
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  transform: rotate(62.289deg);
+  aspect-ratio: 822.41/836.96;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+#eco-friendly .left-select-item {
+  position: absolute;
+  width: 984px;
+  height: 984px;
+  border-radius: 50%;
+  border: 5px solid var(--earth-blue);
+  top: -8%;
+  left: -15%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 15px rgba(42, 117, 188, 0.25);
+}
+
+#eco-friendly .left-select-item .dot {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background-color: var(--earth-blue);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(42, 117, 188, 0.4);
+}
+
+/* Khôi phục vị trí dots gốc */
+#eco-friendly .left-select-item .dot-1 {
+  top: 21%;
+  left: 92.3%;
+  transform: translateX(-50%);
+}
+
+#eco-friendly .left-select-item .dot-2 {
+  top: 36%;
+  left: 98.4%;
+  transform: translate(-50%, -50%);
+}
+
+#eco-friendly .left-select-item .dot-3 {
+  top: 50%;
+  left: 100.3%;
+  transform: translate(-50%, -50%);
+}
+
+#eco-friendly .left-select-item .dot-4 {
+  top: 65%;
+  left: 98.5%;
+  transform: translate(-50%, -100%);
+}
+
+#eco-friendly .left-select-item .dot-5 {
+  top: 77%;
+  left: 92.5%;
+  transform: translate(-50%, -50%);
+}
+
+#eco-friendly .features-right {
+  z-index: 1;
+  width: 100%;
+  margin-left: 420px; /* Đảm bảo không bị đè bởi quả địa cầu */
+  padding-right: 20px;
+}
+
+#eco-friendly .right-item {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background-color: white;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  position: relative;
+  z-index: 1;
+  height: 120px;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%; /* Chiếm hết width */
+  text-align: right; /* Căn text sang phải */
+}
+
+#eco-friendly .right-item .line {
+  border-right: 1px solid var(--earth-blue);
+  height: 50px;
+  margin: 0 30px;
+  transition: all 0.3s ease;
+  flex-shrink: 0; /* Không cho line bị co lại */
+}
+
+#eco-friendly .right-item p {
+  color: #333;
+  font-family: Inter;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-transform: uppercase;
+  flex: 0 0 auto; /* Không co dãn, giữ kích thước tự nhiên */
+  margin: 0 30px 0 0;
+  text-align: right; /* Căn tiêu đề sang phải */
+  white-space: normal; /* Cho phép xuống dòng khi cần */
+  word-wrap: break-word; /* Xuống dòng khi hết chỗ */
+  min-width: 200px; /* Min width để đẹp */
+}
+
+#eco-friendly .right-item ul {
+  margin: 0;
+  flex: 1; /* Chiếm hết phần còn lại */
+  padding-left: 0;
+  width: 100%;
+  text-align: right; /* Căn list sang phải */
+}
+
+#eco-friendly .right-item li {
+  color: #444;
+  font-family: Inter;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  text-align: right; /* Căn từng item sang phải */
+  white-space: normal; /* Cho phép xuống dòng khi cần */
+  word-wrap: break-word; /* Xuống dòng khi hết chỗ */
+  overflow-wrap: break-word; /* Đảm bảo break word */
+  width: 100%; /* Full width để căn phải hiệu quả */
+}
+
+/* Thêm đường nối từ right-item về dots như thiết kế gốc */
+#eco-friendly .right-item.active::before {
+  content: '';
+  position: absolute;
+  left: -420px; /* Kết nối về phía quả địa cầu */
+  top: 50%;
+  width: 400px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--earth-blue) 0%, transparent 100%);
+  z-index: 0;
+  transform: translateY(-50%);
+}
+
+/* Active states cho dots */
+#eco-friendly .left-select-item .dot.active::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle at center, #4fc3f7 30%, #0d47a1 100%);
+  border-radius: 50%;
+  left: 20px;
+  top: 0;
+  box-shadow: 0 0 15px rgba(13, 71, 161, 0.8), 0 0 30px rgba(79, 195, 247, 0.6);
+  z-index: 15;
+}
+
+#eco-friendly .left-select-item .dot.active::before {
+  content: '';
+  position: absolute;
+  width: 50px;
+  height: 2px;
+  background: linear-gradient(90deg, #4fc3f7 0%, var(--earth-blue) 100%);
+  left: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  box-shadow: 0 0 8px rgba(79, 195, 247, 0.4);
+}
+
+#eco-friendly .left-select-item .dot.active {
+  background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #4fc3f7 100%);
+  box-shadow: 0 0 20px rgba(13, 71, 161, 0.8), 0 0 40px rgba(79, 195, 247, 0.4);
+}
+
+/* Active states cho right-item */
+#eco-friendly .right-item.active {
+  background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #4fc3f7 100%);
+  transform: translateX(-5px);
+  box-shadow: 0 5px 20px rgba(13, 71, 161, 0.6), 0 0 40px rgba(79, 195, 247, 0.3);
+  border-radius: 4px;
+}
+
+#eco-friendly .right-item.active p,
+#eco-friendly .right-item.active li {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+#eco-friendly .right-item .line.active {
+  border-right: 3px solid #4fc3f7 !important;
+  box-shadow: 0 0 10px rgba(79, 195, 247, 0.6);
+}
+
+/* Chỉ cần responsive breakpoints để fix vấn đề, giữ nguyên thiết kế desktop */
+
+/* Màn hình rất lớn (> 1600px) */
+@media (min-width: 1600px) {
+  #eco-friendly .features-right {
+    margin-left: 450px; /* Tăng margin cho màn hình lớn */
+  }
+  
+  #eco-friendly .right-item.active::before {
+    left: -450px;
+    width: 430px;
+  }
+}
+
+/* Responsive cho màn hình 1200px - 1600px */
+@media (max-width: 1600px) and (min-width: 1200px) {
+  #eco-friendly .features-right {
+    margin-left: 350px; /* Giảm margin cho màn hình nhỏ hơn */
+  }
+  
+  #eco-friendly .right-item.active::before {
+    left: -350px;
+    width: 330px;
+  }
+}
+
+/* Màn hình laptop (992px - 1200px) */
+@media (max-width: 1200px) and (min-width: 992px) {
+  #eco-friendly .circle-layout {
+    height: 550px;
+  }
+  
+  #eco-friendly .features-left {
+    width: 600px;
+    left: -5%;
+  }
+  
+  #eco-friendly .left-select-item {
+    width: 700px;
+    height: 700px;
+    left: -10%;
+  }
+  
+  #eco-friendly .features-right {
+    margin-left: 250px; /* Điều chỉnh margin cho laptop */
+    width: calc(100% - 270px); /* Đảm bảo không tràn */
+  }
+  
+  #eco-friendly .right-item {
+    height: 100px;
+    padding: 12px;
+  }
+  
+  #eco-friendly .right-item p {
+    font-size: 18px;
+    text-align: right;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  #eco-friendly .right-item li {
+    font-size: 14px;
+    text-align: right;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  #eco-friendly .right-item .line {
+    margin: 0 15px;
+  }
+  
+  #eco-friendly .right-item.active::before {
+    left: -250px;
+    width: 230px;
+  }
+}
+
+/* Tablet screens */
+@media (max-width: 992px) {
+  #eco-friendly .circle-layout {
+    height: auto;
+    flex-direction: column;
+    min-height: 600px;
+  }
+  
+  #eco-friendly .features-left {
+    position: relative;
+    width: 450px;
+    transform: none;
+    top: 0;
+    left: 0;
+    margin: 20px auto 30px;
+  }
+  
+  #eco-friendly .left-select-item {
+    width: 500px;
+    height: 500px;
+    top: 0;
+    left: -5%;
+  }
+  
+  #eco-friendly .features-right {
+    width: 90%;
+    margin: 0 auto; /* Reset margin để không bị đè */
+  }
+  
+  #eco-friendly .right-item p {
+    width: 100%;
+    font-size: 16px;
+    text-align: right;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  #eco-friendly .right-item li {
+    width: 100%;
+    font-size: 14px;
+    margin-right: 0;
+    text-align: right;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  /* Điều chỉnh vị trí dots cho tablet */
+  #eco-friendly .left-select-item .dot-1 {
+    top: 20%;
+    left: 90%;
+  }
+  
+  #eco-friendly .left-select-item .dot-2 {
+    top: 35%;
+    left: 95%;
+  }
+  
+  #eco-friendly .left-select-item .dot-3 {
+    top: 50%;
+    left: 97%;
+  }
+  
+  #eco-friendly .left-select-item .dot-4 {
+    top: 65%;
+    left: 95%;
+  }
+  
+  #eco-friendly .left-select-item .dot-5 {
+    top: 80%;
+    left: 90%;
+  }
+}
+
+/* Mobile screens */
+@media (max-width: 768px) {
+  #eco-friendly .features {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+  
+  #eco-friendly .circle-layout {
+    height: auto;
+    display: block;
+  }
+  
+  /* Ẩn globe trên mobile để tránh vỡ layout */
+  #eco-friendly .features-left {
+    display: none;
+  }
+  
+  #eco-friendly .features-right {
+    width: 95%;
+    margin: 0 auto;
+  }
+  
+  #eco-friendly .right-item {
+    flex-direction: column;
+    height: auto;
+    padding: 15px;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+  
+  #eco-friendly .right-item p {
+    width: 100%;
+    font-size: 16px;
+    margin-bottom: 10px;
+    text-align: left;
+    white-space: normal; /* Cho phép xuống dòng trên mobile */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  #eco-friendly .right-item .line {
+    display: none;
+  }
+  
+  #eco-friendly .right-item ul {
+    padding-left: 20px;
+  }
+  
+  #eco-friendly .right-item li {
+    width: 100%;
+    font-size: 14px;
+    margin-bottom: 5px;
+    text-align: left;
+    white-space: normal; /* Cho phép xuống dòng trên mobile */
+    /* Giữ chữ trong khung */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Ẩn các hiệu ứng kết nối trên mobile */
+  #eco-friendly .right-item.active::before,
+  #eco-friendly .left-select-item .dot.active::before {
+    display: none;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 576px) {
+  #eco-friendly .features {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  
+  #eco-friendly .right-item p {
+    font-size: 15px;
+  }
+  
+  #eco-friendly .right-item li {
+    font-size: 13px;
+  }
+}
+
+/* Fix overflow và đảm bảo text wrap đúng cách */
+#eco-friendly .right-item p,
+#eco-friendly .right-item li {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Đảm bảo container không bị overflow */
+#eco-friendly .circle-layout {
+  overflow: visible;
+  position: relative;
+}
+
+#eco-friendly .features-right {
+  box-sizing: border-box;
+}
+
+/* Fix cho màn hình nhỏ hơn breakpoint */
+@media (max-width: 1100px) and (min-width: 992px) {
+  #eco-friendly .features-right {
+    margin-left: 200px;
+    width: calc(100% - 220px);
+  }
+  
+  #eco-friendly .right-item p {
+    font-size: 16px;
+    text-align: right;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  #eco-friendly .right-item li {
+    font-size: 13px;
+    text-align: right;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+  
+  #eco-friendly .right-item.active::before {
+    left: -200px;
+    width: 180px;
+  }
+}

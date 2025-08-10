@@ -394,7 +394,7 @@ class HomeService {
       
       // Xử lý factoryVideo nếu có
       if (sectionsData.factoryVideo !== undefined) {
-        formData.append('factoryVideoUrl', sectionsData.factoryVideo);
+        formData.append('factoryVideo', sectionsData.factoryVideo);
       }
     } else {
       // Backward compatibility

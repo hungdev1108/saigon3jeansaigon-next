@@ -668,7 +668,29 @@ export default function Home({ homeData }: HomeProps) {
       {/* Factory View Section */}
       <section className="factory-view mb-4">
         <div className="container-fluid p-0">
-          {factoryVideo ? (
+          {factoryVideo && isYouTubeUrl(factoryVideo) ? (
+            <div className="position-relative" style={{ paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+              <iframe
+                src={`https://www.youtube.com/embed/${getYouTubeVideoId(factoryVideo)}?controls=1&autoplay=1&mute=1&loop=1&playlist=${getYouTubeVideoId(factoryVideo)}&playsinline=1&modestbranding=1&rel=0`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-100 h-100"
+                style={{ position: 'absolute', top: 0, left: 0, borderRadius: '8px' }}
+                title="Factory Video"
+                loading="lazy"
+              ></iframe>
+              <div className="overlay" style={{ 
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "rgba(0,0,0,0.1)",
+                borderRadius: '8px'
+              }}></div>
+            </div>
+          ) : factoryVideo ? (
             <div className="position-relative">
               <video 
                 autoPlay
@@ -679,7 +701,8 @@ export default function Home({ homeData }: HomeProps) {
                 style={{ 
                   display: "block",
                   width: "100%",
-                  height: "auto"
+                  height: "auto",
+                  borderRadius: '8px'
                 }}
                 onError={(e) => console.error("Video error:", e)}
               >
@@ -693,36 +716,13 @@ export default function Home({ homeData }: HomeProps) {
                 left: 0,
                 width: "100%",
                 height: "100%",
-                background: "rgba(0,0,0,0.1)"
+                background: "rgba(0,0,0,0.1)",
+                borderRadius: '8px'
               }}></div>
             </div>
           ) : (
-            <div className="position-relative">
-              <video 
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-100"
-                style={{ 
-                  display: "block",
-                  width: "100%",
-                  height: "auto"
-                }}
-                onError={(e) => console.error("Video error:", e)}
-              >
-                <source src={getVideoUrl("/videos/STORY_SG3J.mp4")} type="video/mp4" />
-                <source src={getVideoUrl("/videos/STORY_SG3J.mp4")} type="video/webm" />
-                Your browser does not support the video tag.
-              </video>
-              <div className="overlay" style={{ 
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                background: "rgba(0,0,0,0.1)"
-              }}></div>
+            <div className="no-video-placeholder" style={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0f0f0', borderRadius: '8px' }}>
+              No factory video available.
             </div>
           )}
         </div>
@@ -954,7 +954,15 @@ export default function Home({ homeData }: HomeProps) {
                             className="img-fluid w-100"
                             width={800}
                             height={600}
-                            style={{ objectFit: 'cover', height: '100%', objectPosition: 'center center' }}
+                            style={{ 
+                              objectFit: 'cover', 
+                              height: '100%', 
+                              objectPosition: 'center center', 
+                              width: '100%',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0
+                            }}
                           />
                         );
                       })()}

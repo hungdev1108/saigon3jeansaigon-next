@@ -366,6 +366,7 @@ export default function AdminHomePage() {
   
   // Media type selection for sections (file upload vs YouTube URL)
   const [sectionMediaTypes, setSectionMediaTypes] = useState<{ [key: string]: 'file' | 'youtube' }>({});
+  const [factoryVideoType, setFactoryVideoType] = useState<'file' | 'youtube'>('file');
 
   // Modal news
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -374,6 +375,18 @@ export default function AdminHomePage() {
   useEffect(() => {
     loadHomepageData();
   }, []);
+
+  // Initialize factoryVideoType based on existing data
+  useEffect(() => {
+    if (homeData?.factoryVideo) {
+      setFactoryVideoType(isYouTubeUrl(homeData.factoryVideo) ? 'youtube' : 'file');
+    }
+  }, [homeData?.factoryVideo]);
+
+  // Helper function to clear YouTube URL
+  const handleClearYoutubeUrl = () => {
+    setHomeData(prev => prev ? { ...prev, factoryVideo: "" } : prev);
+  };
 
   const loadHomepageData = async () => {
     try {
@@ -444,8 +457,16 @@ export default function AdminHomePage() {
       return textChanged || fileChanged;
     }
     if (section === 'factoryVideo') {
-      return initialHomeData?.factoryVideo !== homeData?.factoryVideo || 
-        Object.keys(files).some(key => key === 'factoryVideo');
+      const hasDataChange = initialHomeData?.factoryVideo !== homeData?.factoryVideo;
+      const hasFileChange = Object.keys(files).some(key => key === 'factoryVideo');
+      console.log('hasChanges factoryVideo:', {
+        initialData: initialHomeData?.factoryVideo,
+        currentData: homeData?.factoryVideo,
+        hasDataChange,
+        hasFileChange,
+        files: Object.keys(files)
+      });
+      return hasDataChange || hasFileChange;
     }
     if (section === 'certifications') {
       return (
@@ -756,12 +777,11 @@ export default function AdminHomePage() {
           }
           // Nếu có các file khác cho hero (ví dụ: backgroundImage, videoUrl), thêm vào đây nếu cần
           result = await homeService.updateHero(dataToSave as HeroData, filesToSave);
-        } else if (section === 'factoryVideo' && files['factoryVideo']) {
-          filesToSave['factoryVideo'] = files['factoryVideo'];
-          result = await homeService.updateHomeSections({
-            sections: homeData.sections || [],
-            factoryVideo: homeData.factoryVideo || ""
-          }, filesToSave);
+        } else if (section === 'factoryVideo') {
+          if (files['factoryVideo']) {
+            filesToSave['factoryVideo'] = files['factoryVideo'];
+          }
+          // Always proceed with save for factory video (even if just URL change)
         }
         
         // Đảm bảo truyền đúng key cho AI Banner
@@ -783,10 +803,14 @@ export default function AdminHomePage() {
               break;
           case 'factoryVideo':
               // Xử lý riêng cho factory video
+              console.log('Saving factory video - Current data:', homeData.factoryVideo);
+              console.log('Saving factory video - Files to save:', Object.keys(filesToSave));
+              console.log('Saving factory video - Factory video type:', factoryVideoType);
               result = await homeService.updateHomeSections({ 
                 sections: homeData.sections || [],
-                factoryVideo: homeData.factoryVideo || "" 
-              }, filesToSave);
+                factoryVideo: homeData.factoryVideo || ""
+              } as any, filesToSave);
+              console.log('Factory video save result:', result);
               break;
           case 'sections':
               // Chuẩn bị files cho sections
@@ -803,7 +827,7 @@ export default function AdminHomePage() {
                 sections: Array.isArray(dataToSave) ? dataToSave : homeData.sections,
                 factoryVideo: homeData.factoryVideo || ""
               };
-              result = await homeService.updateHomeSections(sectionsToSave, filesToSave);
+              result = await homeService.updateHomeSections(sectionsToSave as any, filesToSave);
               break;
           case 'customers':
               // Chuẩn bị files cho customers
@@ -863,12 +887,15 @@ export default function AdminHomePage() {
         
         console.log(`Save ${section} result:`, result);
         
+        console.log('Save result details:', { success: result?.success, message: result?.message, data: result?.data });
         if (result && result.success) {
           // Thêm delay nhỏ để đảm bảo backend đã cập nhật xong
           await new Promise(resolve => setTimeout(resolve, 700));
           
           // Reload data to get updated values
+          console.log('Reloading data after successful save...');
           const newData = await homeService.getCompleteHomeData();
+          console.log('New data loaded:', newData);
           setHomeData(newData as HomeData);
           setInitialHomeData(newData as HomeData); // Reset initial data for hasChanges
           
@@ -878,8 +905,14 @@ export default function AdminHomePage() {
           setMediaPreview({});
           setHeroPreview({});
           
+          // Reset factory video type based on new data
+          if (newData?.factoryVideo) {
+            setFactoryVideoType(isYouTubeUrl(newData.factoryVideo) ? 'youtube' : 'file');
+          }
+          
           toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
         } else {
+          console.error('Save failed:', result);
           throw new Error(result?.message || "Lưu thất bại");
         }
     } catch (error: any) {
@@ -1206,40 +1239,111 @@ export default function AdminHomePage() {
           <h4>Video Section Factory</h4>
           <div className="grid-2-col">
             <div className="form-column">
-              <FormItem label="Factory Video" icon={<FiVideo />}>
+              <FormItem label="Video" icon={<FiVideo />}>
+                <div className="media-type-selection" style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', marginRight: '20px' }}>
+                    <input
+                      type="radio"
+                      name="factory-video-type"
+                      value="file"
+                      checked={factoryVideoType !== 'youtube'}
+                      onChange={() => {
+                        setFactoryVideoType('file');
+                        // Clear YouTube URL when switching to file upload
+                        if (isYouTubeUrl(homeData?.factoryVideo || '')) {
+                          setHomeData(prev => prev ? { ...prev, factoryVideo: '' } : prev);
+                        }
+                      }}
+                      style={{ marginRight: '8px' }}
+                    />
+                    Upload File
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center' }}>
+                    <input
+                      type="radio"
+                      name="factory-video-type"
+                      value="youtube"
+                      checked={factoryVideoType === 'youtube'}
+                      onChange={() => {
+                        setFactoryVideoType('youtube');
+                        // Clear file upload when switching to YouTube
+                        if (files['factoryVideo']) {
+                          const newFiles = { ...files };
+                          delete newFiles['factoryVideo'];
+                          setFiles(newFiles);
+                        }
+                        // Clear existing video file path
+                        if (homeData?.factoryVideo && !isYouTubeUrl(homeData.factoryVideo)) {
+                          setHomeData(prev => prev ? { ...prev, factoryVideo: '' } : prev);
+                        }
+                      }}
+                      style={{ marginRight: '8px' }}
+                    />
+                    YouTube URL
+                  </label>
+                </div>
                 <div className="image-preview-container">
-                  {files['factoryVideo'] ? (
-                    <video
-                      src={URL.createObjectURL(files['factoryVideo'])}
-                      width="300"
-                      height="150"
-                      controls
-                      className="image-preview"
-                    />
-                  ) : homeData.factoryVideo ? (
-                    <video
-                      src={homeData.factoryVideo.startsWith('http')
-                        ? homeData.factoryVideo
-                        : `${BACKEND_DOMAIN}${homeData.factoryVideo}`}
-                      width="300"
-                      height="150"
-                      controls
-                      className="image-preview"
-                    />
+                  {factoryVideoType === 'youtube' ? (
+                    <div>
+                      <input
+                        type="url"
+                        placeholder="Nhập YouTube URL (https://www.youtube.com/watch?v=...)"
+                        value={factoryVideoType === 'youtube' ? (homeData.factoryVideo || '') : ''}
+                        onChange={e => setHomeData(prev => prev ? { ...prev, factoryVideo: e.target.value } : prev)}
+                        className="form-input"
+                        style={{ marginBottom: '10px' }}
+                      />
+                      {homeData.factoryVideo && isYouTubeUrl(homeData.factoryVideo) && (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${getYouTubeVideoId(homeData.factoryVideo)}?controls=1`}
+                          width="300"
+                          height="169"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="image-preview"
+                          title="Factory Video Preview"
+                        />
+                      )}
+                      {homeData.factoryVideo && isYouTubeUrl(homeData.factoryVideo) && (
+                        <button type="button" className="btn btn-danger btn-sm mt-2" onClick={handleClearYoutubeUrl}>
+                          <FiX /> Clear YouTube URL
+                        </button>
+                      )}
+                    </div>
                   ) : (
-                    <div className="no-video-placeholder">No factory video uploaded yet</div>
+                    <div>
+                      {files['factoryVideo'] ? (
+                        <video
+                          src={URL.createObjectURL(files['factoryVideo'])}
+                          width="300"
+                          height="150"
+                          controls
+                          className="image-preview"
+                        />
+                      ) : homeData.factoryVideo && !isYouTubeUrl(homeData.factoryVideo) ? (
+                        <video
+                          src={homeData.factoryVideo.startsWith('http')
+                            ? homeData.factoryVideo
+                            : `${BACKEND_DOMAIN}${homeData.factoryVideo}`}
+                          width="300"
+                          height="150"
+                          controls
+                          className="image-preview"
+                        />
+                      ) : (
+                        <div className="no-video-placeholder">No factory video uploaded yet</div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <input
-                  type="file"
-                  onChange={(e) => handleFileChange(e, 'factoryVideo')}
-                  accept="video/*"
-                  className="form-file-input"
-                />
-                {homeData.factoryVideo && !files['factoryVideo'] && (
-                  <div className="video-path">
-                    <small>{homeData.factoryVideo}</small>
-                  </div>
+                {factoryVideoType === 'file' && (
+                  <input
+                    type="file"
+                    onChange={e => handleFileChange(e, 'factoryVideo')}
+                    accept="video/*"
+                    className="form-file-input"
+                  />
                 )}
               </FormItem>
             </div>
@@ -1700,3 +1804,6 @@ export default function AdminHomePage() {
     </div>
   );
 }
+
+// Helper function to parse YouTube ID
+

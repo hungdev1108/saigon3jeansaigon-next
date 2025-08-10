@@ -85,6 +85,113 @@ export default function Overview({ overviewData }: OverviewProps) {
   const animateElementsRef = useRef<(HTMLElement | null)[]>([]);
   const sliderRef = useRef<Slider>(null);
 
+  // Force uniform font-weight for hero section with intensive debugging
+  useEffect(() => {
+    const forceUniformTypography = () => {
+      console.log('🎨 Force typography running...');
+      console.log('📊 Banner description data:', overviewData?.banner?.description);
+      
+      const heroContent = document.querySelector('.hero-content');
+      if (heroContent) {
+        const allElements = heroContent.querySelectorAll('*');
+        console.log(`🔍 Found ${allElements.length} elements in hero-content`);
+        
+        allElements.forEach((element, index) => {
+          const el = element as HTMLElement;
+          const tagName = el.tagName.toLowerCase();
+          const currentWeight = window.getComputedStyle(el).fontWeight;
+          const currentColor = window.getComputedStyle(el).color;
+          
+          console.log(`Element ${index}: ${tagName}, current weight: ${currentWeight}, current color: ${currentColor}`);
+          
+          // Determine appropriate styling based on element type
+          const isListElement = tagName === 'li' || tagName === 'ul' || el.classList.contains('uniform-typography-li') || el.classList.contains('uniform-typography-ul');
+          const fontWeight = isListElement ? '500' : '400';
+          const letterSpacing = isListElement ? '0.2px' : '0.3px';
+          const textShadow = isListElement ? '0 0 0.5px rgba(51, 51, 51, 0.1)' : 'none';
+          
+          console.log(`Element ${index} (${tagName}) - isListElement: ${isListElement}, setting weight: ${fontWeight}, shadow: ${textShadow}`);
+          
+          // Force styles with highest priority
+          el.style.setProperty('font-weight', fontWeight, 'important');
+          el.style.setProperty('color', '#333', 'important');
+          el.style.setProperty('font-family', '"Inter", sans-serif', 'important');
+          el.style.setProperty('font-style', 'normal', 'important');
+          el.style.setProperty('font-variant', 'normal', 'important');
+          el.style.setProperty('font-stretch', 'normal', 'important');
+          el.style.setProperty('letter-spacing', letterSpacing, 'important');
+          el.style.setProperty('text-shadow', textShadow, 'important');
+          
+          // Remove any inherited styling
+          el.style.removeProperty('font-weight');
+          el.style.setProperty('font-weight', fontWeight, 'important');
+          
+          const newWeight = window.getComputedStyle(el).fontWeight;
+          const newColor = window.getComputedStyle(el).color;
+          console.log(`After change: weight: ${newWeight}, color: ${newColor}`);
+        });
+        
+        // Special handling for specific elements
+        const heroTitle = document.getElementById('hero-title');
+        const heroContentText = document.getElementById('hero-content-text');
+        
+        if (heroTitle) {
+          heroTitle.style.setProperty('font-weight', '400', 'important');
+          heroTitle.style.setProperty('color', '#333', 'important');
+          heroTitle.style.setProperty('font-family', '"Inter", sans-serif', 'important');
+          heroTitle.style.setProperty('font-variation-settings', '"wght" 400', 'important');
+          console.log('🎯 Hero title forced');
+        }
+        
+        if (heroContentText) {
+          heroContentText.style.setProperty('font-weight', '400', 'important');
+          heroContentText.style.setProperty('color', '#333', 'important');
+          heroContentText.style.setProperty('font-family', '"Inter", sans-serif', 'important');
+          
+          // Force all children with setAttribute for maximum override
+          const children = heroContentText.querySelectorAll('*');
+          children.forEach((child, childIndex) => {
+            const childEl = child as HTMLElement;
+            const childTag = childEl.tagName.toLowerCase();
+            
+            // Determine appropriate styling for child elements
+            const isChildListElement = childTag === 'li' || childTag === 'ul' || childEl.classList.contains('uniform-typography-li') || childEl.classList.contains('uniform-typography-ul');
+            const childFontWeight = isChildListElement ? '500' : '400';
+            const childLetterSpacing = isChildListElement ? '0.2px' : '0.3px';
+            const childTextShadow = isChildListElement ? '0 0 0.5px rgba(51, 51, 51, 0.1)' : 'none';
+            
+            childEl.style.setProperty('font-weight', childFontWeight, 'important');
+            childEl.style.setProperty('color', '#333', 'important');  
+            childEl.style.setProperty('font-family', '"Inter", sans-serif', 'important');
+            childEl.style.setProperty('letter-spacing', childLetterSpacing, 'important');
+            childEl.style.setProperty('text-shadow', childTextShadow, 'important');
+            
+            // Try setting attributes too
+            childEl.setAttribute('style', 
+              childEl.getAttribute('style') + `; font-weight: ${childFontWeight} !important; color: #333 !important; font-family: "Inter", sans-serif !important; letter-spacing: ${childLetterSpacing} !important; text-shadow: ${childTextShadow} !important;`
+            );
+            
+            console.log(`🔧 Child ${childIndex} (${childTag}) - isListElement: ${isChildListElement}, weight: ${childFontWeight}, shadow: ${childTextShadow}`);
+          });
+          
+          console.log('📝 Hero content text and children forced');
+        }
+      }
+    };
+
+    // Apply multiple times with different delays
+    forceUniformTypography();
+    const timer1 = setTimeout(forceUniformTypography, 50);
+    const timer2 = setTimeout(forceUniformTypography, 200);
+    const timer3 = setTimeout(forceUniformTypography, 500);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [overviewData]);
+
   // Slick settings
   const slickSettings = {
     centerMode: true,
@@ -202,34 +309,93 @@ export default function Overview({ overviewData }: OverviewProps) {
   // Helper: Render mô tả có danh sách thụt vào nếu có dấu '-'
   function renderBannerDescription(text: string) {
     if (!text) return null;
+    
+    console.log('🔍 Raw banner description:', text);
+    console.log('🔍 Text length:', text.length);
+    console.log('🔍 Text encoded:', JSON.stringify(text));
+    
     // Tách block theo 2 dòng xuống
     const blocks = text.trim().split(/\n\s*\n/);
+    console.log('📦 Number of blocks:', blocks.length);
+    
+    // Shared styles object to ensure consistency
+    const baseParagraphStyles = {
+      fontFamily: '"Inter", sans-serif',
+      fontSize: 26,
+      fontWeight: 400,
+      color: '#333',
+      lineHeight: 1.5,
+      letterSpacing: '0.3px',
+      fontStyle: 'normal',
+      fontVariant: 'normal',
+      fontStretch: 'normal'
+    };
+    
+    // List items need visual compensation to match paragraph appearance
+    const baseListStyles = {
+      fontFamily: '"Inter", sans-serif',
+      fontSize: 26,
+      fontWeight: 500, // Use 500 instead of 450 for better browser support
+      color: '#333',
+      lineHeight: 1.5,
+      letterSpacing: '0.2px', // Slightly tighter letter spacing
+      fontStyle: 'normal',
+      fontVariant: 'normal',
+      fontStretch: 'normal',
+      textShadow: '0 0 0.5px rgba(51, 51, 51, 0.1)' // Very subtle text shadow for visual weight
+    };
+    
     return blocks.map((block, idx) => {
       const lines = block.split('\n');
+      console.log(`📄 Block ${idx}:`, lines);
+      
       // Nếu tất cả dòng đều bắt đầu bằng '-'
       if (lines.every(line => line.trim().startsWith('-'))) {
+        console.log(`📋 Block ${idx} is a list`);
         return (
           <ul
             key={idx}
+            className="uniform-typography-ul"
             style={{
               marginLeft: 40,
               marginTop: 8,
               marginBottom: 8,
-              fontFamily: '"Inter", sans-serif',
-              fontWeight: '500 !important'
+              ...baseListStyles,
+              listStyle: 'disc',
+              paddingLeft: 0
             }}
           >
             {lines.map((line, i) => (
-              <li key={i} style={{ fontFamily: '"Inter", sans-serif', fontSize: 24, fontWeight: '500 !important', color: '#333 !important', marginBottom: 8, letterSpacing: '0.3px', lineHeight: 1.4 }}>
+              <li 
+                key={i} 
+                className="uniform-typography-li"
+                style={{
+                  ...baseListStyles,
+                  marginBottom: 8,
+                  display: 'list-item'
+                }}
+              >
                 {line.replace(/^(\s*)-/, '$1')}
               </li>
             ))}
           </ul>
         );
       }
+      
       // Đoạn văn thường
+      console.log(`📄 Block ${idx} is a paragraph`);
       return (
-        <p key={idx} style={{ marginBottom: 12, whiteSpace: 'pre-line', fontSize: 24, fontWeight: '500 !important', color: '#333 !important', lineHeight: 1.5, letterSpacing: '0.3px' }}>{block}</p>
+        <p 
+          key={idx} 
+          className="uniform-typography-p"
+          style={{ 
+            ...baseParagraphStyles,
+            marginBottom: 12, 
+            whiteSpace: 'pre-line' 
+          }}
+        >
+          {block}
+        </p>
       );
     });
   }
@@ -260,7 +426,7 @@ export default function Overview({ overviewData }: OverviewProps) {
 
   return (
     <>
-      <section className="page-content py-5">
+      <section className="page-content" style={{ padding: 0 }}>
         {/* <!-- Hero Section with Overlay --> */}
         <div className="hero-section" style={{
           minHeight: `100vh`,
@@ -269,7 +435,8 @@ export default function Overview({ overviewData }: OverviewProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: '-13px',
+          marginTop: '-70px',
+          paddingTop: '80px',
           position: 'relative',
           zIndex: 2,
         }}>
@@ -290,9 +457,39 @@ export default function Overview({ overviewData }: OverviewProps) {
               opacity: 0.85
             }}
           />
-          <div className="hero-content" style={{ position: 'relative', zIndex: 2, color: '#333', textShadow: 'none', textAlign: 'left', fontWeight: 500, width: '100%', maxWidth: 1600, margin: '0 auto', marginTop: 120, paddingBottom: 0, paddingTop: 0, paddingLeft: 60, paddingRight: 60, background: 'rgba(255,255,255,0.02)' }}>
-            <h2 style={{ color: '#333 !important', textShadow: 'none', textAlign: 'left', fontWeight: '500 !important', fontSize: 48, marginBottom: 24, fontFamily: '"Inter", sans-serif', letterSpacing: '0.5px' }}>{overviewData.banner.title}</h2>
-            <div style={{ fontFamily: '"Inter", sans-serif', fontSize: 26, lineHeight: 1.5, color: '#333 !important', textAlign: 'justify', fontWeight: '500 !important', margin: 0, letterSpacing: '0.3px' }}>
+          <div className="hero-content uniform-text" style={{ 
+            position: 'relative', 
+            zIndex: 2, 
+            width: '100%', 
+            maxWidth: 1600, 
+            margin: '0 auto', 
+            marginTop: 120, 
+            paddingBottom: 0, 
+            paddingTop: 0, 
+            paddingLeft: 60, 
+            paddingRight: 60, 
+            background: 'rgba(255,255,255,0.02)' 
+          }}>
+            <h2 id="hero-title" style={{ 
+              color: '#333', 
+              textShadow: 'none', 
+              textAlign: 'left', 
+              fontWeight: 400, 
+              fontSize: 48, 
+              marginBottom: 24, 
+              fontFamily: '"Inter", sans-serif', 
+              letterSpacing: '0.5px' 
+            }}>{overviewData.banner.title}</h2>
+            <div id="hero-content-text" style={{ 
+              fontFamily: '"Inter", sans-serif', 
+              fontSize: 26, 
+              lineHeight: 1.5, 
+              color: '#333', 
+              textAlign: 'justify', 
+              fontWeight: 400, 
+              margin: 0, 
+              letterSpacing: '0.3px' 
+            }}>
               {renderBannerDescription(overviewData.banner.description)}
             </div>
           </div>
@@ -814,6 +1011,62 @@ export default function Overview({ overviewData }: OverviewProps) {
           }
         `}</style>
         <style jsx global>{`
+          /* Ultimate font weight fix using IDs - highest specificity */
+          #hero-title {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          #hero-content-text,
+          #hero-content-text * {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          #hero-content-text p,
+          #hero-content-text ul,
+          #hero-content-text li {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-style: normal !important;
+            font-stretch: normal !important;
+            font-variant: normal !important;
+            font-synthesis: none !important;
+          }
+          
+          /* Force override any external CSS */
+          body #hero-title,
+          html body #hero-title {
+            font-weight: 400 !important;
+          }
+          
+          body #hero-content-text *,
+          html body #hero-content-text * {
+            font-weight: 400 !important;
+          }
+          
+          /* Backup with class selectors */
+          .hero-section div.hero-content.uniform-text ul li {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .hero-section div.hero-content.uniform-text p {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .hero-section div.hero-content.uniform-text h2 {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
           /* Ensure header stays fixed on top */
           header {
             position: fixed !important;
@@ -849,19 +1102,223 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
           }
           
-          /* Force uniform font weight for hero content */
+          /* Force uniform font weight and color for hero content - All lighter */
           .hero-section .hero-content * {
-            font-weight: 500 !important;
+            font-weight: 400 !important;
             color: #333 !important;
+            font-family: "Inter", sans-serif !important;
           }
           .hero-section .hero-content h2,
           .hero-section .hero-content p,
           .hero-section .hero-content li,
           .hero-section .hero-content ul,
           .hero-section .hero-content div {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* Extra specific rules to ensure bullet points have same weight */
+          .hero-section .hero-content ul li {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          .hero-section .hero-content ul {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* Override any browser defaults */
+          .hero-section .hero-content li::marker {
+            color: #333 !important;
+            font-weight: 400 !important;
+          }
+          
+          /* Uniform text styling class - Most specific rules - All lighter */
+          .hero-section .uniform-text,
+          .hero-section .uniform-text *,
+          .hero-section .uniform-text p,
+          .hero-section .uniform-text li,
+          .hero-section .uniform-text ul,
+          .hero-section .uniform-text div,
+          .hero-section .uniform-text h1,
+          .hero-section .uniform-text h2,
+          .hero-section .uniform-text h3,
+          .hero-section .uniform-text h4,
+          .hero-section .uniform-text h5,
+          .hero-section .uniform-text h6 {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+          }
+          
+          /* Force consistency on all text elements - All lighter */
+          .hero-section .uniform-text ul li,
+          .hero-section .uniform-text p {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-style: normal !important;
+            text-decoration: none !important;
+          }
+          
+          /* Nuclear option - Force all text to have same lighter weight */
+          .hero-section .hero-content *,
+          .hero-section .hero-content *:before,
+          .hero-section .hero-content *:after {
+            font-weight: 400 !important;
+          }
+          
+          .hero-section .hero-content ul,
+          .hero-section .hero-content ul *,
+          .hero-section .hero-content li,
+          .hero-section .hero-content li *,
+          .hero-section .hero-content p,
+          .hero-section .hero-content p *,
+          .hero-section .hero-content h1,
+          .hero-section .hero-content h2,
+          .hero-section .hero-content h3,
+          .hero-section .hero-content h4,
+          .hero-section .hero-content h5,
+          .hero-section .hero-content h6,
+          .hero-section .hero-content div {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* ULTIMATE OVERRIDE - Triệt để cho tất cả media queries */
+          @media screen {
+            .hero-section .hero-content *,
+            .hero-section .hero-content h1,
+            .hero-section .hero-content h2,
+            .hero-section .hero-content h3,
+            .hero-section .hero-content h4,
+            .hero-section .hero-content h5,
+            .hero-section .hero-content h6,
+            .hero-section .hero-content p,
+            .hero-section .hero-content li,
+            .hero-section .hero-content ul,
+            .hero-section .hero-content div,
+            .hero-section .hero-content span {
+              font-weight: 400 !important;
+              color: #333 !important;
+              font-family: "Inter", sans-serif !important;
+            }
+          }
+          
+          /* ULTRA NUCLEAR OPTION - Force with highest specificity possible */
+          html body .hero-section .hero-content *,
+          html body .hero-section .hero-content h1,
+          html body .hero-section .hero-content h2,
+          html body .hero-section .hero-content h3,
+          html body .hero-section .hero-content h4,
+          html body .hero-section .hero-content h5,
+          html body .hero-section .hero-content h6,
+          html body .hero-section .hero-content p,
+          html body .hero-section .hero-content li,
+          html body .hero-section .hero-content ul,
+          html body .hero-section .hero-content ol,
+          html body .hero-section .hero-content div,
+          html body .hero-section .hero-content span,
+          html body .hero-section .hero-content strong,
+          html body .hero-section .hero-content b,
+          html body .hero-section .hero-content em,
+          html body .hero-section .hero-content i {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-style: normal !important;
+            font-variation-settings: "wght" 400 !important;
+          }
+          
+          /* Force override even on pseudo elements */
+          html body .hero-section .hero-content *::before,
+          html body .hero-section .hero-content *::after {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+          }
+          
+          /* Target specific typography classes for visual consistency */
+          .uniform-typography-ul,
+          .uniform-typography-ul * {
+            font-weight: 500 !important; /* Medium weight for lists */
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            font-stretch: normal !important;
+            letter-spacing: 0.2px !important;
+            text-shadow: 0 0 0.5px rgba(51, 51, 51, 0.1) !important;
+          }
+          
+          .uniform-typography-li,
+          .uniform-typography-li * {
+            font-weight: 500 !important; /* Medium weight for list items */
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            font-stretch: normal !important;
+            letter-spacing: 0.2px !important;
+            text-shadow: 0 0 0.5px rgba(51, 51, 51, 0.1) !important;
+          }
+          
+          .uniform-typography-p,
+          .uniform-typography-p * {
+            font-weight: 400 !important; /* Normal weight for paragraphs */
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            font-stretch: normal !important;
+            font-variation-settings: "wght" 400 !important;
+          }
+          
+          /* Force list elements specifically - medium weight with visual enhancements */
+          html body .hero-section .hero-content ul.uniform-typography-ul li.uniform-typography-li {
             font-weight: 500 !important;
             color: #333 !important;
             font-family: "Inter", sans-serif !important;
+            letter-spacing: 0.2px !important;
+            text-shadow: 0 0 0.5px rgba(51, 51, 51, 0.1) !important;
+          }
+          
+          /* Force paragraph elements specifically - normal weight */
+          html body .hero-section .hero-content p.uniform-typography-p {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-variation-settings: "wght" 400 !important;
+          }
+          
+          /* Override browser user agent styles */
+          .hero-section .hero-content ul li {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-variation-settings: "wght" 400 !important;
+          }
+          
+          .hero-section .hero-content p {
+            font-weight: 400 !important;
+            color: #333 !important;
+            font-family: "Inter", sans-serif !important;
+            font-variation-settings: "wght" 400 !important;
+          }
+          
+          /* Adjust hero section positioning for mobile */
+          @media (max-width: 768px) {
+            .hero-section {
+              margin-top: -70px !important;
+              padding-top: 70px !important;
+            }
           }
           
           /* Fix milestones section font consistency */
@@ -931,25 +1388,25 @@ export default function Overview({ overviewData }: OverviewProps) {
             .hero-section .hero-content h2 {
               font-size: 42px !important;
               margin-bottom: 20px !important;
-              font-weight: 500 !important;
+              font-weight: 400 !important;
               color: #333 !important;
             }
             .hero-section .hero-content div {
               font-size: 24px !important;
               line-height: 1.5 !important;
-              font-weight: 500 !important;
+              font-weight: 400 !important;
               color: #333 !important;
             }
             .hero-section .hero-content ul li {
               font-size: 24px !important;
               line-height: 1.4 !important;
-              font-weight: 500 !important;
+              font-weight: 400 !important;
               color: #333 !important;
             }
             .hero-section .hero-content p {
               font-size: 24px !important;
               line-height: 1.5 !important;
-              font-weight: 500 !important;
+              font-weight: 400 !important;
               color: #333 !important;
             }
           }
