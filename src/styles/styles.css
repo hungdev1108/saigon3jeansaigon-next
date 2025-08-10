@@ -1417,17 +1417,6 @@ body.loaded .text-overlay {
   border-radius: 8px 8px 0 0;
   display: block;
   max-height: 450px; /* Thêm max-height để giới hạn */
-  position: relative; /* Default position for desktop/mobile */
-}
-
-/* Desktop - ensure normal layout */
-@media (min-width: 993px) {
-  .news-item img, .news-item .img-fluid.w-100 {
-    position: relative !important;
-    height: auto !important;
-    object-fit: contain !important;
-    max-height: 450px !important;
-  }
 }
 
 .news-item:hover img {
@@ -7627,23 +7616,6 @@ footer a:hover {
   }
   .news-item img {
     max-height: 300px; /* Giảm chiều cao tối đa trên tablet */
-  }
-}
-
-/* Mobile adjustments - Override tablet absolute positioning */
-@media (max-width: 768px) {
-  .news-item {
-    min-height: auto !important;
-    height: auto !important;
-  }
-  
-  .news-item img, .news-item .img-fluid.w-100 {
-    position: relative !important; /* Override tablet absolute positioning */
-    height: auto !important;
-    object-fit: contain !important;
-    max-height: 250px !important;
-    top: auto !important;
-    left: auto !important;
   }
 }
 

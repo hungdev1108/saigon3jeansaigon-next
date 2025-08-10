@@ -955,13 +955,12 @@ export default function Home({ homeData }: HomeProps) {
                             width={800}
                             height={600}
                             style={{ 
-                              objectFit: 'cover', 
-                              height: '100%', 
+                              objectFit: 'contain', 
+                              height: 'auto', 
                               objectPosition: 'center center', 
+                              maxHeight: '450px',
                               width: '100%',
-                              position: 'absolute',
-                              top: 0,
-                              left: 0
+                              position: 'relative'
                             }}
                           />
                         );
