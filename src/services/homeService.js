@@ -394,7 +394,14 @@ class HomeService {
       
       // Xử lý factoryVideo nếu có
       if (sectionsData.factoryVideo !== undefined) {
-        formData.append('factoryVideo', sectionsData.factoryVideo);
+        const fv = sectionsData.factoryVideo;
+        const isYoutube = typeof fv === 'string' && (fv.includes('youtube.com/watch?v=') || fv.includes('youtu.be/'));
+        // Tránh đụng tên field file 'factoryVideo' của multer: gửi URL qua field khác
+        if (isYoutube) {
+          formData.append('factoryVideoUrl', fv);
+        } else {
+          formData.append('factoryVideo', fv);
+        }
       }
     } else {
       // Backward compatibility
