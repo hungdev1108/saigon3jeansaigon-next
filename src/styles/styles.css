@@ -6380,25 +6380,25 @@ footer a:hover {
 /* Đặt từng chấm tại các vị trí trên vòng tròn */
 #eco-friendly .left-select-item .dot-1 {
   top: 21%;
-  left: 92.3%;
+  left: 92.2%;
   transform: translateX(-50%);
 }
 
 #eco-friendly .left-select-item .dot-2 {
-  top: 36%;
-  left: 98.4%;
+  top: 37%;
+  left: 98.5;
   transform: translate(-50%, -50%);
 }
 
 #eco-friendly .left-select-item .dot-3 {
   top: 50%;
-  left: 100.3%;
+  left: 100.2%;
   transform: translate(-50%, -50%);
 }
 
 #eco-friendly .left-select-item .dot-4 {
   top: 65%;
-  left: 98.5%;
+  left: 98.4%;
   transform: translate(-50%, -100%);
 }
 
@@ -6534,19 +6534,49 @@ footer a:hover {
   box-shadow: 0 0 10px rgba(79, 195, 247, 0.6);
 }
 
-/* Responsive styles for desktop (1200px - 1600px) */
+/* Responsive styles for desktop (1240px - 1600px) */
 @media (max-width: 1600px) {
+  #eco-friendly .left-select-item .dot-1 {
+    top: 16%;
+    left: 89%;
+    transform: translateX(-50%);
+  }
+  
+  #eco-friendly .left-select-item .dot-2 {
+    top: 34.5%;
+    left: 98%;
+    transform: translate(-50%, -50%);
+  }
+  
+  #eco-friendly .left-select-item .dot-3 {
+    top: 51%;
+    left: 100.3%;
+    transform: translate(-50%, -50%);
+  }
+  
+  #eco-friendly .left-select-item .dot-4 {
+    top: 70%;
+    left: 96.8%;
+    transform: translate(-50%, -100%);
+  }
+  
+  #eco-friendly .left-select-item .dot-5 {
+    top: 84%;
+    left: 87%;
+    transform: translate(-50%, -50%);
+  }
+
   #eco-friendly .circle-layout {
     height: 650px;
   }
   
   #eco-friendly .features-left {
-    width: 700px;
+    width: 650px;
   }
   
   #eco-friendly .left-select-item {
-    width: 800px;
-    height: 800px;
+    width: 750px;
+    height: 750px;
   }
   
   #eco-friendly .right-item p {
@@ -6558,8 +6588,8 @@ footer a:hover {
   }
 }
 
-/* Laptop screens (992px - 1200px) */
-@media (max-width: 1200px) {
+/* Laptop screens (992px - 1240px) */
+@media (max-width: 1240px) {
   #eco-friendly .circle-layout {
     height: 550px;
   }
@@ -6570,9 +6600,9 @@ footer a:hover {
   }
   
   #eco-friendly .left-select-item {
-    width: 700px;
-    height: 700px;
-    left: -10%;
+    width: 680px;
+    height: 680px;
+    left: -11%;
   }
   
   #eco-friendly .right-item {
@@ -6587,7 +6617,8 @@ footer a:hover {
   
   #eco-friendly .right-item li {
     width: 300px;
-    font-size: 14px;
+    font-size: 12px;
+    margin-right: 30px;
   }
   
   #eco-friendly .right-item .line {
@@ -6601,21 +6632,22 @@ footer a:hover {
     height: 500px;
     flex-direction: column;
   }
-  
+
+  #eco-friendly .left-select-item .dot{
+    width: 26px;
+    height: 26px;
+  }
+
   #eco-friendly .features-left {
-    position: relative;
-    width: 450px;
-    transform: none;
-    top: 0;
-    left: 0;
-    margin: 0 auto 30px;
+    width: 550px;
+     left: -5%; 
   }
   
   #eco-friendly .left-select-item {
-    width: 500px;
-    height: 500px;
-    top: 0;
-    left: -5%;
+    width: 600px;
+    height: 600px;
+    left: -7%;
+    border: 4px solid var(--earth-blue);
   }
   
   #eco-friendly .features-right {
@@ -6629,35 +6661,59 @@ footer a:hover {
   }
   
   #eco-friendly .right-item li {
-    width: 250px;
-    font-size: 14px;
+    width: 300px;
+    font-size: 12px;
     margin-right: 0;
   }
   
   /* Adjust dot positions for tablet */
   #eco-friendly .left-select-item .dot-1 {
-    top: 20%;
-    left: 90%;
+    top: 18%;
+    left: 90.3%;
   }
   
   #eco-friendly .left-select-item .dot-2 {
-    top: 35%;
-    left: 95%;
+    top: 39%;
+    left: 99.2%;
   }
   
   #eco-friendly .left-select-item .dot-3 {
-    top: 50%;
-    left: 97%;
+    top: 57.8%;
+    left: 99.7%;
   }
   
   #eco-friendly .left-select-item .dot-4 {
-    top: 65%;
-    left: 95%;
+    top: 79%;
+    left: 92.8%;
   }
   
   #eco-friendly .left-select-item .dot-5 {
-    top: 80%;
-    left: 90%;
+    top: 93%;
+    left: 76%;
+  }
+}
+/* Tablet screens (880px - 992px) */
+@media (max-width: 880px) {
+  #eco-friendly .features-left {
+    display: none;
+  }
+  #eco-friendly .features-left {
+    display: none;
+  }
+  
+  #eco-friendly .features-right {
+    width: 95%;
+    margin: 0 auto;
+  }
+  
+  #eco-friendly .right-item {
+    justify-content: flex-start;
+
+    padding-left: 50px;
+  }
+  #eco-friendly .right-item li {
+    width: 400px;
+    font-size: 13px;
   }
 }
 
