@@ -642,6 +642,7 @@ export default function Overview({ overviewData }: OverviewProps) {
             background-image: url('/images/overview-page/BgrCEO.jpg');
             background-size: cover;
             background-position: center;
+            background-repeat: no-repeat;
             padding: 40px 0;
             overflow: hidden;
             width: 100%;
@@ -739,84 +740,193 @@ export default function Overview({ overviewData }: OverviewProps) {
             position: absolute;
             right: 5vw;
             bottom: 0;
-            height: 105%;
+            height: 100%;
             z-index: 3;
             display: flex;
             align-items: flex-end;
-            transform: translateY(-5%); /* Đẩy lên cao hơn */
+            transform: translateY(-5%);
           }
           
           .ceo-image {
             height: 100%;
-            max-height: 900px; /* Tăng kích thước tối đa */
+            max-height: 900px;
+            max-width: 100%;
             width: auto;
             object-fit: contain;
             filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
           }
           
-          /* Responsive styles */
-          @media (max-width: 1400px) {
-            .message-content {
-              max-width: 60%;
-              padding: 20px 22px;
+          .scroll-down-indicator {
+            position: absolute;
+            right: 2vw;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+          }
+          
+          .scroll-down-indicator svg {
+            width: 32px;
+            height: 48px;
+            transition: all 0.3s ease;
+          }
+          
+          /* Responsive styles - NO OVERLAP EVER */
+          @media (max-width: 1660px) {
+            .message-section {
+              min-height: 800px;
             }
             
-            .ceo-image {
-              max-height: 850px;
+            .message-content {
+              max-width: 55%;
+              width: 55%;
+              padding: 20px 22px;
+              font-size: 0.78rem;
+              min-height: 360px;
             }
+            
+            .message-text p {
+              font-size: 0.85rem;
+            }
+            
+            .message-text blockquote {
+              font-size: 0.95rem;
+            }
+            
+            .ceo-signature .ceo-name {
+              font-size: 1.05rem;
+            }
+            
+            .ceo-signature .ceo-position {
+              font-size: 0.9rem;
+            }
+            
             
             .ceo-image-container {
               height: 100%;
               right: 4vw;
+              width: 35%;
+              max-width: 35%;
+            }
+            
+            .scroll-down-indicator {
+              right: 1.5vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 28px;
+              height: 42px;
             }
           }
-          
-          @media (max-width: 1200px) {
+          @media (max-width: 1400px) {
             .message-section {
               min-height: 700px;
             }
             
             .message-content {
-              max-width: 65%;
-              font-size: 0.8rem;
+              max-width: 60%;
+              width: 60%;
+              padding: 20px 22px;
+              font-size: 0.75rem;
+              min-height: 450px;
+            }
+            
+            .message-text p {
+              font-size: 0.9rem;
+              line-height: 1.3;
+            }
+            
+            .message-text blockquote {
+              font-size: 1rem;
+            }
+            
+            .ceo-signature .ceo-name {
+              font-size: 1.1rem;
+            }
+            
+            .ceo-signature .ceo-position {
+              font-size: 0.9rem;
             }
             
             .ceo-image {
               max-height: 800px;
+              max-width: 450px;
             }
             
             .ceo-image-container {
-              height: 95%;
-              right: 3vw;
+              position: absolute;
+              right: 2vw;
+              bottom: 0;
+              height: 100%;
+              display: flex;
+              transform: translateY(-5%);
+            }
+            
+            .scroll-down-indicator {
+              right: 1.2vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 24px;
+              height: 36px;
+            }
+          }
+          
+          @media (max-width: 1200px) {
+            .message-section {
+              min-height: 650px;
+            }
+            
+            .message-content {
+              max-width: 55%;
+              width: 55%;
+              padding: 18px 20px;
+              font-size: 0.7rem;
+              min-height: 320px;
+            }
+            
+            .message-text p {
+              font-size: 0.7rem;
+              line-height: 1.3;
+            }
+            
+            .message-text blockquote {
+              font-size: 0.8rem;
+            }
+            
+            .ceo-signature .ceo-name {
+              font-size: 0.85rem;
+            }
+            
+            .ceo-signature .ceo-position {
+              font-size: 0.75rem;
+            }
+            
+            .ceo-image {
+              max-height: 800px;
+              max-width: 430px;
+            }
+            
+            .ceo-image-container {
+              height: 100%;
+              right: 5vw;
+              width: 35%;
+            }
+            
+            .scroll-down-indicator {
+              right: 1vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 20px;
+              height: 30px;
             }
           }
           
           @media (max-width: 1024px) {
             .message-section {
-              min-height: 600px;
-              padding: 40px 20px;
-            }
-            
-            .message-content {
-              max-width: 70%;
-              margin-left: 3vw;
-              padding: 20px;
-              font-size: 0.9rem;
-            }
-            
-            .ceo-image-container {
-              right: 3vw;
-              height: 90%;
-            }
-            
-            .ceo-image {
-              max-height: 500px;
-            }
-          }
-          
-          @media (max-width: 768px) {
-            .message-section {
-              min-height: 500px;
+              min-height: 650px;
               padding: 30px 15px;
               display: flex;
               align-items: center;
@@ -824,11 +934,11 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
             
             .message-content {
-              max-width: 65%;
-              width: 65%;
+              max-width: 55%;
+              width: 55%;
               margin-left: 2vw;
               padding: 20px 18px;
-              font-size: 0.75rem;
+              font-size: 0.7rem;
               background: rgba(255,255,255,0.1);
               backdrop-filter: blur(12px) saturate(160%);
               -webkit-backdrop-filter: blur(12px) saturate(160%);
@@ -850,11 +960,144 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
             
             .message-text {
-              max-height: 240px; /* Giảm chiều cao */
+              max-height: 450px; /* Giảm chiều cao */
               overflow-y: auto;
               padding-right: 8px;
               text-align: justify;
+              font-size: 0.85rem;
+            }
+            
+            /* Custom scrollbar for message text */
+            .message-text::-webkit-scrollbar {
+              width: 2px;
+            }
+            
+            .message-text::-webkit-scrollbar-track {
+              background: rgba(255,255,255,0.1);
+              border-radius: 10px;
+            }
+            
+            .message-text::-webkit-scrollbar-thumb {
+              background: rgba(30,78,125,0.3);
+              border-radius: 10px;
+            }
+            
+            .message-text::-webkit-scrollbar-thumb:hover {
+              background: rgba(30,78,125,0.5);
+            }
+            
+            .ceo-image-container {
+              position: absolute;
+              right: 3vw;
+              top: 47%;
+              transform: translateY(-50%);
+              height: 110%;
+              width: 60%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              z-index: 1;
+            }
+            
+            .scroll-down-indicator {
+              right: 0.5vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 16px;
+              height: 24px;
+            }
+            
+            .ceo-image {
+              max-height: 120%;
+              max-width: 110%;
+              width: auto;
+              object-fit: contain;
+              object-position: center;
+            }
+            
+            .section-title {
+              font-size: 1.5rem;
+              margin-bottom: 1rem;
+              padding-bottom: 1rem;
+              color: #1e4e7d;
+            }
+            
+            .section-title span {
+              width: 40px;
+              height: 2px;
+            }
+            
+            .message-text p {
+              margin-bottom: 0.4rem;
+              line-height: 1.3;
+              text-align: justify;
+              font-size: 0.7rem;
+            }
+            
+            .message-text blockquote {
+              font-size: 0.8rem;
+              padding: 8px 10px;
+              margin: 8px 0;
+              color: #0d6efd;
+            }
+            
+            .ceo-signature .ceo-name {
+              font-size: 0.8rem;
+            }
+            
+            .ceo-signature .ceo-position {
               font-size: 0.65rem;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .message-section {
+              min-height: 500px;
+              padding: 30px 15px;
+              display: flex;
+              align-items: center;
+              justify-content: flex-start;
+            }
+            
+            .message-content {
+              max-width: 60%;
+              width: 65%;
+              margin-left: 2vw;
+              padding: 10px 8px;
+              font-size: 0.7rem;
+              background: rgba(255,255,255,0.1);
+              backdrop-filter: blur(12px) saturate(160%);
+              -webkit-backdrop-filter: blur(12px) saturate(160%);
+              border: 1px solid rgba(255,255,255,0.15);
+              border-radius: 15px;
+              box-sizing: border-box;
+            }
+            
+            .message-content::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 40%;
+              background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+              z-index: -1;
+              pointer-events: none;
+            }
+            
+            .message-text {
+              max-height: 350px; /* Giảm chiều cao */
+              overflow-y: auto;
+              padding-right: 8px;
+              text-align: left;
+              font-size: 0.45rem;
+              line-height: 1.4;
+              letter-spacing: normal;
+              word-spacing: normal;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              hyphens: auto;
             }
             
             /* Custom scrollbar for message text */
@@ -878,15 +1121,24 @@ export default function Overview({ overviewData }: OverviewProps) {
             
             .ceo-image-container {
               position: absolute;
-              right: 2vw;
-              top: 50%;
+              right: 3vw;
+              top: 47%;
               transform: translateY(-50%);
               height: 80%;
-              width: 35%;
+              width: 40%;
               display: flex;
               justify-content: center;
               align-items: center;
               z-index: 1;
+            }
+            
+            .scroll-down-indicator {
+              right: 0.5vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 16px;
+              height: 24px;
             }
             
             .ceo-image {
@@ -898,7 +1150,7 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
             
             .section-title {
-              font-size: 0.9rem;
+              font-size: 1rem !important;
               margin-bottom: 0.4rem;
               padding-bottom: 0.3rem;
               color: #1e4e7d;
@@ -911,9 +1163,14 @@ export default function Overview({ overviewData }: OverviewProps) {
             
             .message-text p {
               margin-bottom: 0.4rem;
-              line-height: 1.3;
-              text-align: justify;
+              line-height: 1.35;
+              text-align: left;
               font-size: 0.65rem;
+              letter-spacing: normal;
+              word-spacing: normal;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              hyphens: auto;
             }
             
             .message-text blockquote {
@@ -921,6 +1178,13 @@ export default function Overview({ overviewData }: OverviewProps) {
               padding: 5px 8px;
               margin: 5px 0;
               color: #0d6efd;
+              text-align: left;
+              letter-spacing: normal;
+              word-spacing: normal;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              border-left: 2px solid #0d6efd;
+              hyphens: auto;
             }
             
             .ceo-signature .ceo-name {
@@ -934,50 +1198,69 @@ export default function Overview({ overviewData }: OverviewProps) {
           
           @media (max-width: 576px) {
             .message-section {
-              min-height: 450px;
+              min-height: 350px;
               padding: 20px 10px;
               display: flex;
               align-items: center;
             }
             
             .message-content {
-              width: 60%;
+              width: 55%;
               max-width: 60%;
-              margin-left: 3vw;
-              padding: 16px 14px;
-              font-size: 0.65rem;
+              margin-left: 2vw;
+              padding: 10px 8px;
+              font-size: 0.6rem;
               background: rgba(255,255,255,0.08);
-              backdrop-filter: blur(10px) saturate(150%);
-              -webkit-backdrop-filter: blur(10px) saturate(150%);
+              backdrop-filter: blur(5px) saturate(150%);
+              -webkit-backdrop-filter: blur(5px) saturate(150%);
               border: 1px solid rgba(255,255,255,0.12);
               border-radius: 12px;
               box-sizing: border-box;
+              min-height: 280px;
+              z-index: 10;
             }
             
             .message-text {
-              max-height: 280px;
+              max-height: 200px;
               overflow-y: auto;
               line-height: 1.3;
-              text-align: justify;
-              font-size: 0.6rem;
+              text-align: left;
+              font-size: 0.62rem;
+              letter-spacing: normal;
+              word-spacing: normal;
+              hyphens: auto;
+              overflow-wrap: break-word;
+              word-break: break-word;
             }
             
             .ceo-image-container {
-              right: 1vw;
-              width: 38%;
-              height: 75%;
+              right: 2vw;
+              width: 55%;
+              height: 90%;
+              max-width: 42%;
+              z-index: 1;
+            }
+            
+            .scroll-down-indicator {
+              right: 0.3vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 14px;
+              height: 21px;
             }
             
             .ceo-image {
               max-height: 100%;
+              max-width: 100%;
               object-fit: contain;
               object-position: center;
             }
             
             .section-title {
-              font-size: 0.75rem;
-              margin-bottom: 0.3rem;
-              padding-bottom: 0.2rem;
+              font-size: 0.65rem !important;
+              margin-bottom: 0.1rem;
+              padding-bottom: 0.1rem;
             }
             
             .section-title span {
@@ -986,27 +1269,240 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
             
             .message-text p {
-              margin-bottom: 0.3rem;
-              line-height: 1.2;
-              font-size: 0.55rem;
-              text-align: justify;
+              margin-bottom: 0.2rem;
+              line-height: 1.25;
+              font-size: 0.5rem;
+              text-align: left;
+              letter-spacing: normal;
+              word-spacing: normal;
+              hyphens: auto;
+              overflow-wrap: break-word;
+              word-break: break-word;
             }
             
             .message-text blockquote {
-              font-size: 0.5rem;
+              font-size: 0.4rem;
               padding: 4px 6px;
-              margin: 4px 0;
-              text-align: justify;
-              border-left: 3px solid #0d6efd;
+              margin: 8px 0;
+              text-align: left;
+              letter-spacing: normal;
+              word-spacing: normal;
+              hyphens: auto;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              border-left: 2px solid #0d6efd;
               background: rgba(13, 110, 253, 0.05);
             }
             
             .ceo-signature .ceo-name {
-              font-size: 0.55rem;
+              font-size: 0.48rem;
             }
             
             .ceo-signature .ceo-position {
+              font-size: 0.38rem;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .message-section {
+              min-height: 300px;
+              padding: 15px 8px;
+              display: flex;
+              align-items: center;
+            }
+            
+            .message-content {
+              width: 55%;
+              max-width: 60%;
+              margin-left: 2vw;
+              padding: 8px 6px;
+              font-size: 0.5rem;
+              background: rgba(255,255,255,0.08);
+              backdrop-filter: blur(5px) saturate(150%);
+              -webkit-backdrop-filter: blur(5px) saturate(150%);
+              border: 1px solid rgba(255,255,255,0.12);
+              border-radius: 12px;
+              box-sizing: border-box;
+              min-height: 280px;
+              z-index: 10;
+            }
+            
+            .message-text {
+              max-height: 200px;
+              overflow-y: auto;
+              line-height: 1.2;
+              text-align: left;
+              font-size: 0.52rem;
+              letter-spacing: normal;
+              word-spacing: normal;
+              hyphens: auto;
+              overflow-wrap: break-word;
+              word-break: break-word;
+            }
+            
+            .ceo-image-container {
+              right: 3vw;
+              width: 55%;
+              height: 90%;
+              max-width: 40%;
+              z-index: 1;
+            }
+            
+            .scroll-down-indicator {
+              right: 0.3vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 12px;
+              height: 18px;
+            }
+            
+            .ceo-image {
+              max-height: 100%;
+              max-width: 100%;
+              object-fit: contain;
+              object-position: center;
+            }
+            
+            .section-title {
+              font-size: 0.6rem !important;
+              margin-bottom: 0.2rem;
+              padding-bottom: 0.15rem;
+            }
+            
+            .section-title span {
+              width: 25px;
+              height: 2px;
+            }
+            
+            .message-text p {
+              margin-bottom: 0.2rem;
+              line-height: 1.2;
               font-size: 0.45rem;
+              text-align: left;
+              letter-spacing: normal;
+              word-spacing: normal;
+              hyphens: auto;
+              overflow-wrap: break-word;
+              word-break: break-word;
+            }
+            
+            .message-text blockquote {
+              font-size: 0.35rem;
+              padding: 4px 6px;
+              margin: 6px 0;
+              text-align: left;
+              letter-spacing: normal;
+              word-spacing: normal;
+              hyphens: auto;
+              overflow-wrap: break-word;
+              word-break: break-word;
+              border-left: 2px solid #0d6efd;
+              background: rgba(13, 110, 253, 0.05);
+            }
+            
+            .ceo-signature .ceo-name {
+              font-size: 0.45rem;
+            }
+            
+            .ceo-signature .ceo-position {
+              font-size: 0.35rem;
+            }
+          }
+          
+          @media (max-width: 350px) {
+            .message-section {
+              min-height: 150px;
+              padding: 10px 10px;
+              display: flex;
+              align-items: center;
+            }
+            
+            .message-content {
+              width: 55%;
+              max-width: 60%;
+              margin-left: 1vw;
+              padding: 5px 5px;
+              font-size: 0.42rem;
+              background: rgba(255,255,255,0.08);
+              backdrop-filter: blur(5px) saturate(150%);
+              -webkit-backdrop-filter: blur(5px) saturate(150%);
+              border: 1px solid rgba(255,255,255,0.12);
+              border-radius: 12px;
+              box-sizing: border-box;
+              min-height: 200px;
+              z-index: 10;
+            }
+            
+            .message-text {
+              max-height: 150px;
+              overflow-y: auto;
+              line-height: 1;
+              text-align: justify;
+              font-size: 0.35rem;
+            }
+            
+            .ceo-image-container {
+              right: 1vw;
+              width: 60%;
+              height: 90%;
+              max-width: 41%;
+              z-index: 1;
+            }
+            
+            .scroll-down-indicator {
+              right: 0.2vw;
+            }
+            
+            .scroll-down-indicator svg {
+              width: 8px;
+              height: 14px;
+            }
+            
+            .ceo-image {
+              max-height: 100%;
+              max-width: 100%;
+              object-fit: contain;
+              object-position: center;
+            }
+            
+            .section-title {
+              font-size: 0.60rem;
+              margin-bottom: 0.3rem;
+              padding-bottom: 0.2rem;
+            }
+            /* Smaller title only for message section */
+            .message-section .section-title {
+              font-size: 0.40rem !important;
+            }
+            
+            .section-title span {
+              width: 25px;
+              height: 2px;
+            }
+            
+            .message-text p {
+              margin-bottom: 0.2rem;
+              line-height: 1.2;
+              font-size: 0.35rem;
+              text-align: justify;
+            }
+            
+            .message-text blockquote {
+              font-size: 0.25rem;
+              padding: 4px 6px;
+              margin: 4px 0;
+              text-align: justify;
+              border-left: 1px solid #0d6efd;
+              background: rgba(13, 110, 253, 0.05);
+            }
+            
+            .ceo-signature .ceo-name {
+              font-size: 0.42rem;
+            }
+            
+            .ceo-signature .ceo-position {
+              font-size: 0.32rem;
             }
           }
         `}</style>
@@ -1378,6 +1874,93 @@ export default function Overview({ overviewData }: OverviewProps) {
             /* Keep original font-weight and styling */
           }
 
+          /* Van Large Desktop - 2000x600 */
+          @media (max-width: 2000px) {
+            .hero-section .hero-content {
+              max-width: 90% !important;
+              margin-top: 200px !important;
+              padding-left: 10px !important;
+              padding-right: 10px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 80px !important;
+              margin-bottom: 25px !important;
+              font-weight: 400 !important;
+              line-height: 1.3 !important;
+              letter-spacing: 0.5px !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 26px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 16px !important;
+              font-weight: 400 !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 26px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 12px !important;
+              font-weight: 400 !important;
+            }
+          }
+
+          /* Van Desktop - 1535x600 */
+          @media (max-width: 1535px) {
+            .hero-section .hero-content {
+              max-width: 1300px !important;
+              margin-top: 200px !important;
+              padding-left: 50px !important;
+              padding-right: 50px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 52px !important;
+              margin-bottom: 26px !important;
+              font-weight: 400 !important;
+              line-height: 1.3 !important;
+              letter-spacing: 0.4px !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 23px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 15px !important;
+              font-weight: 400 !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 23px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 11px !important;
+              font-weight: 400 !important;
+            }
+          }
+
+          /* Van Desktop small - 1279x600 */
+          @media (max-width: 1279px) {
+            .hero-section .hero-content {
+              max-width: 1200px !important;
+              margin-top: 170px !important;
+              padding-left: 50px !important;
+              padding-right: 50px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 48px !important;
+              margin-bottom: 24px !important;
+              font-weight: 400 !important;
+              line-height: 1.3 !important;
+              letter-spacing: 0.3px !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 20px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 14px !important;
+              font-weight: 400 !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 20px !important;
+              line-height: 1.3 !important;
+              margin-bottom: 10px !important;
+              font-weight: 400 !important;
+            }
+          }
+
           @media (max-width: 1024px) {
             .hero-section .hero-content {
               max-width: 1200px !important;
@@ -1392,20 +1975,20 @@ export default function Overview({ overviewData }: OverviewProps) {
               color: #333 !important;
             }
             .hero-section .hero-content div {
-              font-size: 24px !important;
-              line-height: 1.5 !important;
+              font-size: 20px !important;
+              line-height: 1.3 !important;
               font-weight: 400 !important;
               color: #333 !important;
             }
             .hero-section .hero-content ul li {
-              font-size: 24px !important;
-              line-height: 1.4 !important;
+              font-size: 18px !important;
+              line-height: 1.3 !important;
               font-weight: 400 !important;
               color: #333 !important;
             }
             .hero-section .hero-content p {
-              font-size: 24px !important;
-              line-height: 1.5 !important;
+              font-size: 18px !important;
+              line-height: 1.3 !important;
               font-weight: 400 !important;
               color: #333 !important;
             }
@@ -1413,8 +1996,8 @@ export default function Overview({ overviewData }: OverviewProps) {
           
           @media (max-width: 768px) {
             .hero-section .hero-content {
-              max-width: 100% !important;
-              margin-top: 180px !important;
+              max-width: 90% !important;
+              margin-top: 120px !important;
               padding-left: 20px !important;
               padding-right: 20px !important;
             }
@@ -1427,14 +2010,14 @@ export default function Overview({ overviewData }: OverviewProps) {
               line-height: 1.3 !important;
             }
             .hero-section .hero-content div {
-              font-size: 18px !important;
+              font-size: 17px !important;
               line-height: 1.4 !important;
               font-weight: 500 !important;
               color: #333 !important;
               letter-spacing: 0.1px !important;
             }
             .hero-section .hero-content ul li {
-              font-size: 18px !important;
+              font-size: 17px !important;
               font-weight: 500 !important;
               color: #333 !important;
               margin-bottom: 5px !important;
@@ -1442,7 +2025,7 @@ export default function Overview({ overviewData }: OverviewProps) {
               line-height: 1.3 !important;
             }
             .hero-section .hero-content p {
-              font-size: 18px !important;
+              font-size: 17px !important;
               font-weight: 500 !important;
               color: #333 !important;
               line-height: 1.4 !important;
@@ -1454,17 +2037,17 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
           }
           
-          @media (max-width: 600px) {
+          @media (max-width: 639px) {
             .hero-section .hero-content {
-              max-width: 100% !important;
-              margin-top: 200px !important;
-              padding-left: 15px !important;
-              padding-right: 15px !important;
+              max-width: 90% !important;
+              margin-top: 120px !important;
+              padding-left: 20px !important;
+              padding-right: 20px !important;
             }
             .hero-section .hero-content h2 {
               font-size: 22px !important;
               margin-bottom: 10px !important;
-              letter-spacing: 0.1px !important;
+              letter-spacing: normal !important;
               font-weight: 500 !important;
               color: #333 !important;
               line-height: 1.2 !important;
@@ -1474,29 +2057,21 @@ export default function Overview({ overviewData }: OverviewProps) {
               line-height: 1.3 !important;
               font-weight: 500 !important;
               color: #333 !important;
-              letter-spacing: 0.1px !important;
+              letter-spacing: normal !important;
             }
-            .hero-section .hero-content ul,
-            .hero-section .hero-content li {
-              margin-left: 10px !important;
-              font-size: 16px !important;
+            .hero-section .hero-content ul li {
+              font-size: 15px !important;
               font-weight: 500 !important;
               color: #333 !important;
-              line-height: 1.3 !important;
-              word-spacing: 0 !important;
+              margin-bottom: 5px !important;
               letter-spacing: 0.1px !important;
-              font-family: "Inter", sans-serif !important;
-              margin-bottom: 6px !important;
-              white-space: normal !important;
-              overflow: visible !important;
-              text-overflow: unset !important;
-              word-break: break-word !important;
+              line-height: 1.3 !important;
             }
             .hero-section .hero-content p {
-              font-size: 16px !important;
+              font-size: 15px !important;
               font-weight: 500 !important;
               color: #333 !important;
-              line-height: 1.3 !important;
+              line-height: 1.4 !important;
               margin-bottom: 8px !important;
               letter-spacing: 0.1px !important;
             }
@@ -1514,9 +2089,9 @@ export default function Overview({ overviewData }: OverviewProps) {
           /* Mobile nhỏ 481px-600px */
           @media (max-width: 480px) {
             .hero-section .hero-content {
-              margin-top: 220px !important;
-              padding-left: 12px !important;
-              padding-right: 12px !important;
+              margin-top: 100px !important;
+              padding-left: 22px !important;
+              padding-right: 22px !important;
             }
             .hero-section .hero-content h2 {
               font-size: 20px !important;
@@ -1534,7 +2109,7 @@ export default function Overview({ overviewData }: OverviewProps) {
               letter-spacing: 0.1px !important;
             }
             .hero-section .hero-content ul li {
-              font-size: 15px !important;
+              font-size: 13px !important;
               line-height: 1.3 !important;
               margin-bottom: 5px !important;
               font-weight: 500 !important;
@@ -1542,7 +2117,7 @@ export default function Overview({ overviewData }: OverviewProps) {
               letter-spacing: 0.1px !important;
             }
             .hero-section .hero-content p {
-              font-size: 15px !important;
+              font-size: 13px !important;
               line-height: 1.3 !important;
               margin-bottom: 6px !important;
               font-weight: 500 !important;
@@ -1551,6 +2126,187 @@ export default function Overview({ overviewData }: OverviewProps) {
             }
             .section-title {
               font-size: 1.5rem !important;
+            }
+          }
+
+          @media (max-width: 350px) {
+            .hero-section .hero-content {
+              margin-top: 80px !important;
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 20px !important;
+              margin-bottom: 20px !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content div {
+              font-size: 10px !important;
+              line-height: 1.5 !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 10px !important;
+              line-height: 1.3 !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 11px !important;
+              line-height: 1.3 !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+          }
+
+          @media (max-width: 320px) {
+            .hero-section .hero-content {
+              margin-top: 70px !important;
+              padding-left: 20px !important;
+              padding-right: 20px !important;
+            }
+            .hero-section .hero-content h2 {
+              font-size: 42px !important;
+              margin-bottom: 20px !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content div {
+              font-size: 20px !important;
+              line-height: 1.5 !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content ul li {
+              font-size: 9px !important;
+              line-height: 1.3 !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+            .hero-section .hero-content p {
+              font-size: 10px !important;
+              line-height: 1.3 !important;
+              font-weight: 400 !important;
+              color: #333 !important;
+            }
+          }
+
+          /* Responsive Background Styles */
+          /* Hero Section Background Responsive */
+          @media (max-width: 2000px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+            }
+          }
+
+          @media (max-width: 1600px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+            }
+          }
+
+          @media (max-width: 1200px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 700px !important;
+            }
+          }
+
+          @media (max-width: 992px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 600px !important;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 500px !important;
+            }
+          }
+
+          @media (max-width: 600px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 400px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 350px !important;
+            }
+          }
+
+          @media (max-width: 350px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 300px !important;
+            }
+          }
+
+          @media (max-width: 320px) {
+            .hero-section .overview-banner-img {
+              object-fit: cover !important;
+              object-position: center center !important;
+            }
+            .message-section {
+              background-size: cover !important;
+              background-position: center center !important;
+              background-attachment: scroll !important;
+              min-height: 250px !important;
             }
           }
         `}</style>

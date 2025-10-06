@@ -85,6 +85,17 @@ interface HomeContactData {
   isActive: boolean;
 }
 
+interface CertificationData {
+  _id?: string;
+  name: string;
+  description: string;
+  image: string;
+  category?: string;
+  order?: number;
+  issuedDate?: string;
+  validUntil?: string;
+}
+
 interface HomeData {
   hero: HeroData;
   sections: SectionData[];
@@ -92,11 +103,7 @@ interface HomeData {
   customers: CustomersData;
   featuredNews: NewsData[];
   homeContact?: HomeContactData;
-  certifications?: {
-    _id: string;
-    description: string;
-    image: string;
-  }[];
+  certifications?: CertificationData[];
 }
 
 // Preview states
@@ -622,7 +629,7 @@ export default function AdminHomePage() {
         if (currentOnHome.length >= 4) {
           // Tìm tin không phải featured để thay thế (ưu tiên bỏ tin nhỏ trước)
           const nonFeaturedOnHome = currentOnHome.filter(n => !n.isFeatured);
-          let oldestOnHome;
+          let oldestOnHome: NewsData;
           
           if (nonFeaturedOnHome.length > 0) {
             // Ưu tiên bỏ tin nhỏ cũ nhất
@@ -900,8 +907,8 @@ export default function AdminHomePage() {
         
         console.log(`Save ${section} result:`, result);
         
-        console.log('Save result details:', { success: result?.success, message: result?.message, data: result?.data });
-        if (result && result.success) {
+        console.log('Save result details:', { success: (result as any)?.success, message: (result as any)?.message, data: (result as any)?.data });
+        if (result && (result as any).success) {
           // Thêm delay nhỏ để đảm bảo backend đã cập nhật xong
           await new Promise(resolve => setTimeout(resolve, 700));
           
@@ -926,7 +933,7 @@ export default function AdminHomePage() {
           toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
         } else {
           console.error('Save failed:', result);
-          throw new Error(result?.message || "Lưu thất bại");
+          throw new Error((result as any)?.message || "Lưu thất bại");
         }
     } catch (error: any) {
       handleError(error, `lưu ${section}`);
@@ -1007,7 +1014,7 @@ export default function AdminHomePage() {
       if (!prevData) return null;
       const newData = JSON.parse(JSON.stringify(prevData));
       if (Array.isArray(newData.sections) && newData.sections[index]) {
-        newData.sections[index].mediaType = mediaType;
+        (newData.sections[index] as any).mediaType = mediaType;
       }
       return newData;
     });
@@ -1116,13 +1123,13 @@ export default function AdminHomePage() {
       
       console.log("API result:", result);
       
-      if (result.success) {
+      if ((result as any).success) {
         toast.success(newsData._id ? "Đã cập nhật tin tức!" : "Đã thêm tin tức mới!", { ...toastOptions, icon: <FiCheck /> });
         const updatedNews = await homeService.getHomepageNews();
         setHomepageNews(updatedNews as NewsData[]);
         setIsEditModalOpen(false);
       } else {
-        throw new Error(result.message || "Lưu tin tức thất bại");
+        throw new Error((result as any).message || "Lưu tin tức thất bại");
       }
     } catch (error) {
       handleError(error, newsData._id ? "cập nhật tin tức" : "thêm tin tức mới");
@@ -1147,10 +1154,10 @@ export default function AdminHomePage() {
     }
   };
 
-  const handleCertificationChange = (e: ChangeEvent<HTMLInputElement>, index: number, field: 'description' | 'image') => {
+  const handleCertificationChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number, field: 'name' | 'description' | 'category' | 'image') => {
     const { value } = e.target;
     setHomeData(prev => {
-      if (!prev) return null;
+      if (!prev || !prev.certifications) return null;
       const updated = [...prev.certifications];
       updated[index] = { ...updated[index], [field]: value };
       return { ...prev, certifications: updated };
@@ -1371,7 +1378,10 @@ export default function AdminHomePage() {
           <button className="btn-add" onClick={handleAddSection}><FiPlusCircle /> Thêm section mới</button>
         </div>
 
-        {console.log("Rendering sections:", homeData.sections)}
+        {(() => {
+          console.log("Rendering sections:", homeData.sections);
+          return null;
+        })()}
         {Array.isArray(homeData.sections) && homeData.sections.map((section, index) => (
           <div key={index} className="subsection-card">
             <div className="subsection-header">
@@ -1776,42 +1786,198 @@ export default function AdminHomePage() {
           </div>
       </AdminSectionCard>
       
-      {/* Certifications Small Cards Section */}
+      {/* Certifications Section - Full Dashboard */}
       <AdminSectionCard
-        title="Chứng chỉ nhỏ (Certifications - Small Cards)"
+        title="Quản lý Chứng chỉ (Certifications)"
         onSave={() => handleSave('certifications')}
         isSaving={saving === 'certifications'}
         hasChanges={hasChanges('certifications')}
       >
-        {homeData?.certifications?.slice(2, 7).map((cert, idx) => {
-          const realIndex = idx + 2; // index thực tế trong mảng certifications
-          return (
-            <div key={cert._id || realIndex} className="subsection-card">
-              <FormItem label="Mô tả (Description)">
-                <input
-                  type="text"
-                  value={cert.description}
-                  onChange={e => handleCertificationChange(e, realIndex, 'description')}
-                  className="form-input"
-                />
-              </FormItem>
-              <FormItem label="Hình ảnh (Image)">
-                <div className="image-preview-container">
-                  {logoPreview[`cert_${realIndex}`]
-                    ? <Image src={logoPreview[`cert_${realIndex}`]} alt="Certification" width={120} height={60} className="image-preview" />
-                    : cert.image && <Image src={`${BACKEND_DOMAIN}${cert.image}`} alt="Certification" width={120} height={60} className="image-preview" />
-                  }
+        <div className="certifications-dashboard">
+          {/* LEED GOLD Certification (Box trái) */}
+          {homeData?.certifications?.[0] && (
+            <div className="certification-main-card leed-certification">
+              <h4 className="certification-title">
+                Box trái
+              </h4>
+              <div className="grid-2-col">
+                <div className="form-column">
+                  <FormItem label="Tên chứng chỉ" icon={<FiType />}>
+                    <input
+                      type="text"
+                      value={homeData.certifications[0].name || ''}
+                      onChange={e => handleCertificationChange(e, 0, 'name')}
+                      className="form-input"
+                      placeholder="LEED GOLD"
+                    />
+                  </FormItem>
+                  <FormItem label="Mô tả" icon={<FiFileText />}>
+                    <textarea
+                      value={homeData.certifications[0].description || ''}
+                      onChange={e => handleCertificationChange(e, 0, 'description')}
+                      className="form-textarea"
+                      rows={3}
+                      placeholder="Leadership in Energy & Environmental Design"
+                    />
+                  </FormItem>
+                  <FormItem label="Thể loại" icon={<FiType />}>
+                    <input
+                      type="text"
+                      value={homeData.certifications[0].category || ''}
+                      onChange={e => handleCertificationChange(e, 0, 'category')}
+                      className="form-input"
+                      placeholder="environmental"
+                    />
+                  </FormItem>
                 </div>
-                <input
-                  type="file"
-                  onChange={e => handleCertificationFileChange(e, realIndex)}
-                  accept="image/*"
-                  className="form-file-input"
-                />
-              </FormItem>
+                <div className="form-column">
+                  <FormItem label="Hình ảnh chứng chỉ" icon={<FiImage />}>
+                    <div className="image-preview-container large">
+                      {logoPreview[`cert_0`]
+                        ? <Image src={logoPreview[`cert_0`]} alt="LEED GOLD" width={300} height={200} className="image-preview" />
+                        : homeData.certifications[0].image && <Image src={`${BACKEND_DOMAIN}${homeData.certifications[0].image}`} alt="LEED GOLD" width={300} height={200} className="image-preview" />
+                      }
+                    </div>
+                    <input
+                      type="file"
+                      onChange={e => handleCertificationFileChange(e, 0)}
+                      accept="image/*"
+                      className="form-file-input"
+                    />
+                    <div className="image-size-notice">
+                      <div className="notice-icon">📐</div>
+                      <div className="notice-text">
+                        <strong>Kích thước khuyến nghị:</strong> 800x600px (tỷ lệ 4:3)
+                      </div>
+                    </div>
+                  </FormItem>
+                </div>
+              </div>
             </div>
-          );
-        })}
+          )}
+
+          {/* ISO Certification (Box giữa) */}
+          {homeData?.certifications?.[1] && (
+            <div className="certification-main-card iso-certification">
+              <h4 className="certification-title">
+                Box giữa
+              </h4>
+              <div className="grid-2-col">
+                <div className="form-column">
+                  <FormItem label="Tên chứng chỉ" icon={<FiType />}>
+                    <input
+                      type="text"
+                      value={homeData.certifications[1].name || ''}
+                      onChange={e => handleCertificationChange(e, 1, 'name')}
+                      className="form-input"
+                      placeholder="ISO 9001:2015"
+                    />
+                  </FormItem>
+                  <FormItem label="Mô tả" icon={<FiFileText />}>
+                    <textarea
+                      value={homeData.certifications[1].description || ''}
+                      onChange={e => handleCertificationChange(e, 1, 'description')}
+                      className="form-textarea"
+                      rows={3}
+                      placeholder="Quality Management System"
+                    />
+                  </FormItem>
+                  <FormItem label="Thể loại" icon={<FiType />}>
+                    <input
+                      type="text"
+                      value={homeData.certifications[1].category || ''}
+                      onChange={e => handleCertificationChange(e, 1, 'category')}
+                      className="form-input"
+                      placeholder="quality"
+                    />
+                  </FormItem>
+                </div>
+                <div className="form-column">
+                  <FormItem label="Hình ảnh chứng chỉ" icon={<FiImage />}>
+                    <div className="image-preview-container large">
+                      {logoPreview[`cert_1`]
+                        ? <Image src={logoPreview[`cert_1`]} alt="ISO Certification" width={300} height={200} className="image-preview" />
+                        : homeData.certifications[1].image && <Image src={`${BACKEND_DOMAIN}${homeData.certifications[1].image}`} alt="ISO Certification" width={300} height={200} className="image-preview" />
+                      }
+                    </div>
+                    <input
+                      type="file"
+                      onChange={e => handleCertificationFileChange(e, 1)}
+                      accept="image/*"
+                      className="form-file-input"
+                    />
+                    <div className="image-size-notice">
+                      <div className="notice-icon">📐</div>
+                      <div className="notice-text">
+                        <strong>Kích thước khuyến nghị:</strong> 800x600px (tỷ lệ 4:3)
+                      </div>
+                    </div>
+                  </FormItem>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Small Certifications (Box phải) */}
+          <div className="certification-small-cards">
+            <h4 className="certification-title">
+              Box phải
+            </h4>
+            <div className="small-certs-grid">
+              {homeData?.certifications?.slice(2, 7).map((cert, idx) => {
+                const realIndex = idx + 2; // index thực tế trong mảng certifications
+                return (
+                  <div key={cert._id || realIndex} className="small-cert-card">
+                    <div className="small-cert-header">
+                      <h5>Chứng chỉ #{realIndex - 1}</h5>
+                    </div>
+                    <FormItem label="Tên chứng chỉ">
+                      <input
+                        type="text"
+                        value={cert.name || ''}
+                        onChange={e => handleCertificationChange(e, realIndex, 'name')}
+                        className="form-input small"
+                        placeholder="Tên chứng chỉ"
+                      />
+                    </FormItem>
+                    <FormItem label="Mô tả">
+                      <input
+                        type="text"
+                        value={cert.description || ''}
+                        onChange={e => handleCertificationChange(e, realIndex, 'description')}
+                        className="form-input small"
+                        placeholder="Mô tả ngắn"
+                      />
+                    </FormItem>
+                    <FormItem label="Thể loại">
+                      <input
+                        type="text"
+                        value={cert.category || ''}
+                        onChange={e => handleCertificationChange(e, realIndex, 'category')}
+                        className="form-input small"
+                        placeholder="Thể loại"
+                      />
+                    </FormItem>
+                    <FormItem label="Hình ảnh">
+                      <div className="image-preview-container small">
+                        {logoPreview[`cert_${realIndex}`]
+                          ? <Image src={logoPreview[`cert_${realIndex}`]} alt="Certification" width={120} height={80} className="image-preview" />
+                          : cert.image && <Image src={`${BACKEND_DOMAIN}${cert.image}`} alt="Certification" width={120} height={80} className="image-preview" />
+                        }
+                      </div>
+                      <input
+                        type="file"
+                        onChange={e => handleCertificationFileChange(e, realIndex)}
+                        accept="image/*"
+                        className="form-file-input small"
+                      />
+                    </FormItem>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </AdminSectionCard>
       
       {/* Modal chỉnh sửa tin tức */}
@@ -1822,6 +1988,143 @@ export default function AdminHomePage() {
         onSave={handleSaveNews}
         isSaving={saving === 'news'}
       />
+      
+      {/* CSS Styles for Certifications Dashboard */}
+      <style jsx>{`
+        .certifications-dashboard {
+          display: flex;
+          flex-direction: column;
+          gap: 2rem;
+        }
+        
+        .certification-main-card {
+          background: #f8f9fa;
+          border: 2px solid #e9ecef;
+          border-radius: 12px;
+          padding: 1.5rem;
+          margin-bottom: 1rem;
+        }
+        
+        .leed-certification {
+          border-left: 4px solid #28a745;
+        }
+        
+        .iso-certification {
+          border-left: 4px solid #007bff;
+        }
+        
+        .certification-title {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+          color: #495057;
+          font-size: 1.25rem;
+          font-weight: 600;
+        }
+        
+        .cert-icon {
+          color: #6c757d;
+        }
+        
+        .image-preview-container.large {
+          min-height: 200px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px dashed #dee2e6;
+          border-radius: 8px;
+          background: #fff;
+        }
+        
+        .image-preview-container.small {
+          min-height: 80px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid #dee2e6;
+          border-radius: 6px;
+          background: #fff;
+        }
+        
+        .certification-small-cards {
+          background: #f8f9fa;
+          border: 2px solid #e9ecef;
+          border-radius: 12px;
+          padding: 1.5rem;
+        }
+        
+        .small-certs-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 1rem;
+          margin-top: 1rem;
+        }
+        
+        .small-cert-card {
+          background: #fff;
+          border: 1px solid #dee2e6;
+          border-radius: 8px;
+          padding: 1rem;
+          transition: all 0.2s ease;
+        }
+        
+        .small-cert-card:hover {
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          transform: translateY(-2px);
+        }
+        
+        .small-cert-header {
+          margin-bottom: 1rem;
+        }
+        
+        .small-cert-header h5 {
+          color: #495057;
+          font-size: 1rem;
+          font-weight: 600;
+          margin: 0;
+        }
+        
+        .form-input.small {
+          padding: 0.5rem;
+          font-size: 0.875rem;
+        }
+        
+        .form-file-input.small {
+          padding: 0.375rem;
+          font-size: 0.875rem;
+        }
+        
+        .image-size-notice {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+          padding: 0.5rem;
+          background: #e7f3ff;
+          border-radius: 4px;
+          font-size: 0.875rem;
+        }
+        
+        .notice-icon {
+          font-size: 1rem;
+        }
+        
+        .notice-text {
+          color: #0066cc;
+        }
+        
+        @media (max-width: 768px) {
+          .small-certs-grid {
+            grid-template-columns: 1fr;
+          }
+          
+          .certification-main-card,
+          .certification-small-cards {
+            padding: 1rem;
+          }
+        }
+      `}</style>
     </div>
   );
 }

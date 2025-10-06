@@ -836,7 +836,7 @@ export default function Home({ homeData }: HomeProps) {
               certifications.map((cert: CertificationData, index: number) => {
                 const certImg = getOptimizedImageUrls(cert.image || "");
                 // Xử lý hiển thị theo category
-                if (cert.name === "LEED GOLD") {
+                if (cert.category === "environmental") {
                   return (
                     <div key={index} className="col-lg-4 mb-4">
                       <div className="cert-item leed-cert">
@@ -849,23 +849,34 @@ export default function Home({ homeData }: HomeProps) {
 
                         />
                         <div className="leed-text-container">
-                          <div className="leed-text-row">
-                            <span className="leed-letter">L</span>EADERSHIP IN
-                          </div>
-                          <div className="leed-text-row">
-                            <span className="leed-letter">E</span>NERGY &amp;
-                          </div>
-                          <div className="leed-text-row">
-                            <span className="leed-letter">E</span>NVIRONMENTAL
-                          </div>
-                          <div className="leed-text-row">
-                            <span className="leed-letter">D</span>ESIGN
-                          </div>
+                          {(() => {
+                            const raw = (cert.description || "").trim();
+                            const lines = raw
+                              ? raw.split(/\r?\n|\|/).map(s => s.trim()).filter(Boolean).slice(0, 4)
+                              : [];
+                            const fallback = [
+                              "LEADERSHIP IN",
+                              "ENERGY &",
+                              "ENVIRONMENTAL",
+                              "DESIGN",
+                            ];
+                            const rows = lines.length > 0 ? lines : fallback;
+                            return rows.map((text, i) => {
+                              const first = text.charAt(0) || "";
+                              const rest = text.slice(1);
+                              return (
+                                <div key={i} className="leed-text-row">
+                                  <span className="leed-letter">{first}</span>
+                                  {rest}
+                                </div>
+                              );
+                            });
+                          })()}
                         </div>
                       </div>
                     </div>
                   );
-                } else if (cert.name.includes("ISO")) {
+                } else if (cert.category.includes("quality")) {
                   return (
                     <div key={index} className="col-lg-4 mb-4">
                       <div className="cert-item iso-cert">
@@ -898,8 +909,8 @@ export default function Home({ homeData }: HomeProps) {
                     certifications
                       .filter(
                         (cert) =>
-                          !cert.name.includes("LEED") &&
-                          !cert.name.includes("ISO")
+                          !cert.category.includes("environmental") &&
+                          !cert.category.includes("quality")
                       )
                       .map((cert: CertificationData, index: number) => {
                         const certImg = getOptimizedImageUrls(cert.image || "");
