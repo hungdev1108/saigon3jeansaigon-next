@@ -50,6 +50,19 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
     day: 'numeric'
   });
 
+  // Normalize content HTML from editor: fix image URLs to include backend domain
+  const normalizeContent = (html: string) => {
+    if (!html) return '';
+    let out = html;
+    // src="/uploads/..." -> src="${BACKEND_DOMAIN}/uploads/..."
+    out = out.replace(/src=\"\/?uploads\//g, `src=\"${BACKEND_DOMAIN}/uploads/`);
+    // Replace any localhost/api mismatches with current BACKEND_DOMAIN
+    out = out.replace(/src=\"http:\/\/localhost:[0-9]+\/(uploads\/[^"]*)\"/g, (_m, p1) => `src=\"${BACKEND_DOMAIN}/${p1}\"`);
+    return out;
+  };
+
+  const renderedContent = normalizeContent(newsArticle.content);
+
   return (
     <>
       <HeaderScrollEffect />
@@ -122,7 +135,7 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
           <div className={styles.newsContent + " mb-5"}>
             <div
               className="content"
-              dangerouslySetInnerHTML={{ __html: newsArticle.content }}
+              dangerouslySetInnerHTML={{ __html: renderedContent }}
             />
           </div>
           {/* Back to News */}

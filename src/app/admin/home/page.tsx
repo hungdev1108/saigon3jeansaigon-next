@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, useRef } from "react";
 import Image from "next/image";
+import RichTextEditor from "@/components/news/RichTextEditor";
 import homeService from "@/services/homeService";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX, FiCalendar, FiEye } from 'react-icons/fi';
@@ -58,7 +59,13 @@ interface NewsData {
   title: string;
   excerpt: string;
   content: string; // Thêm field content
-  image: string;
+  image: string; // Giữ backward compatibility
+  mainImage: string; // Hình ảnh chính
+  additionalImages: Array<{
+    url: string;
+    alt: string;
+    order: number;
+  }>; // Các hình ảnh phụ
   isPublished: boolean;
   isFeatured: boolean;
   id: string;
@@ -88,7 +95,7 @@ interface HomeContactData {
 interface CertificationData {
   _id?: string;
   name: string;
-  description: string;
+  description?: string;
   image: string;
   category?: string;
   order?: number;
@@ -141,18 +148,30 @@ interface EditNewsModalProps {
   isOpen: boolean;
   onClose: () => void;
   news: NewsData | null;
-  onSave: (newsData: NewsData, file?: File) => Promise<void>;
+  onSave: (newsData: NewsData, mainImageFile?: File, additionalImageFiles?: File[]) => Promise<void>;
   isSaving: boolean;
 }
 const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModalProps) => {
   const [formData, setFormData] = useState<NewsData | null>(null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [mainImageFile, setMainImageFile] = useState<File | null>(null);
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
+  const [additionalImageFiles, setAdditionalImageFiles] = useState<File[]>([]);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState<string[]>([]);
+  const mainImageInputRef = useRef<HTMLInputElement | null>(null);
+  const additionalImagesInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (news) {
       setFormData({ ...news });
-      setImagePreview(news.image ? `${BACKEND_DOMAIN}${news.image}` : null);
+      // Set main image preview
+      const mainImageUrl = news.mainImage || news.image;
+      setMainImagePreview(mainImageUrl ? `${BACKEND_DOMAIN}${mainImageUrl}` : null);
+      // Do not preload previews from existing images; show only newly selected files
+      setAdditionalImagePreviews([]);
+      setAdditionalImageFiles([]);
+      setMainImageFile(null);
+      if (mainImageInputRef.current) mainImageInputRef.current.value = '';
+      if (additionalImagesInputRef.current) additionalImagesInputRef.current.value = '';
     } else {
       setFormData({
         _id: '',
@@ -160,6 +179,8 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
         excerpt: '',
         content: '',
         image: '',
+        mainImage: '',
+        additionalImages: [],
         isPublished: true,
         isFeatured: false,
         publishDate: new Date().toISOString().split('T')[0],
@@ -167,15 +188,21 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
         slug: '',
         tags: [],
         author: 'Saigon 3 Jean',
-        onHome: false, // Thêm onHome mặc định
-        views: 0 // Thêm views mặc định
+        onHome: false,
+        views: 0
       });
-      setImagePreview(null);
+      setMainImagePreview(null);
+      setAdditionalImagePreviews([]);
     }
-    setImageFile(null);
+    setMainImageFile(null);
+    setAdditionalImageFiles([]);
   }, [news]);
 
   if (!isOpen || !formData) return null;
+
+  const handleContentChange = (html: string) => {
+    setFormData(prev => prev ? { ...prev, content: html } : prev);
+  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -190,26 +217,102 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
     });
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      setMainImageFile(file);
+      setMainImagePreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleAdditionalImagesChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const files = Array.from(e.target.files);
+      
+      // Kiểm tra số lượng file
+      if (files.length > 10) {
+        alert('Chỉ có thể chọn tối đa 10 hình ảnh cùng lúc');
+        return;
+      }
+      
+      // Kiểm tra kích thước file
+      const oversizedFiles = files.filter(file => file.size > 2 * 1024 * 1024); // 2MB
+      if (oversizedFiles.length > 0) {
+        alert(`Có ${oversizedFiles.length} file vượt quá 2MB. Vui lòng chọn lại.`);
+        return;
+      }
+      
+      setAdditionalImageFiles(files);
+      const previews = files.map(file => URL.createObjectURL(file));
+      setAdditionalImagePreviews(previews);
+      
+      console.log(`Đã chọn ${files.length} hình ảnh:`, files.map(f => f.name));
+    }
+  };
+
+  const removeAdditionalImage = (index: number) => {
+    const newFiles = additionalImageFiles.filter((_, i) => i !== index);
+    const newPreviews = additionalImagePreviews.filter((_, i) => i !== index);
+    setAdditionalImageFiles(newFiles);
+    setAdditionalImagePreviews(newPreviews);
+  };
+
+  const removeExistingImage = (index: number) => {
+    setFormData(prev => {
+      if (!prev) return null;
+      const newAdditionalImages = [...(prev.additionalImages || [])];
+      newAdditionalImages.splice(index, 1);
+      // Re-order after removal
+      newAdditionalImages.forEach((img, idx) => {
+        img.order = idx + 1;
+      });
+      return { ...prev, additionalImages: newAdditionalImages };
+    });
+  };
+
+  const getExistingImageCount = () => {
+    return formData?.additionalImages?.length || 0;
+  };
+
+  const getTotalImageCount = () => {
+    return getExistingImageCount() + additionalImagePreviews.length;
+  };
+
+  const removeAllImages = () => {
+    // Clear existing images
+    setFormData(prev => {
+      if (!prev) return null;
+      return { ...prev, additionalImages: [] };
+    });
+    // Clear any newly selected images (if any)
+    setAdditionalImageFiles([]);
+    setAdditionalImagePreviews([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData) return;
-    await onSave(formData, imageFile || undefined);
+    await onSave(formData, mainImageFile || undefined, undefined);
+    // Clear selected images after successful save
+    setMainImageFile(null);
+    setMainImagePreview(null);
+    setAdditionalImageFiles([]);
+    setAdditionalImagePreviews([]);
   };
 
   return (
     <div className={`modal-overlay ${isOpen ? 'active' : ''}`}>
-      <div className="modal-container">
+      <div className="modal-container" style={{ width: '100%', maxWidth: 1300 }}>
         <div className="modal-header">
           <h3>{news?._id ? 'Chỉnh sửa tin tức' : 'Thêm tin tức mới'}</h3>
-          <button className="btn-close" onClick={onClose}><FiX /></button>
+          <button className="btn-close" onClick={() => {
+            setMainImageFile(null);
+            setAdditionalImageFiles([]);
+            setAdditionalImagePreviews([]);
+            if (mainImageInputRef.current) mainImageInputRef.current.value = '';
+            if (additionalImagesInputRef.current) additionalImagesInputRef.current.value = '';
+            onClose();
+          }}><FiX /></button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
@@ -236,13 +339,12 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
             </div>
             <div className="form-group">
               <label>Nội dung</label>
-              <textarea 
-                name="content" 
-                value={formData.content} 
-                onChange={handleInputChange} 
-                className="form-textarea" 
-                rows={5}
-                required
+              <RichTextEditor
+                key={formData._id || 'new'}
+                value={formData.content || ''}
+                onChange={handleContentChange}
+                placeholder="Nhập nội dung mô tả tin tức..."
+                height={350}
               />
             </div>
             <div className="form-group">
@@ -319,7 +421,7 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
               </div>
             </div>
             <div className="form-group">
-              <label>Hình ảnh</label>
+              <label>Hình ảnh chính (hiển thị bên ngoài)</label>
               <div className="image-size-notice">
                 <div className="notice-icon">⚠️</div>
                 <div className="notice-text">
@@ -333,10 +435,10 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
                   </ul>
                 </div>
               </div>
-              {imagePreview && (
+              {mainImagePreview && (
                 <div className="image-preview-container">
                   <Image 
-                    src={imagePreview} 
+                    src={mainImagePreview} 
                     alt="Preview" 
                     width={200} 
                     height={120} 
@@ -344,13 +446,19 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
                   />
                 </div>
               )}
-              <input 
-                type="file" 
-                onChange={handleFileChange} 
-                className="form-file-input" 
-                accept="image/*" 
-              />
+              <div className="file-upload-area">
+                <input 
+                  type="file" 
+                  onChange={handleMainImageChange} 
+                  className="form-file-input" 
+                  accept="image/*" 
+                  id="main-image-input"
+                  ref={mainImageInputRef}
+                />
+              </div>
             </div>
+
+            {/* Đã bỏ phần Các hình ảnh phụ */}
 
           </div>
           <div className="modal-footer">
@@ -605,7 +713,7 @@ export default function AdminHomePage() {
           try {
             setSaving(currentFeatured._id);
             const oldNewsUpdated = { ...currentFeatured, isFeatured: false };
-            await homeService.updateNews(currentFeatured._id, oldNewsUpdated, undefined);
+            await homeService.updateNews(currentFeatured._id, oldNewsUpdated, undefined, undefined);
             
             // Cập nhật state local
             setHomepageNews(prevNews =>
@@ -651,7 +759,7 @@ export default function AdminHomePage() {
           try {
             setSaving(oldestOnHome._id);
             const oldNewsUpdated = { ...oldestOnHome, onHome: false };
-            await homeService.updateNews(oldestOnHome._id, oldNewsUpdated, undefined);
+            await homeService.updateNews(oldestOnHome._id, oldNewsUpdated, undefined, undefined);
             
             // Cập nhật state local
             setHomepageNews(prevNews =>
@@ -685,8 +793,8 @@ export default function AdminHomePage() {
       const updatedNewsItem = { ...newsItem, [field]: checked };
       setSaving(newsId);
       try {
-          const result = await homeService.updateNews(newsId, updatedNewsItem, undefined);
-          if (result.success) {
+          const result = await homeService.updateNews(newsId, updatedNewsItem, undefined, undefined);
+          if ((result as any).success) {
               toast.success(statusMessage, { ...toastOptions, icon: <FiCheck /> });
               setHomepageNews(prevNews =>
                 prevNews.map(n => (n._id === newsId ? updatedNewsItem : n))
@@ -697,10 +805,10 @@ export default function AdminHomePage() {
                 id: newsId,
                 field,
                 newValue: checked,
-                result: result.success
+                result: (result as any).success
               });
           } else {
-              throw new Error(result.message || "Cập nhật thất bại");
+              throw new Error((result as any).message || "Cập nhật thất bại");
           }
       } catch (error) {
           handleError(error, `cập nhật trạng thái tin tức`);
@@ -896,7 +1004,7 @@ export default function AdminHomePage() {
                   toast.error("Lỗi khi lưu chứng chỉ nhỏ: " + (result.message || "Lưu thất bại"), toastOptions);
                 }
               } catch (error) {
-                toast.error("Lỗi khi lưu chứng chỉ nhỏ: " + (error?.message || "Lưu thất bại"), toastOptions);
+                toast.error("Lỗi khi lưu chứng chỉ nhỏ: " + ((error as any)?.message || "Lưu thất bại"), toastOptions);
               } finally {
                 setSaving(false);
               }
@@ -926,8 +1034,8 @@ export default function AdminHomePage() {
           setHeroPreview({});
           
           // Reset factory video type based on new data
-          if (newData?.factoryVideo) {
-            setFactoryVideoType(isYouTubeUrl(newData.factoryVideo) ? 'youtube' : 'file');
+          if ((newData as any)?.factoryVideo) {
+            setFactoryVideoType(isYouTubeUrl((newData as any).factoryVideo) ? 'youtube' : 'file');
           }
           
           toast.success("Đã lưu thành công!", { ...toastOptions, icon: <FiCheck /> });
@@ -999,7 +1107,7 @@ export default function AdminHomePage() {
         if (Array.isArray(newData.sections)) {
           newData.sections.splice(index, 1);
           // Cập nhật lại order cho các section còn lại
-          newData.sections.forEach((section, idx) => {
+          newData.sections.forEach((section: any, idx: number) => {
             section.order = idx;
           });
         }
@@ -1085,24 +1193,25 @@ export default function AdminHomePage() {
     setCurrentEditNews(news);
     setIsEditModalOpen(true);
   };
-  const handleSaveNews = async (newsData: NewsData, file?: File) => {
+  const handleSaveNews = async (newsData: NewsData, mainImageFile?: File, additionalImageFiles?: File[]) => {
     setSaving('news');
     try {
       let result;
       if (newsData._id) {
         console.log("Updating existing news:", newsData._id);
-        result = await homeService.updateNews(newsData._id, newsData, file);
+        result = await homeService.updateNews(newsData._id, newsData, mainImageFile, additionalImageFiles);
       } else {
         console.log("Creating new news with data:", {
           title: newsData.title,
           excerpt: newsData.excerpt?.substring(0, 30) + "...",
-          hasImage: !!file,
+          hasMainImage: !!mainImageFile,
+          hasAdditionalImages: !!additionalImageFiles?.length,
           tags: newsData.tags
         });
         
         const formData = new FormData();
         Object.entries(newsData).forEach(([key, value]) => {
-          if (key !== 'image' && key !== '_id' && key !== 'id') {
+          if (key !== 'image' && key !== 'mainImage' && key !== 'additionalImages' && key !== '_id' && key !== 'id') {
             if (key === 'tags' && Array.isArray(value)) {
               // Xử lý đúng cách cho tags
               formData.append(key, value.join(','));
@@ -1113,11 +1222,19 @@ export default function AdminHomePage() {
           }
         });
         
-        if (file) {
-          console.log(`Adding image file: ${file.name} (${file.type}, ${file.size} bytes)`);
-          formData.append('newsImage', file);
+        if (mainImageFile) {
+          console.log(`Adding main image file: ${mainImageFile.name} (${mainImageFile.type}, ${mainImageFile.size} bytes)`);
+          formData.append('newsImage', mainImageFile);
         }
-        
+
+        // Append additional images if provided
+        if (Array.isArray(additionalImageFiles) && additionalImageFiles.length > 0) {
+          additionalImageFiles.forEach((file, idx) => {
+            console.log(`Adding additional image #${idx + 1}: ${file.name}`);
+            formData.append('additionalImages', file);
+          });
+        }
+
         result = await homeService.createNews(formData);
       }
       
@@ -1811,13 +1928,13 @@ export default function AdminHomePage() {
                       placeholder="LEED GOLD"
                     />
                   </FormItem>
-                  <FormItem label="Mô tả" icon={<FiFileText />}>
+                  <FormItem label="Mô tả (tùy chọn)" icon={<FiFileText />}>
                     <textarea
                       value={homeData.certifications[0].description || ''}
                       onChange={e => handleCertificationChange(e, 0, 'description')}
                       className="form-textarea"
                       rows={3}
-                      placeholder="Leadership in Energy & Environmental Design"
+                      placeholder="Leadership in Energy & Environmental Design (không bắt buộc)"
                     />
                   </FormItem>
                   <FormItem label="Thể loại" icon={<FiType />}>
@@ -1873,13 +1990,13 @@ export default function AdminHomePage() {
                       placeholder="ISO 9001:2015"
                     />
                   </FormItem>
-                  <FormItem label="Mô tả" icon={<FiFileText />}>
+                  <FormItem label="Mô tả (tùy chọn)" icon={<FiFileText />}>
                     <textarea
                       value={homeData.certifications[1].description || ''}
                       onChange={e => handleCertificationChange(e, 1, 'description')}
                       className="form-textarea"
                       rows={3}
-                      placeholder="Quality Management System"
+                      placeholder="Quality Management System (không bắt buộc)"
                     />
                   </FormItem>
                   <FormItem label="Thể loại" icon={<FiType />}>
