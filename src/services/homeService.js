@@ -547,19 +547,45 @@ class HomeService {
    * @param {File} imageFile - File hình ảnh mới (nếu có)
    * @returns {Promise<Object>} Kết quả cập nhật
    */
-  async updateNews(newsId, newsData, newsImage) {
+  async updateNews(newsId, newsData, mainImageFile, additionalImageFiles) {
     const formData = new FormData();
-    if (Array.isArray(newsData.tags)) {
-        newsData.tags = newsData.tags.join(',');
+
+    const title = newsData?.title ?? '';
+    const content = typeof newsData?.content === 'string' ? newsData.content : '';
+    const excerpt = newsData?.excerpt ?? '';
+    const tags = Array.isArray(newsData?.tags) ? newsData.tags.join(',') : (typeof newsData?.tags === 'string' ? newsData.tags : '');
+    const isPublished = newsData?.isPublished === true || newsData?.isPublished === 'true' ? 'true' : 'false';
+    const isFeatured = newsData?.isFeatured === true || newsData?.isFeatured === 'true' ? 'true' : 'false';
+    const onHome = newsData?.onHome === true || newsData?.onHome === 'true' ? 'true' : 'false';
+    const publishDate = newsData?.publishDate ? String(newsData.publishDate) : '';
+    const author = newsData?.author ?? '';
+
+    // Append explicit fields to avoid dropping values
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('excerpt', excerpt);
+    if (tags) formData.append('tags', tags);
+    formData.append('isPublished', isPublished);
+    formData.append('isFeatured', isFeatured);
+    formData.append('onHome', onHome);
+    if (publishDate) formData.append('publishDate', publishDate);
+    if (author) formData.append('author', author);
+
+    if (mainImageFile) {
+      formData.append('newsImage', mainImageFile);
     }
-    Object.keys(newsData).forEach(key => formData.append(key, newsData[key]));
-    if (newsImage) formData.append('newsImage', newsImage);
-    
+
+    // Request
     const response = await fetch(`${BACKEND_DOMAIN}/api/home/news/${newsId}`, {
       method: 'PUT',
       headers: getAuthHeaders(true),
-      body: formData
+      body: formData,
     });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to update news: ${response.status} ${text}`);
+    }
     return response.json();
   }
 

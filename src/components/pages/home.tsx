@@ -704,7 +704,12 @@ export default function Home({ homeData }: HomeProps) {
                   height: "auto",
                   borderRadius: '8px'
                 }}
-                onError={(e) => console.error("Video error:", e)}
+                onError={(e) => {
+                  const vid = e.currentTarget as HTMLVideoElement;
+                  console.warn('Video failed to load:', vid.currentSrc || factoryVideo);
+                  // Hide broken video element to avoid UX glitch
+                  vid.style.display = 'none';
+                }}
               >
                 <source src={getVideoUrl(factoryVideo)} type="video/mp4" />
                 <source src={getVideoUrl(factoryVideo)} type="video/webm" />
@@ -851,16 +856,10 @@ export default function Home({ homeData }: HomeProps) {
                         <div className="leed-text-container">
                           {(() => {
                             const raw = (cert.description || "").trim();
-                            const lines = raw
+                            const rows = raw
                               ? raw.split(/\r?\n|\|/).map(s => s.trim()).filter(Boolean).slice(0, 4)
                               : [];
-                            const fallback = [
-                              "LEADERSHIP IN",
-                              "ENERGY &",
-                              "ENVIRONMENTAL",
-                              "DESIGN",
-                            ];
-                            const rows = lines.length > 0 ? lines : fallback;
+                            if (rows.length === 0) return null; // Không hiển thị khi không có mô tả
                             return rows.map((text, i) => {
                               const first = text.charAt(0) || "";
                               const rest = text.slice(1);
