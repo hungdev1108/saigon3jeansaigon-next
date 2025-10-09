@@ -550,7 +550,6 @@ class HomeService {
   async updateNews(newsId, newsData, mainImageFile, additionalImageFiles) {
     const formData = new FormData();
 
-    // Normalize primitives
     const title = newsData?.title ?? '';
     const content = typeof newsData?.content === 'string' ? newsData.content : '';
     const excerpt = newsData?.excerpt ?? '';
