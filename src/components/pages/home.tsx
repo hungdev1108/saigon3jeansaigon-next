@@ -854,14 +854,13 @@ export default function Home({ homeData }: HomeProps) {
                             const lines = raw
                               ? raw.split(/\r?\n|\|/).map(s => s.trim()).filter(Boolean).slice(0, 4)
                               : [];
-                            const fallback = [
-                              "LEADERSHIP IN",
-                              "ENERGY &",
-                              "ENVIRONMENTAL",
-                              "DESIGN",
-                            ];
-                            const rows = lines.length > 0 ? lines : fallback;
-                            return rows.map((text, i) => {
+                            
+                            // Chỉ hiển thị khi có description, không hiển thị fallback
+                            if (lines.length === 0) {
+                              return null;
+                            }
+                            
+                            return lines.map((text, i) => {
                               const first = text.charAt(0) || "";
                               const rest = text.slice(1);
                               return (
@@ -891,8 +890,12 @@ export default function Home({ homeData }: HomeProps) {
                         <div className="iso-text-container">
                           <div className="iso-text-item">
                             {cert.name}
-                            <br />
-                            {cert.description}
+                            {cert.description && (
+                              <>
+                                <br />
+                                {cert.description}
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -932,7 +935,9 @@ export default function Home({ homeData }: HomeProps) {
                                 />
                               </div>
                               <div className="cert-text">
-                                <div className="cert-title">{cert.description}</div>
+                                {cert.description && (
+                                  <div className="cert-title">{cert.description}</div>
+                                )}
                               </div>
                             </div>
                           </div>

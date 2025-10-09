@@ -547,13 +547,38 @@ class HomeService {
    * @param {File} imageFile - File hình ảnh mới (nếu có)
    * @returns {Promise<Object>} Kết quả cập nhật
    */
-  async updateNews(newsId, newsData, newsImage) {
+  async updateNews(newsId, newsData, mainImageFile, additionalImageFiles) {
     const formData = new FormData();
     if (Array.isArray(newsData.tags)) {
         newsData.tags = newsData.tags.join(',');
     }
-    Object.keys(newsData).forEach(key => formData.append(key, newsData[key]));
-    if (newsImage) formData.append('newsImage', newsImage);
+    Object.keys(newsData).forEach(key => {
+      if (key !== 'mainImage' && key !== 'additionalImages') {
+        formData.append(key, newsData[key]);
+      }
+    });
+
+    // Persist deletions of existing additional images by sending the IDs to keep
+    try {
+      const keepIds = Array.isArray(newsData.additionalImages)
+        ? newsData.additionalImages
+            .map(img => (img && (img._id || img.id)))
+            .filter(Boolean)
+        : [];
+      formData.append('keepAdditionalImageIds', JSON.stringify(keepIds));
+    } catch (_) {
+      // ignore if structure is unexpected
+    }
+    
+    if (mainImageFile) {
+      formData.append('newsImage', mainImageFile);
+    }
+    
+    if (additionalImageFiles && additionalImageFiles.length > 0) {
+      additionalImageFiles.forEach(file => {
+        formData.append('additionalImages', file);
+      });
+    }
     
     const response = await fetch(`${BACKEND_DOMAIN}/api/home/news/${newsId}`, {
       method: 'PUT',

@@ -14,7 +14,13 @@ interface NewsArticle {
   title: string;
   content: string;
   excerpt?: string;
-  image: string;
+  image: string; // Giữ backward compatibility
+  mainImage?: string; // Hình ảnh chính
+  additionalImages?: Array<{
+    url: string;
+    alt: string;
+    order: number;
+  }>; // Các hình ảnh phụ
   slug: string;
   publishDate: string;
   isPublished?: boolean;
@@ -107,16 +113,78 @@ export default async function NewsDetailPage({ params }: { params: { slug: strin
               </div>
             )}
           </div>
-          {/* Featured Image */}
-          <div className={styles.newsImageContainer + " mb-4 position-relative"}>
-            <Image
-              src={newsArticle.image.startsWith('/images') ? newsArticle.image : `${BACKEND_DOMAIN}${newsArticle.image}`}
-              alt={newsArticle.title}
-              width={1200}
-              height={630}
-              className="img-fluid rounded"
-              style={{ objectFit: 'cover', width: '100%', maxHeight: '500px' }}
-            />
+          {/* Unified Image Slider: main image + additional images */}
+          <div className={styles.additionalImagesGallery + " mb-5"}>
+            <div className={styles.imageSlider}>
+              <div className={styles.sliderContainer}>
+                {/* Main image as first slide */}
+                <div className={styles.slideItem}>
+                  <Image
+                    src={(newsArticle.mainImage || newsArticle.image).startsWith('/images') 
+                      ? (newsArticle.mainImage || newsArticle.image) 
+                      : `${BACKEND_DOMAIN}${newsArticle.mainImage || newsArticle.image}`}
+                    alt={newsArticle.title}
+                    width={1200}
+                    height={630}
+                    className="img-fluid rounded"
+                    style={{ objectFit: 'cover', width: '100%', height: '400px' }}
+                  />
+                </div>
+                {/* Additional images follow */}
+                {(newsArticle.additionalImages || [])
+                  .sort((a, b) => a.order - b.order)
+                  .map((img, index) => (
+                    <div key={index} className={styles.slideItem}>
+                      <Image
+                        src={img.url.startsWith('/images') ? img.url : `${BACKEND_DOMAIN}${img.url}`}
+                        alt={img.alt || `${newsArticle.title} - Image ${index + 1}`}
+                        width={800}
+                        height={600}
+                        className="img-fluid rounded"
+                        style={{ objectFit: 'cover', width: '100%', height: '400px' }}
+                      />
+                    </div>
+                  ))}
+              </div>
+              <div className={styles.sliderControls}>
+                <button 
+                  className={styles.prevBtn}
+                  onClick={() => {
+                    const slider = document.querySelector(`.${styles.sliderContainer}`) as HTMLElement;
+                    if (slider) {
+                      slider.scrollBy({ left: -400, behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+                <button 
+                  className={styles.nextBtn}
+                  onClick={() => {
+                    const slider = document.querySelector(`.${styles.sliderContainer}`) as HTMLElement;
+                    if (slider) {
+                      slider.scrollBy({ left: 400, behavior: 'smooth' });
+                    }
+                  }}
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+              <div className={styles.sliderDots}>
+                {[0, ...(newsArticle.additionalImages || []).map((_, i) => i + 1)].map((idx) => (
+                  <button
+                    key={idx}
+                    className={styles.dot}
+                    onClick={() => {
+                      const slider = document.querySelector(`.${styles.sliderContainer}`) as HTMLElement;
+                      if (slider) {
+                        slider.scrollTo({ left: idx * 400, behavior: 'smooth' });
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
           {/* Article Content */}
           <div className={styles.newsContent + " mb-5"}>
