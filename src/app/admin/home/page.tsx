@@ -451,18 +451,6 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
                   id="main-image-input"
                   ref={mainImageInputRef}
                 />
-                <label htmlFor="main-image-input" className={`file-upload-label ${mainImageFile ? 'has-files' : ''}`}>
-                  <div className="file-upload-content">
-                    <i className="fas fa-image"></i>
-                    <p>
-                      {mainImageFile 
-                        ? `Đã chọn: ${mainImageFile.name}` 
-                        : 'Chọn hình ảnh chính'
-                      }
-                    </p>
-                    <small>Hỗ trợ: JPG, PNG, WEBP - Tối đa 2MB</small>
-                  </div>
-                </label>
               </div>
             </div>
 
@@ -522,13 +510,7 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
                   id="additional-images-input"
                   ref={additionalImagesInputRef}
                 />
-                <label htmlFor="additional-images-input" className={`file-upload-label`}>
-                  <div className="file-upload-content">
-                    <i className="fas fa-cloud-upload-alt"></i>
-                    <p>Có thể chọn được nhiều hình ảnh cùng lúc</p>
-                    <small>Hỗ trợ: JPG, PNG, WEBP - Tối đa 10 hình</small>
-                  </div>
-                </label>
+                {/* removed label per request */}
                 {additionalImageFiles.length > 0 && (
                   <div style={{ marginTop: 8, fontSize: 12, color: '#374151' }}>
                     Đã chọn {additionalImageFiles.length} hình ảnh
