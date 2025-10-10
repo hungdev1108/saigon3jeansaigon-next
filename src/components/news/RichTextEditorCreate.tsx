@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { BACKEND_DOMAIN } from '@/api/config';
 
-interface RichTextEditorProps {
+interface RichTextEditorCreateProps {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
@@ -14,44 +14,53 @@ interface RichTextEditorProps {
 function loadCdnOnce(): Promise<void> {
   const ensureLink = (href: string) => {
     return new Promise<void>((resolve) => {
-      if (document.querySelector(`link[href="${href}"]`)) return resolve();
+      if (document.querySelector(`link[href="${href}"]`)) {
+        resolve();
+        return;
+      }
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.href = href;
       link.onload = () => resolve();
+      link.onerror = () => resolve();
       document.head.appendChild(link);
     });
   };
+
   const ensureScript = (src: string) => {
     return new Promise<void>((resolve) => {
-      if (document.querySelector(`script[src="${src}"]`)) return resolve();
+      if (document.querySelector(`script[src="${src}"]`)) {
+        resolve();
+        return;
+      }
       const script = document.createElement('script');
       script.src = src;
-      script.async = false;
       script.onload = () => resolve();
-      document.body.appendChild(script);
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
     });
   };
 
-  // Summernote (requires jQuery and Bootstrap 4)
-  return Promise.resolve()
-    .then(() => ensureLink('https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css'))
+  return ensureLink('https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/css/bootstrap.min.css')
     .then(() => ensureLink('https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs4.min.css'))
     .then(() => ensureScript('https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js'))
     .then(() => {
-      // Ensure global aliases
-      const w = (window as any);
-      if (w.jQuery && !w.$) w.$ = w.jQuery;
-      if (w.$ && !w.jQuery) w.jQuery = w.$;
+      // Ensure window.$ and window.jQuery are available
+      const w = window as any;
+      if (w.jQuery && !w.$) {
+        w.$ = w.jQuery;
+      }
     })
     .then(() => ensureScript('https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.1/umd/popper.min.js'))
     .then(() => ensureScript('https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.2/js/bootstrap.min.js'))
     .then(() => ensureScript('https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.20/summernote-bs4.min.js'));
 }
 
-export default function RichTextEditor({ value, onChange, placeholder = 'Nhập mô tả...', height = 300 }: RichTextEditorProps) {
+export default function RichTextEditorCreate({ value, onChange, placeholder = 'Nhập mô tả...', height = 300 }: RichTextEditorCreateProps) {
   const editorRef = useRef<HTMLDivElement | null>(null);
+  const isInitializedRef = useRef(false);
 
+  // Initialize summernote for CREATE mode only
   useEffect(() => {
     let destroyed = false;
     const waitForSummernote = () => new Promise<void>((resolve) => {
@@ -63,12 +72,12 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
       check();
     });
 
-    loadCdnOnce().then(waitForSummernote).then(() => {
-      if (destroyed || !editorRef.current) return;
+    const initializeEditor = () => {
+      if (destroyed || !editorRef.current || isInitializedRef.current) return;
       const $ = (window as any).$;
 
       // Ensure overlay styles so dialogs sit above admin modal
-      const styleId = 'summernote-modal-zfix';
+      const styleId = 'summernote-modal-zfix-create';
       if (!document.getElementById(styleId)) {
         const style = document.createElement('style');
         style.id = styleId;
@@ -123,12 +132,16 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
         }
       });
 
-      // Set initial content
-      $(editorRef.current).summernote('code', value || '');
-    });
+      isInitializedRef.current = true;
+      // Always start with empty content for CREATE mode
+      $(editorRef.current).summernote('code', '');
+    };
+
+    loadCdnOnce().then(waitForSummernote).then(initializeEditor);
 
     return () => {
       destroyed = true;
+      isInitializedRef.current = false;
       try {
         const $ = (window as any).$;
         if ($ && editorRef.current) {
@@ -137,15 +150,16 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
       } catch {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // Initialize only once for CREATE mode
 
-  // Keep external updates in sync
+  // Handle value changes - only update if user is typing
   useEffect(() => {
     const $ = (window as any).$;
-    if ($ && editorRef.current) {
+    if ($ && editorRef.current && isInitializedRef.current) {
       const current = $(editorRef.current).summernote('code');
-      if (current !== value) {
-        $(editorRef.current).summernote('code', value || '');
+      // Only update if the change is from user input (not external)
+      if (value && value !== current && value.length > current.length) {
+        $(editorRef.current).summernote('code', value);
       }
     }
   }, [value]);
@@ -156,5 +170,3 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Nhập 
     </div>
   );
 }
-
-

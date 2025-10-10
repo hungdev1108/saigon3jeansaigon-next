@@ -2,7 +2,8 @@
 
 import { useState, useEffect, ChangeEvent, useRef } from "react";
 import Image from "next/image";
-import RichTextEditor from "@/components/news/RichTextEditor";
+import RichTextEditorCreate from "@/components/news/RichTextEditorCreate";
+import RichTextEditorEdit from "@/components/news/RichTextEditorEdit";
 import homeService from "@/services/homeService";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX, FiCalendar, FiEye } from 'react-icons/fi';
@@ -204,6 +205,14 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
     setFormData(prev => prev ? { ...prev, content: html } : prev);
   };
 
+  const handleEditContentChange = (html: string) => {
+    // For edit mode, update both news object and formData
+    if (news) {
+      news.content = html;
+    }
+    setFormData(prev => prev ? { ...prev, content: html } : prev);
+  };
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const isCheckbox = type === 'checkbox';
@@ -339,13 +348,23 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
             </div>
             <div className="form-group">
               <label>Nội dung</label>
-              <RichTextEditor
-                key={formData._id || 'new'}
-                value={formData.content || ''}
-                onChange={handleContentChange}
-                placeholder="Nhập nội dung mô tả tin tức..."
-                height={350}
-              />
+              {news?._id ? (
+                <RichTextEditorEdit
+                  key={`edit-${news._id}`}
+                  value={news?.content || ''}
+                  onChange={handleEditContentChange}
+                  placeholder="Nhập nội dung mô tả tin tức..."
+                  height={350}
+                />
+              ) : (
+                <RichTextEditorCreate
+                  key="create-new"
+                  value={formData.content || ''}
+                  onChange={handleContentChange}
+                  placeholder="Nhập nội dung mô tả tin tức..."
+                  height={350}
+                />
+              )}
             </div>
             <div className="form-group">
               <label>Tags (tối đa 3 tags)</label>
@@ -1210,8 +1229,13 @@ export default function AdminHomePage() {
         });
         
         const formData = new FormData();
+        
+        // Đảm bảo content luôn được gửi
+        formData.append('content', newsData.content || '');
+        console.log(`Adding content: "${newsData.content || ''}"`);
+        
         Object.entries(newsData).forEach(([key, value]) => {
-          if (key !== 'image' && key !== 'mainImage' && key !== 'additionalImages' && key !== '_id' && key !== 'id') {
+          if (key !== 'image' && key !== 'mainImage' && key !== 'additionalImages' && key !== '_id' && key !== 'id' && key !== 'content') {
             if (key === 'tags' && Array.isArray(value)) {
               // Xử lý đúng cách cho tags
               formData.append(key, value.join(','));
