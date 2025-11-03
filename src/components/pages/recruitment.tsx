@@ -310,14 +310,14 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                           <i className="fas fa-briefcase" style={{ fontSize: '4rem', color: '#dee2e6' }}></i>
                         </div>
                         <h5 className="mb-3" style={{ color: '#6c757d', fontWeight: 500 }}>
-                          Hiện tại chưa có vị trí tuyển dụng
+                          No Open Positions
                         </h5>
                         <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
-                          Chúng tôi hiện chưa có vị trí tuyển dụng nào. Vui lòng kiểm tra lại sau hoặc liên hệ với chúng tôi để biết thêm thông tin.
+                          We don't have any open positions at the moment. Please check back later or contact us for more information.
                         </p>
                         {currentContactHr && (
                           <div className="mt-4">
-                            <p className="text-muted small mb-2">Liên hệ HR:</p>
+                            <p className="text-muted small mb-2">Contact HR:</p>
                             <p className="mb-1">
                               <i className="fas fa-envelope me-2" style={{ color: '#205b8e' }}></i>
                               <a href={`mailto:${currentContactHr.email}`} style={{ color: '#205b8e', textDecoration: 'none' }}>
