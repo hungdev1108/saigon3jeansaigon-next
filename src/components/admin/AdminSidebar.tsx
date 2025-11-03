@@ -4,7 +4,8 @@
 import Link from 'next/link'
 import Image from "next/image"
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import authService from '@/services/authService'
 
 // SVG Icons cho menu
 const HomeIcon = () => (
@@ -147,12 +148,51 @@ export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+
+  useEffect(() => {
+    const user = authService.getCurrentUser()
+    if (user) {
+      setUserRole(user.role || 'admin')
+    }
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken')
     localStorage.removeItem('adminUser')
     router.push('/admin/login')
   }
+
+  // Filter menu items based on user role
+  const getFilteredMenuGroups = () => {
+    if (!userRole || userRole === 'admin') {
+      // Admin sees all menu items
+      return menuGroups
+    }
+
+    if (userRole === 'editor') {
+      // Editor only sees: Home (with News section) and Recruitment
+      return [
+        {
+          title: "Main",
+          items: [
+            { href: '/admin/home', label: 'Home', icon: <HomeIcon /> },
+          ]
+        },
+        {
+          title: "Interaction",
+          items: [
+            { href: '/admin/recruitment', label: 'Recruitment', icon: <RecruitmentIcon /> },
+          ]
+        }
+      ]
+    }
+
+    // Default: show all (fallback)
+    return menuGroups
+  }
+
+  const filteredMenuGroups = getFilteredMenuGroups()
 
   return (
     <div className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
@@ -188,7 +228,7 @@ export default function AdminSidebar() {
       
       {/* Navigation menu */}
       <nav className="sidebar-nav">
-        {menuGroups.map((group, index) => (
+        {filteredMenuGroups.map((group, index) => (
           <div key={index} className="menu-group">
             {!isCollapsed && <h3 className="menu-group-title">{group.title}</h3>}
             
@@ -204,7 +244,7 @@ export default function AdminSidebar() {
               </Link>
             ))}
             
-            {index < menuGroups.length - 1 && !isCollapsed && (
+            {index < filteredMenuGroups.length - 1 && !isCollapsed && (
               <div className="menu-divider"></div>
             )}
           </div>

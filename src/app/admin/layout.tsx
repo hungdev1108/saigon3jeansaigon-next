@@ -25,18 +25,34 @@ export default function AdminLayout({
       return;
     }
 
-    // Kiểm tra authentication cho các trang khác
+    // Kiểm tra authentication và quyền truy cập cho các trang khác
     const checkAuth = async () => {
       const isAuthenticated = authService.isAuthenticated();
       if (!isAuthenticated) {
         router.push("/admin/login");
-      } else {
-        setLoading(false);
+        return;
       }
+
+      // Kiểm tra quyền truy cập nếu là editor
+      const user = authService.getCurrentUser();
+      if (user?.role === 'editor') {
+        // Editor chỉ được truy cập Home và Recruitment
+        const allowedPaths = ['/admin/home', '/admin/recruitment'];
+        const currentPath = pathname;
+        
+        // Kiểm tra nếu path không được phép
+        if (!allowedPaths.some(path => currentPath.startsWith(path))) {
+          // Redirect về trang home nếu truy cập trang không được phép
+          router.push("/admin/home");
+          return;
+        }
+      }
+
+      setLoading(false);
     };
 
     checkAuth();
-  }, [isLoginPage, router]);
+  }, [isLoginPage, router, pathname]);
 
       // Nếu là trang login thì chỉ hiển thị content, không có sidebar
     if (isLoginPage) {

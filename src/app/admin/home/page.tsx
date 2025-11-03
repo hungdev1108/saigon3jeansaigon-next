@@ -5,6 +5,7 @@ import Image from "next/image";
 import RichTextEditorCreate from "@/components/news/RichTextEditorCreate";
 import RichTextEditorEdit from "@/components/news/RichTextEditorEdit";
 import homeService from "@/services/homeService";
+import authService from "@/services/authService";
 import { BACKEND_DOMAIN } from "@/api/config";
 import { FiSave, FiImage, FiVideo, FiLink, FiType, FiFileText, FiTrash2, FiPlusCircle, FiCheck, FiAlertTriangle, FiInfo, FiEdit, FiArrowRight, FiX, FiCalendar, FiEye } from 'react-icons/fi';
 import { toast, ToastOptions } from "react-toastify";
@@ -504,6 +505,19 @@ export default function AdminHomePage() {
   // 1. Thêm state error nếu chưa có
   type SectionError = string | null;
   const [error, setError] = useState<SectionError>(null);
+  // User role state
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Get user role on mount
+  useEffect(() => {
+    const user = authService.getCurrentUser();
+    if (user) {
+      setUserRole(user.role || 'admin');
+    }
+  }, []);
+
+  // Check if user is editor
+  const isEditor = userRole === 'editor';
 
   // Files for upload, preview for UI
   const [files, setFiles] = useState<{ [key: string]: File }>({});
@@ -1329,8 +1343,9 @@ export default function AdminHomePage() {
         <p className="admin-page-description">Chỉnh sửa nội dung sẽ được hiển thị trên trang chủ của website.</p>
       </div>
       
-      {/* Hero Section */}
-      <AdminSectionCard title="Hero Section" onSave={() => handleSave('hero')} isSaving={saving === 'hero'} hasChanges={hasChanges('hero')}>
+      {/* Hero Section - Hidden for editor */}
+      {!isEditor && (
+        <AdminSectionCard title="Hero Section" onSave={() => handleSave('hero')} isSaving={saving === 'hero'} hasChanges={hasChanges('hero')}>
         <div className="grid-2-col">
             <div className="form-column">
                 <FormItem label="Tiêu Hero Banner" icon={<FiType />}>
@@ -1393,9 +1408,11 @@ export default function AdminHomePage() {
             </div>
         </div>
       </AdminSectionCard>
+      )}
 
-      {/* Factory Video Section */}
-      <AdminSectionCard title="Factory Video" onSave={() => handleSave('factoryVideo')} isSaving={saving === 'factoryVideo'} hasChanges={hasChanges('factoryVideo')}>
+      {/* Factory Video Section - Hidden for editor */}
+      {!isEditor && (
+        <AdminSectionCard title="Factory Video" onSave={() => handleSave('factoryVideo')} isSaving={saving === 'factoryVideo'} hasChanges={hasChanges('factoryVideo')}>
         <div className="subsection-card">
           <h4>Video Section Factory</h4>
           <div className="grid-2-col">
@@ -1511,9 +1528,11 @@ export default function AdminHomePage() {
           </div>
         </div>
       </AdminSectionCard>
+      )}
       
-      {/* Content Sections */}
-      <AdminSectionCard title="Content Sections" onSave={() => handleSave('sections')} isSaving={saving === 'sections'} hasChanges={hasChanges('sections')}>
+      {/* Content Sections - Hidden for editor */}
+      {!isEditor && (
+        <AdminSectionCard title="Content Sections" onSave={() => handleSave('sections')} isSaving={saving === 'sections'} hasChanges={hasChanges('sections')}>
         <div className="subsection-header">
           <h4>Quản lý các section trên trang chủ</h4>
           <button className="btn-add" onClick={handleAddSection}><FiPlusCircle /> Thêm section mới</button>
@@ -1676,9 +1695,11 @@ export default function AdminHomePage() {
           </div>
         ))}
       </AdminSectionCard>
+      )}
       
-      {/* Customers Section */}
-      <AdminSectionCard title="Đối tác & Khách hàng" onSave={() => handleSave('customers')} isSaving={saving === 'customers'} hasChanges={hasChanges('customers')}>
+      {/* Customers Section - Hidden for editor */}
+      {!isEditor && (
+        <AdminSectionCard title="Đối tác & Khách hàng" onSave={() => handleSave('customers')} isSaving={saving === 'customers'} hasChanges={hasChanges('customers')}>
          {Object.keys(homeData.customers).map(subSectionKey => (
              <div key={subSectionKey} className="subsection-card">
                  <div className="subsection-header">
@@ -1739,9 +1760,11 @@ export default function AdminHomePage() {
              </div>
          ))}
       </AdminSectionCard>
+      )}
 
-      {/* Contact Section */}
-      <AdminSectionCard title="Contact & Work With Us Section" onSave={() => handleSave('homeContact')} isSaving={saving === 'homeContact'} hasChanges={hasChanges('homeContact')}>
+      {/* Contact Section - Hidden for editor */}
+      {!isEditor && (
+        <AdminSectionCard title="Contact & Work With Us Section" onSave={() => handleSave('homeContact')} isSaving={saving === 'homeContact'} hasChanges={hasChanges('homeContact')}>
         <div className="subsection-card">
           <h4>Contact Section</h4>
           <div className="grid-2-col">
@@ -1815,9 +1838,8 @@ export default function AdminHomePage() {
             </div>
           </div>
         </div>
-
-
       </AdminSectionCard>
+      )}
 
       {/* Image Size Notice for News */}
       <div className="global-news-notice">
@@ -1927,8 +1949,9 @@ export default function AdminHomePage() {
           </div>
       </AdminSectionCard>
       
-      {/* Certifications Section - Full Dashboard */}
-      <AdminSectionCard
+      {/* Certifications Section - Full Dashboard - Hidden for editor */}
+      {!isEditor && (
+        <AdminSectionCard
         title="Quản lý Chứng chỉ (Certifications)"
         onSave={() => handleSave('certifications')}
         isSaving={saving === 'certifications'}
@@ -2120,6 +2143,7 @@ export default function AdminHomePage() {
           </div>
         </div>
       </AdminSectionCard>
+      )}
       
       {/* Modal chỉnh sửa tin tức */}
       <EditNewsModal 

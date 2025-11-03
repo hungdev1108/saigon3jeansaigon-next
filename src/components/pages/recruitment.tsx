@@ -129,36 +129,10 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
     };
   }, [showModal]);
 
-  // Error handling giống Home page
-  if (!jobs.length) {
-    return (
-      <div className="container py-5">
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Use SWR data if available, otherwise fall back to props
   const currentJobs = jobs || [];
   const currentContactHr = contactHr;
   const currentContactInfo = contactInfo;
-
-  // Add loading state
-  if (!jobs.length) {
-    return (
-      <div className="container py-5">
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const totalPages = Math.ceil((currentJobs?.length || 0) / jobsPerPage);
 
@@ -329,37 +303,69 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                     </small>
                   </div>
                   <div className="card-body p-0">
-                    <div className="job-list-container">
-                      {pageJobs.map((job) => (
-                        <div
-                          className="job-item"
-                          onClick={() => handleJobClick(job)}
-                          key={job._id}
-                          style={{ cursor: "pointer" }}
-                        >
-                          <h5>{job.title}</h5>
-                          <div className="job-meta">
-                            <span>
-                              <i className="fas fa-clock me-1"></i>Posted{" "}
-                              {FormatTime.getRelativeTime(
-                                job.createdAt,
-                                "en-US"
-                              )}
-                            </span>
-                            <span>
-                              <i className="fas fa-briefcase me-1"></i>
-                              {job.type}
-                            </span>
-                          </div>
-                          <div className="job-location">
-                            <i className="fas fa-map-marker-alt me-1"></i>
-                            {job.location}
-                          </div>
+                    {currentJobs.length === 0 ? (
+                      // Empty state when no jobs
+                      <div className="empty-state p-5 text-center">
+                        <div className="empty-state-icon mb-4">
+                          <i className="fas fa-briefcase" style={{ fontSize: '4rem', color: '#dee2e6' }}></i>
                         </div>
-                      ))}
-                    </div>
-                    {/* Pagination */}
-                    <div className="pagination-container">
+                        <h5 className="mb-3" style={{ color: '#6c757d', fontWeight: 500 }}>
+                          Hiện tại chưa có vị trí tuyển dụng
+                        </h5>
+                        <p className="text-muted mb-4" style={{ fontSize: '0.95rem', lineHeight: '1.6' }}>
+                          Chúng tôi hiện chưa có vị trí tuyển dụng nào. Vui lòng kiểm tra lại sau hoặc liên hệ với chúng tôi để biết thêm thông tin.
+                        </p>
+                        {currentContactHr && (
+                          <div className="mt-4">
+                            <p className="text-muted small mb-2">Liên hệ HR:</p>
+                            <p className="mb-1">
+                              <i className="fas fa-envelope me-2" style={{ color: '#205b8e' }}></i>
+                              <a href={`mailto:${currentContactHr.email}`} style={{ color: '#205b8e', textDecoration: 'none' }}>
+                                {currentContactHr.email}
+                              </a>
+                            </p>
+                            <p className="mb-0">
+                              <i className="fas fa-phone me-2" style={{ color: '#205b8e' }}></i>
+                              <a href={`tel:${currentContactHr.phone}`} style={{ color: '#205b8e', textDecoration: 'none' }}>
+                                {currentContactHr.phone}
+                              </a>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="job-list-container">
+                          {pageJobs.map((job) => (
+                            <div
+                              className="job-item"
+                              onClick={() => handleJobClick(job)}
+                              key={job._id}
+                              style={{ cursor: "pointer" }}
+                            >
+                              <h5>{job.title}</h5>
+                              <div className="job-meta">
+                                <span>
+                                  <i className="fas fa-clock me-1"></i>Posted{" "}
+                                  {FormatTime.getRelativeTime(
+                                    job.createdAt,
+                                    "en-US"
+                                  )}
+                                </span>
+                                <span>
+                                  <i className="fas fa-briefcase me-1"></i>
+                                  {job.type}
+                                </span>
+                              </div>
+                              <div className="job-location">
+                                <i className="fas fa-map-marker-alt me-1"></i>
+                                {job.location}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {/* Pagination */}
+                        <div className="pagination-container">
                       <nav aria-label="Job pagination">
                         <ul className="pagination justify-content-center mb-0">
                           <li
@@ -412,6 +418,8 @@ export default function Recruitment({ jobs, contactHr, contactInfo }: Recruitmen
                         </small>
                       </div>
                     </div>
+                    </>
+                    )}
                   </div>
                 </div>
               </div>
