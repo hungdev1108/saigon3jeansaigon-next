@@ -1,6 +1,14 @@
 import { BACKEND_DOMAIN } from '../api/config';
 
 class RecruitmentService {
+  // Lấy headers có Authorization từ localStorage
+  getAuthHeaders(isJson = true) {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
+    const headers = {};
+    if (isJson) headers['Content-Type'] = 'application/json';
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }
   // ==================== JOBS ====================
   
   async getAllJobs(includeInactive = false) {
@@ -21,9 +29,7 @@ class RecruitmentService {
       
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/jobs`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(true),
         body: JSON.stringify(jobData),
       });
       
@@ -42,9 +48,7 @@ class RecruitmentService {
     try {
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/jobs/${jobId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(true),
         body: JSON.stringify(jobData),
       });
       const data = await response.json();
@@ -60,6 +64,7 @@ class RecruitmentService {
       console.log('Deleting job:', jobId);
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/jobs/${jobId}`, {
         method: 'DELETE',
+        headers: this.getAuthHeaders(true),
       });
       console.log('Delete response status:', response.status);
       const data = await response.json();
@@ -75,7 +80,9 @@ class RecruitmentService {
   
   async getAllApplications() {
     try {
-      const response = await fetch(`${BACKEND_DOMAIN}/api/careers/applications`);
+      const response = await fetch(`${BACKEND_DOMAIN}/api/careers/applications`, {
+        headers: this.getAuthHeaders(true),
+      });
       const data = await response.json();
       console.log('Raw applications response:', data);
       
@@ -99,9 +106,7 @@ class RecruitmentService {
       console.log('Updating application status:', applicationId, status);
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/applications/${applicationId}/status`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(true),
         body: JSON.stringify({ status }),
       });
       console.log('Update status response status:', response.status);
@@ -118,6 +123,7 @@ class RecruitmentService {
     try {
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/applications/${applicationId}`, {
         method: 'DELETE',
+        headers: this.getAuthHeaders(true),
       });
       const data = await response.json();
       return data;
@@ -144,9 +150,7 @@ class RecruitmentService {
     try {
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/company-info`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(true),
         body: JSON.stringify(companyData),
       });
       const data = await response.json();
@@ -174,9 +178,7 @@ class RecruitmentService {
     try {
       const response = await fetch(`${BACKEND_DOMAIN}/api/careers/contact-hr`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: this.getAuthHeaders(true),
         body: JSON.stringify(contactData),
       });
       const data = await response.json();

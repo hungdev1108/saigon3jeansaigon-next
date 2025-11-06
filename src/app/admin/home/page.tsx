@@ -767,7 +767,8 @@ export default function AdminHomePage() {
       // Kiểm tra tin trang chủ - chỉ cho phép tối đa 4 tin onHome (1 featured + 3 tin nhỏ)
       if (field === 'onHome' && checked) {
         const currentOnHome = homepageNews.filter(n => n.onHome && n._id !== newsId);
-        if (currentOnHome.length >= 4) {
+        // Nếu đã có >= 3 tin onHome (không tính tin hiện tại), khi thêm sẽ thành 4 tin, cần thay thế
+        if (currentOnHome.length >= 3) {
           // Tìm tin không phải featured để thay thế (ưu tiên bỏ tin nhỏ trước)
           const nonFeaturedOnHome = currentOnHome.filter(n => !n.isFeatured);
           let oldestOnHome: NewsData;
@@ -790,23 +791,30 @@ export default function AdminHomePage() {
           
           // Tự động bỏ onHome của tin cũ nhất
           try {
-            setSaving(oldestOnHome._id);
+            setSaving(`removing-${oldestOnHome._id}`);
             const oldNewsUpdated = { ...oldestOnHome, onHome: false };
-            await homeService.updateNews(oldestOnHome._id, oldNewsUpdated, undefined, undefined);
+            const removeResult = await homeService.updateNews(oldestOnHome._id, oldNewsUpdated, undefined, undefined);
             
-            // Cập nhật state local
+            if (!(removeResult as any).success) {
+              throw new Error((removeResult as any).message || 'Failed to remove old news from homepage');
+            }
+            
+            // Cập nhật state local cho tin cũ ngay lập tức
             setHomepageNews(prevNews =>
-              prevNews.map(n => (n._id === oldestOnHome._id ? oldNewsUpdated : n))
+              prevNews.map(n => (n._id === oldestOnHome._id ? { ...oldNewsUpdated, onHome: false } : n))
             );
             
             toast.info(`Đã bỏ khỏi trang chủ: "${oldestOnHome.title}"`, { ...toastOptions });
+            console.log('Successfully removed old news from homepage, continuing to add new news...');
           } catch (error) {
             console.error('Error removing old onHome news:', error);
             toast.error('Lỗi khi bỏ tin trang chủ cũ');
-            return;
+            return; // Không tiếp tục nếu không bỏ được tin cũ
           } finally {
             setSaving(false);
           }
+          // Tiếp tục xử lý để thêm tin mới vào onHome (không return ở đây)
+          // Đảm bảo latestNewsItem được cập nhật sau khi bỏ tin cũ
         }
       }
       
@@ -823,14 +831,22 @@ export default function AdminHomePage() {
         statusMessage = checked ? "Đã hiển thị trên trang chủ" : "Đã bỏ hiển thị trên trang chủ";
       }
       
-      const updatedNewsItem = { ...newsItem, [field]: checked };
+      // Lấy lại newsItem mới nhất từ state (có thể đã được update ở bước trước)
+      const latestNewsItem = homepageNews.find(n => n._id === newsId) || newsItem;
+      const updatedNewsItem = { ...latestNewsItem, [field]: checked };
+      
       setSaving(newsId);
       try {
+          console.log(`Updating news ${newsId} - ${field} to ${checked}`, updatedNewsItem);
           const result = await homeService.updateNews(newsId, updatedNewsItem, undefined, undefined);
+          
           if ((result as any).success) {
               toast.success(statusMessage, { ...toastOptions, icon: <FiCheck /> });
+              
+              // Cập nhật state local với data từ server (nếu có)
+              const serverData = (result as any).data?.news || updatedNewsItem;
               setHomepageNews(prevNews =>
-                prevNews.map(n => (n._id === newsId ? updatedNewsItem : n))
+                prevNews.map(n => (n._id === newsId ? { ...serverData, [field]: checked } : n))
               );
               
               // Log kết quả thành công
@@ -838,13 +854,19 @@ export default function AdminHomePage() {
                 id: newsId,
                 field,
                 newValue: checked,
-                result: (result as any).success
+                result: (result as any).success,
+                updatedItem: serverData
               });
           } else {
               throw new Error((result as any).message || "Cập nhật thất bại");
           }
       } catch (error) {
+          console.error(`Error updating news ${newsId}:`, error);
           handleError(error, `cập nhật trạng thái tin tức`);
+          // Revert state nếu có lỗi
+          setHomepageNews(prevNews =>
+            prevNews.map(n => (n._id === newsId ? latestNewsItem : n))
+          );
       } finally {
           setSaving(false);
       }
@@ -1254,6 +1276,10 @@ export default function AdminHomePage() {
               // Xử lý đúng cách cho tags
               formData.append(key, value.join(','));
               console.log(`Adding tags: ${value.join(',')}`);
+            } else if (typeof value === 'boolean') {
+              // Xử lý boolean đúng cách
+              formData.append(key, value ? 'true' : 'false');
+              console.log(`Adding ${key}: ${value}`);
             } else {
               formData.append(key, String(value));
             }
