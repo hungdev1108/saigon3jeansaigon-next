@@ -766,58 +766,42 @@ export default function AdminHomePage() {
       
       // Kiểm tra tin trang chủ - chỉ cho phép tối đa 4 tin onHome (1 featured + 3 tin nhỏ)
       if (field === 'onHome' && checked) {
-        const currentOnHome = homepageNews.filter(n => n.onHome && n._id !== newsId);
-        // Nếu đã có >= 3 tin onHome (không tính tin hiện tại), khi thêm sẽ thành 4 tin, cần thay thế
-        if (currentOnHome.length >= 3) {
-          // Tìm tin không phải featured để thay thế (ưu tiên bỏ tin nhỏ trước)
-          const nonFeaturedOnHome = currentOnHome.filter(n => !n.isFeatured);
-          let oldestOnHome: NewsData;
-          
-          if (nonFeaturedOnHome.length > 0) {
-            // Ưu tiên bỏ tin nhỏ cũ nhất
-            oldestOnHome = nonFeaturedOnHome.sort((a, b) => new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime())[0];
-          } else {
-            // Nếu tất cả đều featured (trường hợp hiếm), bỏ tin cũ nhất
-            oldestOnHome = currentOnHome.sort((a, b) => new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime())[0];
-          }
-          
-          const confirmResult = window.confirm(
-            `Đã có 4 tin trên trang chủ (tối đa: 1 nổi bật + 3 tin nhỏ).\n\nTin cũ nhất: "${oldestOnHome.title}"\n\nBạn có muốn thay thế bằng tin "${newsItem.title}" không?\n\n(Tin cũ nhất sẽ tự động bỏ khỏi trang chủ)`
+        const newsItem = homepageNews.find(n => n._id === newsId);
+        if (!newsItem) return;
+      
+        // Nếu là bài thường (không featured), giới hạn 3 bài thường trên trang chủ
+        if (!newsItem.isFeatured) {
+          const regularOnHome = homepageNews.filter(
+            n => n.onHome && !n.isFeatured && n._id !== newsId
           );
-          
-          if (!confirmResult) {
-            return; // User hủy
-          }
-          
-          // Tự động bỏ onHome của tin cũ nhất
-          try {
-            setSaving(`removing-${oldestOnHome._id}`);
-            const oldNewsUpdated = { ...oldestOnHome, onHome: false };
-            const removeResult = await homeService.updateNews(oldestOnHome._id, oldNewsUpdated, undefined, undefined);
-            
-            if (!(removeResult as any).success) {
-              throw new Error((removeResult as any).message || 'Failed to remove old news from homepage');
-            }
-            
-            // Cập nhật state local cho tin cũ ngay lập tức
-            setHomepageNews(prevNews =>
-              prevNews.map(n => (n._id === oldestOnHome._id ? { ...oldNewsUpdated, onHome: false } : n))
+      
+          if (regularOnHome.length >= 3) {
+            const oldest = [...regularOnHome].sort(
+              (a, b) =>
+                new Date(a.publishDate).getTime() - new Date(b.publishDate).getTime()
+            )[0];
+      
+            const ok = window.confirm(
+              `Đã đủ 3 tin thường trên trang chủ.\n\nTin cũ nhất: "${oldest.title}".\nBạn có muốn thay bằng tin "${newsItem.title}" không?`
             );
-            
-            toast.info(`Đã bỏ khỏi trang chủ: "${oldestOnHome.title}"`, { ...toastOptions });
-            console.log('Successfully removed old news from homepage, continuing to add new news...');
-          } catch (error) {
-            console.error('Error removing old onHome news:', error);
-            toast.error('Lỗi khi bỏ tin trang chủ cũ');
-            return; // Không tiếp tục nếu không bỏ được tin cũ
-          } finally {
-            setSaving(false);
+            if (!ok) return;
+      
+            try {
+              setSaving(`removing-${oldest._id}`);
+              await homeService.updateNews(oldest._id, { ...oldest, onHome: false });
+              setHomepageNews(prev =>
+                prev.map(n => (n._id === oldest._id ? { ...n, onHome: false } : n))
+              );
+              toast.info(`Đã bỏ khỏi trang chủ: "${oldest.title}"`, toastOptions);
+            } catch (e) {
+              toast.error('Lỗi khi bỏ tin trang chủ cũ', toastOptions);
+              return;
+            } finally {
+              setSaving(false);
+            }
           }
-          // Tiếp tục xử lý để thêm tin mới vào onHome (không return ở đây)
-          // Đảm bảo latestNewsItem được cập nhật sau khi bỏ tin cũ
         }
       }
-      
       // Log trạng thái trước khi thay đổi
       console.log(`Changing ${field} for news "${newsItem.title}" from ${newsItem[field]} to ${checked}`);
       
@@ -1371,7 +1355,7 @@ export default function AdminHomePage() {
       
       {/* Hero Section - Hidden for editor */}
       {!isEditor && (
-        <AdminSectionCard title="Hero Section" onSave={() => handleSave('hero')} isSaving={saving === 'hero'} hasChanges={hasChanges('hero')}>
+      <AdminSectionCard title="Hero Section" onSave={() => handleSave('hero')} isSaving={saving === 'hero'} hasChanges={hasChanges('hero')}>
         <div className="grid-2-col">
             <div className="form-column">
                 <FormItem label="Tiêu Hero Banner" icon={<FiType />}>
@@ -1438,7 +1422,7 @@ export default function AdminHomePage() {
 
       {/* Factory Video Section - Hidden for editor */}
       {!isEditor && (
-        <AdminSectionCard title="Factory Video" onSave={() => handleSave('factoryVideo')} isSaving={saving === 'factoryVideo'} hasChanges={hasChanges('factoryVideo')}>
+      <AdminSectionCard title="Factory Video" onSave={() => handleSave('factoryVideo')} isSaving={saving === 'factoryVideo'} hasChanges={hasChanges('factoryVideo')}>
         <div className="subsection-card">
           <h4>Video Section Factory</h4>
           <div className="grid-2-col">
@@ -1558,7 +1542,7 @@ export default function AdminHomePage() {
       
       {/* Content Sections - Hidden for editor */}
       {!isEditor && (
-        <AdminSectionCard title="Content Sections" onSave={() => handleSave('sections')} isSaving={saving === 'sections'} hasChanges={hasChanges('sections')}>
+      <AdminSectionCard title="Content Sections" onSave={() => handleSave('sections')} isSaving={saving === 'sections'} hasChanges={hasChanges('sections')}>
         <div className="subsection-header">
           <h4>Quản lý các section trên trang chủ</h4>
           <button className="btn-add" onClick={handleAddSection}><FiPlusCircle /> Thêm section mới</button>
@@ -1725,7 +1709,7 @@ export default function AdminHomePage() {
       
       {/* Customers Section - Hidden for editor */}
       {!isEditor && (
-        <AdminSectionCard title="Đối tác & Khách hàng" onSave={() => handleSave('customers')} isSaving={saving === 'customers'} hasChanges={hasChanges('customers')}>
+      <AdminSectionCard title="Đối tác & Khách hàng" onSave={() => handleSave('customers')} isSaving={saving === 'customers'} hasChanges={hasChanges('customers')}>
          {Object.keys(homeData.customers).map(subSectionKey => (
              <div key={subSectionKey} className="subsection-card">
                  <div className="subsection-header">
@@ -1790,7 +1774,7 @@ export default function AdminHomePage() {
 
       {/* Contact Section - Hidden for editor */}
       {!isEditor && (
-        <AdminSectionCard title="Contact & Work With Us Section" onSave={() => handleSave('homeContact')} isSaving={saving === 'homeContact'} hasChanges={hasChanges('homeContact')}>
+      <AdminSectionCard title="Contact & Work With Us Section" onSave={() => handleSave('homeContact')} isSaving={saving === 'homeContact'} hasChanges={hasChanges('homeContact')}>
         <div className="subsection-card">
           <h4>Contact Section</h4>
           <div className="grid-2-col">
@@ -1977,7 +1961,7 @@ export default function AdminHomePage() {
       
       {/* Certifications Section - Full Dashboard - Hidden for editor */}
       {!isEditor && (
-        <AdminSectionCard
+      <AdminSectionCard
         title="Quản lý Chứng chỉ (Certifications)"
         onSave={() => handleSave('certifications')}
         isSaving={saving === 'certifications'}
