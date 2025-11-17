@@ -75,6 +75,42 @@ const authService = {
       return false;
     }
   },
+
+  // Đổi mật khẩu
+  async changePassword(currentPassword, newPassword) {
+    try {
+      const token = this.getToken();
+      if (!token) {
+        return { success: false, message: "Bạn cần đăng nhập để đổi mật khẩu" };
+      }
+
+      const response = await fetch(`${BACKEND_DOMAIN}/api/auth/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return { success: true, message: data.message || "Đổi mật khẩu thành công" };
+      } else {
+        return {
+          success: false,
+          message: data.message || "Đổi mật khẩu thất bại",
+        };
+      }
+    } catch (error) {
+      console.error("Change password error:", error);
+      return { success: false, message: "Lỗi kết nối server" };
+    }
+  },
 };
 
 export default authService;

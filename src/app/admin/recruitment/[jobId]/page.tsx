@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import recruitmentService from '@/services/recruitmentService';
+import { BACKEND_DOMAIN } from '@/api/config';
 import { FiArrowLeft, FiEye, FiMail, FiPhone, FiMapPin, FiCalendar, FiBriefcase, FiUsers, FiTrash } from 'react-icons/fi';
 
 interface Job {
@@ -25,7 +26,13 @@ interface Application {
   email: string;
   phone: string;
   address: string;
-  cvFile: string;
+  cvFile: string | {
+    filename: string;
+    originalName: string;
+    path: string;
+    size: number;
+    mimetype: string;
+  };
   status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
   createdAt: string;
 }
@@ -39,6 +46,8 @@ export default function JobDetailPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showCVModal, setShowCVModal] = useState(false);
+  const [selectedCV, setSelectedCV] = useState<{ url: string; mimetype: string; filename: string } | null>(null);
 
   const fetchJobData = async () => {
     setLoading(true);
@@ -122,6 +131,34 @@ export default function JobDetailPage() {
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
     return <span className={`status-badge ${config.class}`}>{config.label}</span>;
+  };
+
+  const handleViewCV = (app: Application) => {
+    let cvUrl = '';
+    let mimetype = '';
+    let filename = 'CV';
+    
+    if (typeof app.cvFile === 'string') {
+      cvUrl = app.cvFile;
+    } else if (app.cvFile && typeof app.cvFile === 'object') {
+      cvUrl = app.cvFile.path?.startsWith('/') ? app.cvFile.path : '/' + app.cvFile.path;
+      mimetype = app.cvFile.mimetype || '';
+      filename = app.cvFile.filename || app.cvFile.originalName || 'CV';
+    }
+    
+    if (!cvUrl) return;
+    
+    // Add backend domain if it's a relative path
+    if (cvUrl.startsWith('/')) {
+      cvUrl = `${BACKEND_DOMAIN}${cvUrl}`;
+    }
+    
+    setSelectedCV({ url: cvUrl, mimetype, filename });
+    setShowCVModal(true);
+  };
+
+  const isImageFile = (mimetype: string): boolean => {
+    return mimetype.startsWith('image/');
   };
 
   if (loading) {
@@ -262,13 +299,12 @@ export default function JobDetailPage() {
                     <option value="rejected">Từ chối</option>
                   </select>
                   
-                  <a 
-                    href={`/api/careers/applications/${app._id}/cv`} 
-                    target="_blank" 
+                  <button
+                    onClick={() => handleViewCV(app)}
                     className="action-btn view"
                   >
                     <FiEye /> Xem CV
-                  </a>
+                  </button>
                   
                   <button 
                     onClick={() => handleDeleteApplication(app._id)}
@@ -282,6 +318,48 @@ export default function JobDetailPage() {
           </div>
         )}
       </div>
+
+      {/* CV View Modal */}
+      {showCVModal && selectedCV && (
+        <div className="modal-overlay active" onClick={() => setShowCVModal(false)}>
+          <div className="modal-container cv-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Xem CV: {selectedCV.filename}</h3>
+              <button className="btn-close" onClick={() => setShowCVModal(false)}>×</button>
+            </div>
+            <div className="modal-body cv-modal-body">
+              {isImageFile(selectedCV.mimetype) ? (
+                <div className="cv-image-container">
+                  <img 
+                    src={selectedCV.url} 
+                    alt={selectedCV.filename}
+                    style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                  />
+                </div>
+              ) : (
+                <div className="cv-document-container">
+                  <iframe 
+                    src={selectedCV.url}
+                    style={{ width: '100%', height: '70vh', border: 'none' }}
+                    title={selectedCV.filename}
+                  />
+                  <div className="cv-download-link">
+                    <a 
+                      href={selectedCV.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="action-btn view"
+                      style={{ marginTop: '12px', display: 'inline-block' }}
+                    >
+                      <FiEye /> Mở trong tab mới
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .admin-page-container {
@@ -484,6 +562,80 @@ export default function JobDetailPage() {
         .status-badge.rejected {
           background: #f8d7da;
           color: #721c24;
+        }
+        /* Modal Styles */
+        .modal-overlay.active {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 1000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .modal-container {
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 4px 32px rgba(0,0,0,0.2);
+          padding: 0;
+          min-width: 420px;
+          max-width: 96vw;
+          max-height: 85vh;
+          overflow: hidden;
+        }
+        .modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 20px;
+          border-bottom: 1px solid #eee;
+        }
+        .modal-header h3 {
+          margin: 0;
+          font-size: 1.25rem;
+          font-weight: 600;
+        }
+        .btn-close {
+          background: none;
+          border: none;
+          color: #333;
+          font-size: 1.5rem;
+          cursor: pointer;
+          padding: 0;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .modal-body {
+          padding: 20px;
+        }
+        .cv-modal {
+          max-width: 90vw;
+          width: 1000px;
+        }
+        .cv-modal-body {
+          padding: 0;
+          max-height: 80vh;
+          overflow: auto;
+        }
+        .cv-image-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          background: #f5f5f5;
+        }
+        .cv-document-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px;
+        }
+        .cv-download-link {
+          width: 100%;
+          text-align: center;
         }
         @media (max-width: 768px) {
           .admin-header {

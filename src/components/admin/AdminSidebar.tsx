@@ -76,6 +76,13 @@ const OverviewIcon = () => (
   </svg>
 );
 
+const SettingsIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
+  </svg>
+);
+
 const LogoutIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -121,6 +128,12 @@ const menuGroups = [
       { href: '/admin/recruitment', label: 'Recruitment', icon: <RecruitmentIcon /> },
       { href: '/admin/contact', label: 'Contact', icon: <ContactIcon /> },
       { href: '/admin/overview', label: 'Overview', icon: <OverviewIcon /> },
+    ]
+  },
+  {
+    title: "Settings",
+    items: [
+      { href: '/admin/settings', label: 'Settings', icon: <SettingsIcon /> },
     ]
   }
 ];
@@ -171,7 +184,7 @@ export default function AdminSidebar() {
     }
 
     if (userRole === 'editor') {
-      // Editor only sees: Home (with News section) and Recruitment
+      // Editor only sees: Home (with News section), Recruitment, and Settings
       return [
         {
           title: "Main",
@@ -183,6 +196,12 @@ export default function AdminSidebar() {
           title: "Interaction",
           items: [
             { href: '/admin/recruitment', label: 'Recruitment', icon: <RecruitmentIcon /> },
+          ]
+        },
+        {
+          title: "Settings",
+          items: [
+            { href: '/admin/settings', label: 'Settings', icon: <SettingsIcon /> },
           ]
         }
       ]

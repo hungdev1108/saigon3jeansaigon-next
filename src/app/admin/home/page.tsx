@@ -152,8 +152,9 @@ interface EditNewsModalProps {
   news: NewsData | null;
   onSave: (newsData: NewsData, mainImageFile?: File, additionalImageFiles?: File[]) => Promise<void>;
   isSaving: boolean;
+  isEditor?: boolean;
 }
-const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModalProps) => {
+const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving, isEditor = false }: EditNewsModalProps) => {
   const [formData, setFormData] = useState<NewsData | null>(null);
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
   const [mainImagePreview, setMainImagePreview] = useState<string | null>(null);
@@ -175,6 +176,8 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
       if (mainImageInputRef.current) mainImageInputRef.current.value = '';
       if (additionalImagesInputRef.current) additionalImagesInputRef.current.value = '';
     } else {
+      // Editor tạo bài mặc định là chưa đăng (isPublished = false)
+      // Admin có thể set isPublished = true nếu muốn
       setFormData({
         _id: '',
         title: '',
@@ -183,7 +186,7 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
         image: '',
         mainImage: '',
         additionalImages: [],
-        isPublished: true,
+        isPublished: isEditor ? false : false, // Editor và Admin đều mặc định false, Admin có thể tick sau
         isFeatured: false,
         publishDate: new Date().toISOString().split('T')[0],
         id: '',
@@ -198,7 +201,7 @@ const EditNewsModal = ({ isOpen, onClose, news, onSave, isSaving }: EditNewsModa
     }
     setMainImageFile(null);
     setAdditionalImageFiles([]);
-  }, [news]);
+  }, [news, isEditor]);
 
   if (!isOpen || !formData) return null;
 
@@ -1911,6 +1914,14 @@ export default function AdminHomePage() {
                           {news.onHome && <span className="status-badge on-home">Trang chủ</span>}
                         </div>
                         <div className="news-toggles">
+                          {isEditor ? (
+                            <div className="editor-notice">
+                              <p style={{ fontSize: '0.85rem', color: '#666', fontStyle: 'italic' }}>
+                                Chỉ Admin mới có quyền đăng bài, đánh dấu nổi bật và hiển thị trên trang chủ
+                              </p>
+                            </div>
+                          ) : (
+                            <>
                           <div className="form-check">
                             <input 
                               type="checkbox" 
@@ -1944,6 +1955,8 @@ export default function AdminHomePage() {
                             />
                             <label htmlFor={`onHome-${news._id}`}>Trang chủ</label>
                           </div>
+                            </>
+                          )}
                         </div>
                       </div>
                   ))}
@@ -2162,6 +2175,7 @@ export default function AdminHomePage() {
         news={currentEditNews}
         onSave={handleSaveNews}
         isSaving={saving === 'news'}
+        isEditor={isEditor}
       />
       
       {/* CSS Styles for Certifications Dashboard */}

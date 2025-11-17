@@ -36,8 +36,8 @@ export default function AdminLayout({
       // Kiểm tra quyền truy cập nếu là editor
       const user = authService.getCurrentUser();
       if (user?.role === 'editor') {
-        // Editor chỉ được truy cập Home và Recruitment
-        const allowedPaths = ['/admin/home', '/admin/recruitment'];
+        // Editor chỉ được truy cập Home, Recruitment và Settings
+        const allowedPaths = ['/admin/home', '/admin/recruitment', '/admin/settings'];
         const currentPath = pathname;
         
         // Kiểm tra nếu path không được phép

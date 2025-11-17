@@ -84,8 +84,8 @@ export default function AdminRecruitmentPage() {
     isActive: true
   });
   const [jobFormError, setJobFormError] = useState('');
-  
-
+  const [showCVModal, setShowCVModal] = useState(false);
+  const [selectedCV, setSelectedCV] = useState<{ url: string; mimetype: string; filename: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -232,6 +232,21 @@ export default function AdminRecruitmentPage() {
       console.error('Update status error:', error);
       alert('Có lỗi xảy ra: ' + (error.message || 'Không xác định'));
     }
+  };
+
+  const handleViewCV = (app: Application) => {
+    if (!app.cvFile?.path) return;
+    
+    const cvUrl = `${BACKEND_DOMAIN}${app.cvFile.path.startsWith('/') ? app.cvFile.path : '/' + app.cvFile.path}`;
+    const mimetype = app.cvFile.mimetype || '';
+    const filename = app.cvFile.filename || app.cvFile.originalName || 'CV';
+    
+    setSelectedCV({ url: cvUrl, mimetype, filename });
+    setShowCVModal(true);
+  };
+
+  const isImageFile = (mimetype: string): boolean => {
+    return mimetype.startsWith('image/');
   };
 
   // Hàm xử lý lưu thông tin công ty
@@ -564,15 +579,14 @@ export default function AdminRecruitmentPage() {
                     </td>
                     <td>{new Date(app.createdAt).toLocaleDateString('vi-VN')}</td>
                     <td>
-                      <a 
-                        href={`${BACKEND_DOMAIN}${app.cvFile?.path?.startsWith('/') ? app.cvFile.path : '/' + app.cvFile.path}`}
-                        target="_blank" 
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => handleViewCV(app)}
                         className="admin-btn small"
                         style={{ marginRight: 8 }}
+                        title="Xem CV"
                       >
                         <FiEye />
-                      </a>
+                      </button>
                       <button
                         className="admin-btn small danger"
                         title="Xóa ứng viên"
@@ -730,6 +744,48 @@ export default function AdminRecruitmentPage() {
       )}
 
       {renderJobModal}
+
+      {/* CV View Modal */}
+      {showCVModal && selectedCV && (
+        <div className="modal-overlay active" onClick={() => setShowCVModal(false)}>
+          <div className="modal-container cv-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Xem CV: {selectedCV.filename}</h3>
+              <button className="btn-close" onClick={() => setShowCVModal(false)}>×</button>
+            </div>
+            <div className="modal-body cv-modal-body">
+              {isImageFile(selectedCV.mimetype) ? (
+                <div className="cv-image-container">
+                  <img 
+                    src={selectedCV.url} 
+                    alt={selectedCV.filename}
+                    style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain' }}
+                  />
+                </div>
+              ) : (
+                <div className="cv-document-container">
+                  <iframe 
+                    src={selectedCV.url}
+                    style={{ width: '100%', height: '70vh', border: 'none' }}
+                    title={selectedCV.filename}
+                  />
+                  <div className="cv-download-link">
+                    <a 
+                      href={selectedCV.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="admin-btn primary"
+                      style={{ marginTop: '12px' }}
+                    >
+                      <FiEye /> Mở trong tab mới
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .admin-page-container {
@@ -1140,6 +1196,33 @@ export default function AdminRecruitmentPage() {
             flex-direction: column;
             gap: 0;
           }
+        }
+        /* CV Modal Styles */
+        .cv-modal {
+          max-width: 90vw;
+          width: 1000px;
+        }
+        .cv-modal-body {
+          padding: 0;
+          max-height: 80vh;
+          overflow: auto;
+        }
+        .cv-image-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          background: #f5f5f5;
+        }
+        .cv-document-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px;
+        }
+        .cv-download-link {
+          width: 100%;
+          text-align: center;
         }
       `}</style>
         </div>
