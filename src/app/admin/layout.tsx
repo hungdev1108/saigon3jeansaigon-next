@@ -62,8 +62,8 @@ export default function AdminLayout({
   // Hiển thị loading khi đang kiểm tra xác thực
   if (loading) {
     return (
-      <div className="admin-loading">
-        <div className="loading-spinner"></div>
+      <div className="admin-loading" suppressHydrationWarning>
+        <div className="loading-spinner" suppressHydrationWarning></div>
         <p>Đang tải...</p>
       </div>
     );
@@ -71,14 +71,14 @@ export default function AdminLayout({
 
   // Layout chính cho trang admin
   return (
-    <div className="admin-layout">
+    <div className="admin-layout" suppressHydrationWarning>
       {/* Sidebar trái */}
       <AdminSidebar />
 
       {/* Main content */}
-      <div className="admin-main">
+      <div className="admin-main" suppressHydrationWarning>
         {/* Content area */}
-        <main className="admin-content">{children}</main>
+        <main className="admin-content" suppressHydrationWarning>{children}</main>
       </div>
     </div>
   );

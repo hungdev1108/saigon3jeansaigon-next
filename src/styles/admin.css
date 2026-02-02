@@ -773,7 +773,8 @@ textarea.form-control {
   color: #16B1FF;
 }
 
-/* Stats Card Styles */
+/* Stats Card Styles - Basic fallback styles */
+/* Dashboard page uses its own styles via styled-jsx, but keep basic styles for other pages */
 .stat-card {
   background: white;
   border-radius: 16px;
@@ -782,9 +783,9 @@ textarea.form-control {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+/* Dashboard page overrides these with .dash .stat-card */
+.dash .stat-card {
+  /* Let styled-jsx handle this */
 }
 
 .stat-card-header {

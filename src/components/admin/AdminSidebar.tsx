@@ -8,6 +8,16 @@ import { useState, useEffect } from 'react'
 import authService from '@/services/authService'
 
 // SVG Icons cho menu
+const DashboardIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="9" />
+    <rect x="14" y="3" width="7" height="5" />
+    <rect x="14" y="12" width="7" height="9" />
+    <rect x="3" y="16" width="7" height="5" />
+  </svg>
+);
+
+// SVG Icons cho menu
 const HomeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -109,6 +119,7 @@ const menuGroups = [
   {
     title: "Main",
     items: [
+      { href: '/admin/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
       { href: '/admin/home', label: 'Home', icon: <HomeIcon /> },
     ]
   },
@@ -189,6 +200,7 @@ export default function AdminSidebar() {
         {
           title: "Main",
           items: [
+            { href: '/admin/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
             { href: '/admin/home', label: 'Home', icon: <HomeIcon /> },
           ]
         },
@@ -255,7 +267,7 @@ export default function AdminSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`nav-item ${pathname === item.href ? 'active' : ''}`}
+                className={`nav-item ${pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) ? 'active' : ''}`}
                 data-tooltip={isCollapsed ? item.label : ''}
               >
                 <span className="nav-icon">{item.icon}</span>

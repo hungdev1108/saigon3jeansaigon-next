@@ -17,8 +17,8 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    // Auto redirect to /admin/home instead of showing dashboard
-    router.push("/admin/home");
+    // Auto redirect to /admin/dashboard
+    router.push("/admin/dashboard");
   }, [router]);
 
   // Always show loading while redirecting

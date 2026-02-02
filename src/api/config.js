@@ -13,7 +13,7 @@ return process.env.NEXT_PUBLIC_BACKEND_DOMAIN.replace('/api', '');
 if (process.env.NODE_ENV === 'production') {
 return 'https://saigon3jean.com';
 } else {
-return 'http://localhost:3007'; // 🔥 Sửa từ 5001 thành 3007 (port backend thực tế)
+return 'http://localhost:5001';
 }
 };
 

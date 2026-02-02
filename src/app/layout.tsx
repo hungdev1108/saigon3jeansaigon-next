@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 
 import ClientScriptProvider from "../components/ClientScriptProvider";
+import AnalyticsTracker from "../components/AnalyticsTracker";
 
 const montserrat = Montserrat({ 
   weight: ['300', '400', '500', '600', '700'],
@@ -81,6 +82,7 @@ export default function RootLayout({
       </head>
       <body className={`${montserrat.className} ${merriweather.variable}`} suppressHydrationWarning>
         <ClientScriptProvider />
+        <AnalyticsTracker />
         {children}
         <ToastContainer position="top-right" autoClose={3000} />
       </body>
