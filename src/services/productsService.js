@@ -461,24 +461,59 @@ class ProductsService {
     return applicationsData
       .filter((app) => app.isActive !== false)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
-      .map((app, index) => ({
-        id: app._id || `app-${index}`,
-        title: app.title || "",
-        content: {
-          heading: app.content?.heading || app.title || "",
-          description: app.content?.description || "",
-          features: Array.isArray(app.content?.features)
-            ? app.content.features
-            : [],
-          image:
-            this.fixImagePath(app.content?.image) ||
-            "/images/placeholder-application.jpg",
-          imageAlt: app.content?.imageAlt || `${app.title} Image`,
-        },
-        order: app.order || index + 1,
-        accordionId: `application${index + 1}`,
-        isExpanded: index === 0, // Mở accordion đầu tiên
-      }));
+      .map((app, index) => {
+        // Xử lý images trong content
+        const contentImages = [];
+        
+        // Nếu có mảng images thì dùng mảng đó
+        if (Array.isArray(app.content?.images) && app.content?.images.length > 0) {
+          app.content.images.forEach((image, imageIndex) => {
+            contentImages.push({
+              id: image.id || `img-${app.id}-${imageIndex}`,
+              url: this.fixImagePath(image.url),
+              alt: image.alt || `${app.title} Image ${imageIndex + 1}`,
+              order: image.order || imageIndex,
+              isActive: image.isActive !== false,
+            });
+          });
+        } 
+        // Nếu không có mảng images nhưng có image cũ thì chuyển sang dạng mảng
+        else if (app.content?.image) {
+          contentImages.push({
+            id: `img-${app.id}-0`,
+            url: this.fixImagePath(app.content.image),
+            alt: app.content?.imageAlt || `${app.title} Image`,
+            order: 0,
+            isActive: true,
+          });
+        }
+        
+        // Sắp xếp images theo order
+        contentImages.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        return {
+          id: app._id || `app-${index}`,
+          title: app.title || "",
+          content: {
+            heading: app.content?.heading || app.title || "",
+            description: app.content?.description || "",
+            features: Array.isArray(app.content?.features)
+              ? app.content.features
+              : [],
+            // Giữ lại image và imageAlt cho tương thích ngược
+            image:
+              this.fixImagePath(app.content?.image) ||
+              (contentImages.length > 0 ? contentImages[0].url : "/images/placeholder-application.jpg"),
+            imageAlt: app.content?.imageAlt || 
+              (contentImages.length > 0 ? contentImages[0].alt : `${app.title} Image`),
+            // Thêm mảng images
+            images: contentImages,
+          },
+          order: app.order || index + 1,
+          accordionId: `application${index + 1}`,
+          isExpanded: index === 0, // Mở accordion đầu tiên
+        };
+      });
   }
 
   /**
@@ -648,6 +683,22 @@ class ProductsService {
           ],
           image: "/images/product-page/denim_2.png",
           imageAlt: "Advanced Manufacturing Process",
+          images: [
+            {
+              id: "app1-img-1",
+              url: "/images/product-page/denim_2.png",
+              alt: "Advanced Manufacturing Process 1",
+              order: 0,
+              isActive: true,
+            },
+            {
+              id: "app1-img-2",
+              url: "/images/product-page/denim_3.png",
+              alt: "Advanced Manufacturing Process 2",
+              order: 1,
+              isActive: true,
+            }
+          ]
         },
         order: 1,
         accordionId: "application1",
@@ -668,6 +719,15 @@ class ProductsService {
           ],
           image: "/images/product-page/denim_3.png",
           imageAlt: "Quality Control & Testing",
+          images: [
+            {
+              id: "app2-img-1",
+              url: "/images/product-page/denim_3.png",
+              alt: "Quality Control & Testing 1",
+              order: 0,
+              isActive: true,
+            }
+          ]
         },
         order: 2,
         accordionId: "application2",
@@ -688,6 +748,15 @@ class ProductsService {
           ],
           image: "/images/product-page/denim_4.png",
           imageAlt: "Sustainable Production",
+          images: [
+            {
+              id: "app3-img-1",
+              url: "/images/product-page/denim_4.png",
+              alt: "Sustainable Production 1",
+              order: 0,
+              isActive: true,
+            }
+          ]
         },
         order: 3,
         accordionId: "application3",
@@ -708,6 +777,15 @@ class ProductsService {
           ],
           image: "/images/product-page/denim_5.png",
           imageAlt: "Research & Innovation",
+          images: [
+            {
+              id: "app4-img-1",
+              url: "/images/product-page/denim_5.png",
+              alt: "Research & Innovation 1",
+              order: 0,
+              isActive: true,
+            }
+          ]
         },
         order: 4,
         accordionId: "application4",
@@ -727,6 +805,16 @@ class ProductsService {
         "Sensors continuously record data on chemical levels, temperature, pressure, and flow rate. The system integrates remote management and control through a digital interface, processing data to optimize chemical ratios and make automatic adjustments.",
       keywords: ["denim", "manufacturing", "quality", "sustainable"],
     };
+  }
+
+  /**
+   * Tạo ID carousel duy nhất cho application
+   * @param {string} productId - ID sản phẩm
+   * @param {string} applicationId - ID application
+   * @returns {string} - ID carousel
+   */
+  generateApplicationCarouselId(productId, applicationId) {
+    return `app-carousel-${productId}-${applicationId}`.replace(/\s+/g, '-').toLowerCase();
   }
 }
 

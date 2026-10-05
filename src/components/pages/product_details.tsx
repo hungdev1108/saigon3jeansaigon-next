@@ -13,12 +13,21 @@ interface ProductFeature {
   order: number;
 }
 
+interface ApplicationImage {
+  id: string;
+  url: string;
+  alt: string;
+  order: number;
+  isActive: boolean;
+}
+
 interface ApplicationContent {
   heading: string;
   description: string;
   features: string[];
   image: string;
   imageAlt: string;
+  images?: ApplicationImage[];
 }
 
 interface ProductApplication {
@@ -267,13 +276,86 @@ export default function ProductDetails({ params }: ProductDetailsProps = {}) {
                             )}
                           </div>
                           <div className="col-lg-6">
-                            <Image
-                              src={application.content.image}
-                              alt={application.content.imageAlt}
-                              className="application-image"
-                              width={500}
-                              height={500}
-                            />
+                            {/* Hiển thị carousel nếu có nhiều hình ảnh */}
+                            {application.content.images && application.content.images.length > 0 ? (
+                              <div
+                                id={`app-carousel-${application.id}`}
+                                className="carousel slide"
+                                data-bs-ride="carousel"
+                                data-bs-interval={4000}
+                              >
+                                <div className="carousel-inner">
+                                  {application.content.images.map((image, index) => (
+                                    <div
+                                      key={index}
+                                      className={`carousel-item ${index === 0 ? "active" : ""}`}
+                                    >
+                                      <Image
+                                        src={image.url}
+                                        alt={image.alt}
+                                        className="d-block w-100 application-image"
+                                        width={500}
+                                        height={500}
+                                        style={{ objectFit: "cover" }}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Hiển thị điều hướng chỉ khi có nhiều hơn 1 hình */}
+                                {application.content.images.length > 1 && (
+                                  <>
+                                    <div className="carousel-indicators">
+                                      {application.content.images.map((_, index) => (
+                                        <button
+                                          key={index}
+                                          type="button"
+                                          data-bs-target={`#app-carousel-${application.id}`}
+                                          data-bs-slide-to={index}
+                                          className={index === 0 ? "active" : ""}
+                                          aria-current={index === 0 ? "true" : "false"}
+                                          aria-label={`Slide ${index + 1}`}
+                                        ></button>
+                                      ))}
+                                    </div>
+                                    
+                                    <button
+                                      className="carousel-control-prev"
+                                      type="button"
+                                      data-bs-target={`#app-carousel-${application.id}`}
+                                      data-bs-slide="prev"
+                                    >
+                                      <span
+                                        className="carousel-control-prev-icon"
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span className="visually-hidden">Previous</span>
+                                    </button>
+                                    <button
+                                      className="carousel-control-next"
+                                      type="button"
+                                      data-bs-target={`#app-carousel-${application.id}`}
+                                      data-bs-slide="next"
+                                    >
+                                      <span
+                                        className="carousel-control-next-icon"
+                                        aria-hidden="true"
+                                      ></span>
+                                      <span className="visually-hidden">Next</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              // Fallback cho trường hợp chỉ có một hình ảnh cũ
+                              <Image
+                                src={application.content.image}
+                                alt={application.content.imageAlt}
+                                className="application-image"
+                                width={500}
+                                height={500}
+                              />
+                            )}
                           </div>
                         </div>
                       </div>

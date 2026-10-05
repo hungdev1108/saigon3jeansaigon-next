@@ -252,7 +252,7 @@ const productsApi = {
    */
   getProductDetailsBySlug: async (slug) => {
     try {
-      const response = await apiClient.get(`/api/products/slug/${slug}`);
+      const response = await apiClient.get(`/api/products/slug/${slug}/details`);
       return response.data;
     } catch (error) {
       console.error("Error fetching product details by slug:", error);
@@ -289,6 +289,132 @@ const productsApi = {
       return response.data;
     } catch (error) {
       console.error("Error fetching related products:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Thêm hình ảnh mới vào application
+   * @param {string} productId - ID của sản phẩm
+   * @param {string} applicationId - ID của application
+   * @param {File} imageFile - File hình ảnh
+   * @param {string} alt - Mô tả alt cho hình ảnh
+   * @returns {Promise<Object>} - Mảng hình ảnh đã cập nhật
+   */
+  addApplicationImage: async (productId, applicationId, imageFile, alt) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('alt', alt || '');
+      
+      const response = await apiClient.post(
+        `/api/products/${productId}/applications/${applicationId}/images`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error adding application image:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cập nhật application với nhiều hình ảnh
+   * @param {string} productId - ID của sản phẩm
+   * @param {string} applicationId - ID của application
+   * @param {Object} updateData - Dữ liệu cập nhật
+   * @param {FileList} imageFiles - Danh sách file hình ảnh
+   * @returns {Promise<Object>} - Application đã cập nhật
+   */
+  updateApplicationWithImages: async (productId, applicationId, updateData, imageFiles = null) => {
+    try {
+      const formData = new FormData();
+      
+      // Thêm dữ liệu cập nhật
+      if (updateData.title) {
+        formData.append('title', updateData.title);
+      }
+      
+      if (updateData.content) {
+        Object.entries(updateData.content).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            // Xử lý mảng (ví dụ: features)
+            value.forEach((item) => {
+              formData.append(`content[${key}][]`, item);
+            });
+          } else {
+            formData.append(`content[${key}]`, value);
+          }
+        });
+      }
+      
+      // Thêm hình ảnh mới nếu có
+      if (imageFiles && imageFiles.length > 0) {
+        for (let i = 0; i < imageFiles.length; i++) {
+          formData.append('applicationImages', imageFiles[i]);
+        }
+      }
+      
+      const response = await apiClient.put(
+        `/api/products/${productId}/applications/${applicationId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error updating application with images:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Xóa một hình ảnh trong application
+   * @param {string} productId - ID của sản phẩm
+   * @param {string} applicationId - ID của application
+   * @param {number} imageIndex - Vị trí index của hình ảnh
+   * @returns {Promise<Object>} - Mảng hình ảnh đã cập nhật
+   */
+  deleteApplicationImage: async (productId, applicationId, imageIndex) => {
+    try {
+      const response = await apiClient.delete(
+        `/api/products/${productId}/applications/${applicationId}/images/${imageIndex}`
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting application image:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Sắp xếp lại thứ tự hình ảnh trong application
+   * @param {string} productId - ID của sản phẩm
+   * @param {string} applicationId - ID của application
+   * @param {Array<number>} imageIndexes - Mảng vị trí theo thứ tự mới
+   * @returns {Promise<Object>} - Mảng hình ảnh đã cập nhật
+   */
+  reorderApplicationImages: async (productId, applicationId, imageIndexes) => {
+    try {
+      const response = await apiClient.post(
+        `/api/products/${productId}/applications/${applicationId}/images/reorder`,
+        { imageIndexes }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error reordering application images:', error);
       throw error;
     }
   },

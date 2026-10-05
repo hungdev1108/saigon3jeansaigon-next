@@ -138,6 +138,92 @@ const facilitiesApi = {
       throw error;
     }
   },
+
+  /**
+   * Thêm nhiều hình ảnh cho một feature
+   * @param {string} featureId - ID của feature
+   * @param {FormData} formData - Form data chứa các file hình ảnh (featureImages)
+   * @returns {Promise} Promise object với kết quả thêm hình ảnh
+   */
+  addFeatureImages: async (featureId, formData) => {
+    try {
+      const response = await apiClient.post(
+        `/api/facilities/features/${featureId}/images`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error adding images to feature:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Cập nhật một hình ảnh trong feature
+   * @param {string} featureId - ID của feature
+   * @param {number} imageIndex - Index của hình ảnh
+   * @param {FormData} formData - Form data chứa thông tin hình ảnh mới
+   * @returns {Promise} Promise object với kết quả cập nhật hình ảnh
+   */
+  updateFeatureImage: async (featureId, imageIndex, formData) => {
+    try {
+      const response = await apiClient.put(
+        `/api/facilities/features/${featureId}/images/${imageIndex}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating feature image:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Xóa một hình ảnh từ feature
+   * @param {string} featureId - ID của feature
+   * @param {number} imageIndex - Index của hình ảnh
+   * @returns {Promise} Promise object với kết quả xóa hình ảnh
+   */
+  deleteFeatureImage: async (featureId, imageIndex) => {
+    try {
+      const response = await apiClient.delete(
+        `/api/facilities/features/${featureId}/images/${imageIndex}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting feature image:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Sắp xếp lại thứ tự hình ảnh của feature
+   * @param {string} featureId - ID của feature
+   * @param {Array<number>} imageIndexes - Mảng thứ tự mới của các hình ảnh
+   * @returns {Promise} Promise object với kết quả sắp xếp lại
+   */
+  reorderFeatureImages: async (featureId, imageIndexes) => {
+    try {
+      const response = await apiClient.post(
+        `/api/facilities/features/${featureId}/images/reorder`,
+        { imageIndexes }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error reordering feature images:", error);
+      throw error;
+    }
+  },
 };
 
 export default facilitiesApi;

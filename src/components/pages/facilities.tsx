@@ -13,12 +13,19 @@ interface KeyMetric {
   order: number;
 }
 
+interface FeatureImage {
+  url: string;
+  alt: string;
+  order: number;
+}
+
 interface FacilityFeature {
   id: string;
   title: string;
   description: string;
   image: string;
   imageAlt: string;
+  images: FeatureImage[];
   order: number;
   layout: string;
 }
@@ -91,6 +98,11 @@ export default function Facilities() {
     );
   }
 
+  // Hàm để tạo ID carousel duy nhất cho feature
+  const generateFeatureCarouselId = (featureId: string) => {
+    return `feature-carousel-${featureId}`;
+  };
+
   return (
     //  Facilities Overview
     <section className="facilities-overview py-5">
@@ -128,28 +140,107 @@ export default function Facilities() {
 
         {/* <!-- Facility Features --> */}
         <div className="facility-features">
-          {facilitiesData.facilityFeatures.map((feature) => (
-            <div
-              key={feature.id}
-              className={`feature-item row mb-5 ${
-                feature.layout === "right" ? "flex-row-reverse" : ""
-              }`}
-            >
-              <div className="col-lg-6 feature-content">
-                <h3 className="feature-title">{feature.title}</h3>
-                <p className="feature-description">{feature.description}</p>
+          {facilitiesData.facilityFeatures.map((feature) => {
+            // Lấy và sắp xếp hình ảnh
+            const featureImages = feature.images && feature.images.length > 0 
+              ? feature.images 
+              : feature.image 
+                ? [{ url: feature.image, alt: feature.imageAlt, order: 0 }] 
+                : [];
+            
+            const sortedImages = [...featureImages].sort((a, b) => a.order - b.order);
+            const carouselId = generateFeatureCarouselId(feature.id);
+            const carouselTarget = `#${carouselId}`;
+            
+            return (
+              <div
+                key={feature.id}
+                className={`feature-item row mb-5 ${
+                  feature.layout === "right" ? "flex-row-reverse" : ""
+                }`}
+              >
+                <div className="col-lg-6 feature-content">
+                  <h3 className="feature-title">{feature.title}</h3>
+                  <p className="feature-description">{feature.description}</p>
+                </div>
+                <div className="col-lg-6 feature-image">
+                  {/* Carousel cho nhiều hình ảnh */}
+                  {sortedImages.length > 0 && (
+                    <div
+                      id={carouselId}
+                      className="carousel slide"
+                      data-bs-ride="carousel"
+                      data-bs-interval={3000}
+                    >
+                      <div className="carousel-inner">
+                        {sortedImages.map((image, index) => (
+                          <div
+                            key={index}
+                            className={`carousel-item ${index === 0 ? "active" : ""}`}
+                          >
+                            <Image
+                              src={image.url.startsWith('http') ? image.url : `/${image.url.replace(/^\/+/, '')}`}
+                              alt={image.alt}
+                              width={600}
+                              height={400}
+                              className="img-fluid rounded"
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Carousel Indicators nếu có nhiều hơn 1 hình ảnh */}
+                      {sortedImages.length > 1 && (
+                        <div className="carousel-indicators">
+                          {sortedImages.map((_, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              data-bs-target={carouselTarget}
+                              data-bs-slide-to={index}
+                              className={index === 0 ? "active" : ""}
+                              aria-current={index === 0 ? "true" : "false"}
+                              aria-label={`Slide ${index + 1}`}
+                            ></button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Carousel Controls nếu có nhiều hơn 1 hình ảnh */}
+                      {sortedImages.length > 1 && (
+                        <>
+                          <button
+                            className="carousel-control-prev"
+                            type="button"
+                            data-bs-target={carouselTarget}
+                            data-bs-slide="prev"
+                          >
+                            <span
+                              className="carousel-control-prev-icon"
+                              aria-hidden="true"
+                            ></span>
+                            <span className="visually-hidden">Previous</span>
+                          </button>
+                          <button
+                            className="carousel-control-next"
+                            type="button"
+                            data-bs-target={carouselTarget}
+                            data-bs-slide="next"
+                          >
+                            <span
+                              className="carousel-control-next-icon"
+                              aria-hidden="true"
+                            ></span>
+                            <span className="visually-hidden">Next</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="col-lg-6 feature-image">
-                <Image
-                  src={feature.image}
-                  alt={feature.imageAlt}
-                  width={600}
-                  height={400}
-                  className="img-fluid rounded"
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

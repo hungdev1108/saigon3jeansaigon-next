@@ -12,17 +12,13 @@ export default function Footer() {
             <Image
               src="/images/sg3jeans_logo.png"
               alt="Saigon 3 Logo"
-              className="mb-3"
+              className="mb-3 logo"
               width={100}
               height={100}
-              style={{ height: "50px" }}
             />
             <div className="social-icons footer-mobile-social">
               <Link href="#" className="me-2">
                 <i className="fab fa-facebook-f"></i>
-              </Link>
-              <Link href="#" className="me-2">
-                <i className="fab fa-twitter"></i>
               </Link>
               <Link href="#" className="me-2">
                 <i className="fab fa-instagram"></i>

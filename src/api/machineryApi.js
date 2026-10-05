@@ -160,6 +160,137 @@ const machineryApi = {
       throw error;
     }
   },
+
+  /**
+   * Thêm nhiều hình ảnh cho một machine
+   * @param {string} stageId - ID của stage
+   * @param {string} machineId - ID của machine
+   * @param {FormData} formData - Form data chứa các file hình ảnh (machineImages)
+   * @returns {Promise} Promise object với kết quả thêm hình ảnh
+   */
+  addMachineImages: async (stageId, machineId, formData) => {
+    try {
+      const response = await apiClient.post(
+        `/api/machinery/stages/${stageId}/machines/${machineId}/images`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error adding images to machine:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Xóa một hình ảnh của machine
+   * @param {string} stageId - ID của stage
+   * @param {string} machineId - ID của machine
+   * @param {number} imageIndex - Index của hình ảnh
+   * @returns {Promise} Promise object với kết quả xóa hình ảnh
+   */
+  deleteMachineImage: async (stageId, machineId, imageIndex) => {
+    try {
+      const response = await apiClient.delete(
+        `/api/machinery/stages/${stageId}/machines/${machineId}/images/${imageIndex}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting machine image:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Sắp xếp lại thứ tự hình ảnh của machine
+   * @param {string} stageId - ID của stage
+   * @param {string} machineId - ID của machine
+   * @param {Array<number>} imageIndexes - Mảng thứ tự mới của các hình ảnh
+   * @returns {Promise} Promise object với kết quả sắp xếp lại
+   */
+  reorderMachineImages: async (stageId, machineId, imageIndexes) => {
+    try {
+      const response = await apiClient.post(
+        `/api/machinery/stages/${stageId}/machines/${machineId}/images/reorder`,
+        { imageIndexes }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error reordering machine images:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Thêm nhiều hình ảnh vào Process
+   * @param {string} machineryId - ID của machinery
+   * @param {number} stageIndex - Index của stage
+   * @param {number} processIndex - Index của process
+   * @param {FormData} formData - Form data chứa các file hình ảnh (processImages)
+   * @returns {Promise} Promise object với kết quả thêm hình ảnh
+   */
+  addMultipleImagesToProcess: async (machineryId, stageIndex, processIndex, formData) => {
+    try {
+      const response = await apiClient.post(
+        `/api/machinery/${machineryId}/stages/${stageIndex}/processes/${processIndex}/images/multiple`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error adding multiple images to process:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Xóa một hình ảnh từ Process
+   * @param {string} machineryId - ID của machinery
+   * @param {number} stageIndex - Index của stage
+   * @param {number} processIndex - Index của process
+   * @param {number} imageIndex - Index của hình ảnh
+   * @returns {Promise} Promise object với kết quả xóa hình ảnh
+   */
+  deleteProcessImage: async (machineryId, stageIndex, processIndex, imageIndex) => {
+    try {
+      const response = await apiClient.delete(
+        `/api/machinery/${machineryId}/stages/${stageIndex}/processes/${processIndex}/images/${imageIndex}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting process image:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Sắp xếp lại thứ tự hình ảnh
+   * @param {string} machineryId - ID của machinery
+   * @param {number} stageIndex - Index của stage
+   * @param {number} processIndex - Index của process
+   * @param {Array<number>} imageIndexes - Mảng thứ tự mới của các hình ảnh
+   * @returns {Promise} Promise object với kết quả sắp xếp lại
+   */
+  reorderProcessImages: async (machineryId, stageIndex, processIndex, imageIndexes) => {
+    try {
+      const response = await apiClient.post(
+        `/api/machinery/${machineryId}/stages/${stageIndex}/processes/${processIndex}/images/reorder`,
+        { imageIndexes }
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error reordering process images:", error);
+      throw error;
+    }
+  },
 };
 
 export default machineryApi;

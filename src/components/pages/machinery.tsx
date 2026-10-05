@@ -4,12 +4,19 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { machineryService } from "../../services";
 
+interface MachineImage {
+  url: string;
+  alt: string;
+  order: number;
+}
+
 interface Machine {
   id: string;
   name: string;
   description: string;
   image: string;
   imageAlt: string;
+  images: MachineImage[];
   order: number;
   isActive: boolean;
 }
@@ -163,6 +170,22 @@ export default function Machinery() {
       machine.name.toLowerCase().replace(/\s+/g, "") === activeMachine
   );
 
+  // Create a unique carousel ID for the current machine
+  const carouselId = currentMachine 
+    ? `machine-carousel-${currentMachine.id}-${activeStage}` 
+    : "";
+  const carouselTarget = `#${carouselId}`;
+  
+  // Get machine images to display
+  const machineImages = currentMachine?.images && currentMachine.images.length > 0 
+    ? currentMachine.images 
+    : currentMachine?.image 
+      ? [{ url: currentMachine.image, alt: currentMachine.imageAlt || currentMachine.name, order: 0 }] 
+      : [];
+  
+  // Sort images by order
+  const sortedImages = [...machineImages].sort((a, b) => a.order - b.order);
+
   return (
     <>
       <section className="machinery-section py-5">
@@ -234,13 +257,80 @@ export default function Machinery() {
                               onClick={handleMachineOverlayClick}
                             >
                               <div className="machine-image-container">
-                                <Image
-                                  src={currentMachine.image}
-                                  alt={currentMachine.imageAlt}
-                                  className="img-fluid"
-                                  width={500}
-                                  height={500}
-                                />
+                                {/* Carousel for multiple images */}
+                                {sortedImages.length > 0 && (
+                                  <div
+                                    id={carouselId}
+                                    className="carousel slide"
+                                    data-bs-ride="carousel"
+                                    data-bs-interval={3000}
+                                  >
+                                    <div className="carousel-inner">
+                                      {sortedImages.map((image, index) => (
+                                        <div
+                                          key={index}
+                                          className={`carousel-item ${index === 0 ? "active" : ""}`}
+                                        >
+                                          <Image
+                                            src={image.url.startsWith('http') ? image.url : `/${image.url.replace(/^\/+/, '')}`}
+                                            alt={image.alt}
+                                            className="d-block w-100 img-fluid"
+                                            width={500}
+                                            height={500}
+                                          />
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Carousel Indicators if more than 1 image */}
+                                    {sortedImages.length > 1 && (
+                                      <div className="carousel-indicators">
+                                        {sortedImages.map((_, index) => (
+                                          <button
+                                            key={index}
+                                            type="button"
+                                            data-bs-target={carouselTarget}
+                                            data-bs-slide-to={index}
+                                            className={index === 0 ? "active" : ""}
+                                            aria-current={index === 0 ? "true" : "false"}
+                                            aria-label={`Slide ${index + 1}`}
+                                          ></button>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Carousel Controls if more than 1 image */}
+                                    {sortedImages.length > 1 && (
+                                      <>
+                                        <button
+                                          className="carousel-control-prev"
+                                          type="button"
+                                          data-bs-target={carouselTarget}
+                                          data-bs-slide="prev"
+                                        >
+                                          <span
+                                            className="carousel-control-prev-icon"
+                                            aria-hidden="true"
+                                          ></span>
+                                          <span className="visually-hidden">Previous</span>
+                                        </button>
+                                        <button
+                                          className="carousel-control-next"
+                                          type="button"
+                                          data-bs-target={carouselTarget}
+                                          data-bs-slide="next"
+                                        >
+                                          <span
+                                            className="carousel-control-next-icon"
+                                            aria-hidden="true"
+                                          ></span>
+                                          <span className="visually-hidden">Next</span>
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+
                                 <div
                                   className="machine-overlay"
                                   style={{ opacity: 0 }}

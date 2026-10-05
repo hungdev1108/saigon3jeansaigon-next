@@ -29,6 +29,19 @@ class FacilitiesService {
   }
 
   /**
+   * Xử lý dữ liệu hình ảnh
+   * @param {Object} imageData - Dữ liệu hình ảnh từ API
+   * @returns {Object} Dữ liệu hình ảnh đã xử lý
+   */
+  processImageData(imageData) {
+    return {
+      url: this.fixImagePath(imageData.url) || "",
+      alt: imageData.alt || "",
+      order: imageData.order || 0
+    };
+  }
+
+  /**
    * Lấy và xử lý tất cả dữ liệu cho trang facilities
    * @returns {Promise<Object>} Dữ liệu đã được xử lý
    */
@@ -103,6 +116,11 @@ class FacilitiesService {
           this.fixImagePath(feature.image) ||
           "/images/placeholder-facility.jpg",
         imageAlt: feature.imageAlt || `${feature.title} Facilities`,
+        images: Array.isArray(feature.images) 
+          ? feature.images.map(img => this.processImageData(img)).sort((a, b) => a.order - b.order)
+          : feature.image 
+            ? [{ url: this.fixImagePath(feature.image), alt: feature.imageAlt || feature.title, order: 0 }] 
+            : [],
         order: feature.order || 0,
         layout: feature.layout || "left",
       }));
@@ -247,6 +265,13 @@ class FacilitiesService {
           "We are committed to creating a green, clean, and friendly working environment, contributing to the development of a sustainable ecosystem around the business.",
         image: "/images/facilities-page/section_1-outdoor.jpg",
         imageAlt: "Outdoor Facilities",
+        images: [
+          {
+            url: "/images/facilities-page/section_1-outdoor.jpg",
+            alt: "Outdoor Facilities",
+            order: 0
+          }
+        ],
         order: 1,
         layout: "left",
       },
@@ -257,6 +282,13 @@ class FacilitiesService {
           "The workspace is optimized to create a clean, safe, and comfortable environment, enhancing health, boosting productivity, and providing comfort for employees.",
         image: "/images/facilities-page/section_2-office.jpg",
         imageAlt: "Office Facilities",
+        images: [
+          {
+            url: "/images/facilities-page/section_2-office.jpg",
+            alt: "Office Facilities",
+            order: 0
+          }
+        ],
         order: 2,
         layout: "right",
       },
@@ -267,6 +299,13 @@ class FacilitiesService {
           "The modern infrastructure system is comprehensively invested, from advanced production lines and automation technology to strict quality control processes.",
         image: "/images/facilities-page/section_3-facilities.jpg",
         imageAlt: "Manufacturing Facilities",
+        images: [
+          {
+            url: "/images/facilities-page/section_3-facilities.jpg",
+            alt: "Manufacturing Facilities",
+            order: 0
+          }
+        ],
         order: 3,
         layout: "left",
       },
@@ -277,6 +316,13 @@ class FacilitiesService {
           "People are the core factor that drives the success and sustainable development of the business. Therefore, investing in training and skill development is always a priority to enhance capabilities and create sustainable value.",
         image: "/images/facilities-page/section_4-talented.jpg",
         imageAlt: "Talented Workforce",
+        images: [
+          {
+            url: "/images/facilities-page/section_4-talented.jpg",
+            alt: "Talented Workforce",
+            order: 0
+          }
+        ],
         order: 4,
         layout: "right",
       },

@@ -1,5 +1,5 @@
 import machineryApi from "../api/machineryApi";
-import {BACKEND_DOMAIN} from '../api/config';
+
 
 /**
  * Service để xử lý dữ liệu machinery
@@ -18,13 +18,40 @@ class MachineryService {
       return imagePath;
     }
 
-    // Nếu đã có /uploads/ thì thêm base URL
+    // Nếu đã có /uploads/ thì trả về đường dẫn tương đối
     if (imagePath.startsWith("/uploads/")) {
-      return `${BACKEND_DOMAIN}${imagePath}`;
+      // Khi làm việc với Next Image, trả về đường dẫn tuyệt đối hoặc dẫn đến public folder
+      return imagePath;
     }
 
-    // Fallback cho đường dẫn cũ - tất cả đều chuyển về backend
-    return `${BACKEND_DOMAIN}${imagePath}`;
+    // Fallback cho đường dẫn cũ - đảm bảo có dấu gạch chéo đầu tiên
+    return imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  }
+  
+  /**
+   * Xử lý dữ liệu hình ảnh
+   * @param {Object} imageData - Dữ liệu hình ảnh từ API
+   * @returns {Object} Dữ liệu hình ảnh đã xử lý
+   */
+  processImageData(imageData) {
+    return {
+      url: this.fixImagePath(imageData.url) || "",
+      alt: imageData.alt || "",
+      order: imageData.order || 0
+    };
+  }
+  
+  /**
+   * Xử lý dữ liệu hình ảnh
+   * @param {Object} imageData - Dữ liệu hình ảnh từ API
+   * @returns {Object} Dữ liệu hình ảnh đã xử lý
+   */
+  processImageData(imageData) {
+    return {
+      url: this.fixImagePath(imageData.url) || "",
+      alt: imageData.alt || "",
+      order: imageData.order || 0
+    };
   }
 
   /**
@@ -97,9 +124,16 @@ class MachineryService {
         id: machine._id || "",
         name: machine.name || "",
         description: machine.description || "",
+        // Giữ các trường cũ
         image:
           this.fixImagePath(machine.image) || "/images/placeholder-machine.jpg",
         imageAlt: machine.imageAlt || `${machine.name}`,
+        // Thêm xử lý mảng images mới
+        images: Array.isArray(machine.images) 
+          ? machine.images.map(img => this.processImageData(img)).sort((a, b) => a.order - b.order)
+          : machine.image 
+            ? [{ url: this.fixImagePath(machine.image), alt: machine.imageAlt || machine.name, order: 0 }] 
+            : [],
         order: machine.order || 0,
         isActive: machine.isActive !== false,
       }));
@@ -198,10 +232,58 @@ class MachineryService {
         name: machine.name,
         image: machine.image,
         description: machine.description,
+        // Thêm mảng images
+        images: machine.images || [],
       }));
     });
 
     return machineData;
+  }
+  
+  /**
+   * Tạo ID carousel duy nhất cho machine
+   * @param {string} machineId - ID của machine
+   * @param {number} stageIndex - Index của stage
+   * @param {number} machineIndex - Index của machine
+   * @returns {string} - ID carousel
+   */
+  generateMachineCarouselId(machineId, stageIndex, machineIndex) {
+    return `machine-carousel-${machineId}-${stageIndex}-${machineIndex}`;
+  }
+
+  /**
+   * Xử lý dữ liệu machinery để đảm bảo mỗi machine có mảng images
+   * @param {Object} machinery - Dữ liệu machinery từ API
+   * @returns {Object} - Dữ liệu machinery đã xử lý
+   */
+  processMachineryData(machinery) {
+    if (!machinery || !machinery.stages) return machinery;
+    
+    // Duyệt qua từng stage và machine
+    machinery.stages.forEach(stage => {
+      if (stage.machines) {
+        stage.machines.forEach(machine => {
+          // Đảm bảo machine có mảng images
+          if (!machine.images) {
+            machine.images = [];
+          }
+          
+          // Nếu không có images nhưng có image cũ, thêm vào mảng images
+          if (machine.images.length === 0 && machine.image) {
+            machine.images.push({
+              url: this.fixImagePath(machine.image),
+              alt: machine.imageAlt || machine.name,
+              order: 0
+            });
+          }
+          
+          // Sắp xếp images theo order
+          machine.images.sort((a, b) => a.order - b.order);
+        });
+      }
+    });
+    
+    return machinery;
   }
 
   // Dữ liệu mặc định khi API fail
@@ -232,6 +314,13 @@ class MachineryService {
               "Lazer machine with advanced technology, helping to optimize production processes and ensure the highest quality of products.",
             image: "/images/machinery-page/lazer_machine.png",
             imageAlt: "Lazer Machine",
+            images: [
+              {
+                url: "/images/machinery-page/lazer_machine.png",
+                alt: "Lazer Machine",
+                order: 0
+              }
+            ],
             order: 1,
             isActive: true,
           },
@@ -242,6 +331,13 @@ class MachineryService {
               "Industrial wash machine with advanced technology, helping to optimize production processes and ensure the highest quality of products.",
             image: "/images/machinery-page/wash_machine.png",
             imageAlt: "Wash Machine",
+            images: [
+              {
+                url: "/images/machinery-page/wash_machine.png",
+                alt: "Wash Machine",
+                order: 0
+              }
+            ],
             order: 2,
             isActive: true,
           },
@@ -263,6 +359,13 @@ class MachineryService {
               "Precision cutting machine for accurate fabric preparation and minimal waste.",
             image: "/images/machinery-page/cutting_machine.png",
             imageAlt: "Cutting Machine",
+            images: [
+              {
+                url: "/images/machinery-page/cutting_machine.png",
+                alt: "Cutting Machine",
+                order: 0
+              }
+            ],
             order: 1,
             isActive: true,
           },
@@ -284,6 +387,13 @@ class MachineryService {
               "High-speed industrial sewing machines for consistent stitching quality.",
             image: "/images/machinery-page/sewing_machine.png",
             imageAlt: "Sewing Machine",
+            images: [
+              {
+                url: "/images/machinery-page/sewing_machine.png",
+                alt: "Sewing Machine",
+                order: 0
+              }
+            ],
             order: 1,
             isActive: true,
           },
@@ -305,6 +415,13 @@ class MachineryService {
               "Final processing machines for product finishing and quality assurance.",
             image: "/images/machinery-page/finishing_machine.png",
             imageAlt: "Finishing Machine",
+            images: [
+              {
+                url: "/images/machinery-page/finishing_machine.png",
+                alt: "Finishing Machine",
+                order: 0
+              }
+            ],
             order: 1,
             isActive: true,
           },
